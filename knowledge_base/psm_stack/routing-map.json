@@ -1,0 +1,908 @@
+{
+  "_base_autoloaded": {
+    "note": "copilot-instructions.md is auto-loaded by VS Code into the system prompt. Do NOT add it to scenario files  it would be a redundant read."
+  },
+  "php_js_api": {
+    "agent": "fullstack",
+    "capability": "PHP_DOC_STYLE",
+    "keywords": [
+      "php",
+      "javascript",
+      "api",
+      "ajax",
+      "query",
+      "mysql",
+      "mariadb",
+      "rest",
+      "endpoint",
+      "json",
+      "fetch",
+      "jquery"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md",
+      ".github/standard/templateDoc.php",
+      ".github/standard/todoTemplate.js"
+    ],
+    "context": "App layer (PHP/JS/API)",
+    "priority": "high"
+  },
+  "php_docblock_style": {
+    "agent": "fullstack",
+    "capability": "PHP_DOC_STYLE",
+    "keywords": [
+      "documenta",
+      "classi",
+      "funzioni",
+      "phpdoc",
+      "docblock",
+      "@example",
+      "graffa",
+      "brace",
+      "summary classe",
+      "templateDoc.php",
+      "metodi php"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/standard/templateDoc.php",
+      ".github/subdetail/psm-cms-conventions.md"
+    ],
+    "context": "PHP documentation style compliance",
+    "priority": "high"
+  },
+  "infra_ops": {
+    "agent": "sistemista",
+    "keywords": [
+      "docker",
+      "traefik",
+      "ubuntu",
+      "proxmox",
+      "ssh",
+      "vm",
+      "network",
+      "firewall",
+      "dns",
+      "compose",
+      "container"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/architecture.md",
+      ".github/subdetail/commands-quick.md",
+      ".github/subdetail/network.md"
+    ],
+    "context": "Infrastructure/operations",
+    "priority": "high"
+  },
+  "docs": {
+    "agent": "documentazione",
+    "capability": "AUDIT",
+    "keywords": [
+      "documenta",
+      "readme",
+      "readme-authentication",
+      "autenticazione applicativa",
+      "auth app",
+      "login joomla",
+      "checklist",
+      "template",
+      "markdown",
+      "audit",
+      "roadmap",
+      "versione",
+      "changelog"
+    ],
+    "files": [
+      ".github/esperti/esperto_documentazione.md",
+      ".github/Checklist-Progetto.md",
+      ".github/Vision-e-Roadmap.md",
+      ".github/checklist/README.md",
+      ".github/docs/auth/README-authentication.md"
+    ],
+    "context": "Documentation",
+    "priority": "medium"
+  },
+  "security": {
+    "agent": "fullstack",
+    "capability": "SECURITY_AUDIT",
+    "keywords": [
+      "sql injection",
+      "xss",
+      "csrf",
+      "auth",
+      "oauth",
+      "encryption",
+      "tls",
+      "ssl",
+      "hsts",
+      "csp",
+      "sanitize",
+      "vulnerability",
+      "exploit"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/checklist/03-security-hardening.md"
+    ],
+    "context": "Security hardening",
+    "priority": "critical"
+  },
+  "fatture": {
+    "agent": "fullstack",
+    "capability": "DOMAIN_FATTURE",
+    "keywords": [
+      "fatture",
+      "fatturazione",
+      "fatturapa",
+      "xml",
+      "winfarm",
+      "scadenziario",
+      "pagamenti",
+      "riconciliazione",
+      "invoice",
+      "edoc",
+      "manifest",
+      "sync fatture"
+    ],
+    "files": [
+      ".github/Vision-e-Roadmap.md",
+      "consegna/Fatturazione-Sincronizzazione.md",
+      ".github/checklist/01-functionality.md"
+    ],
+    "context": "Fatture e pagamenti",
+    "priority": "high"
+  },
+  "fatture_sync": {
+    "agent": "sistemista",
+    "keywords": [
+      "sync_copy_only",
+      "manifest",
+      "edoc_cp",
+      "edoc_pa",
+      "edoc_pr",
+      "fatture sync",
+      "winfarm sync",
+      "copy_sync",
+      "bonifica fatture"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      "consegna/Fatturazione-Sincronizzazione.md",
+      ".github/subdetail/cron-jobs.md"
+    ],
+    "context": "Sync infrastrutturale fatture WinFarm\u2192backup (Python script, manifest MD5, cron)",
+    "priority": "high"
+  },
+  "desktop_webview2": {
+    "agent": "fullstack",
+    "keywords": [
+      "webview2",
+      "wpf",
+      "c#",
+      "csharp",
+      "desktop",
+      "sqlite",
+      "offline",
+      "sync",
+      ".net",
+      "windows app"
+    ],
+    "files": [
+      ".github/Vision-e-Roadmap.md",
+      ".github/checklist/01-functionality.md",
+      ".github/esperti/esperto_fullstack.md"
+    ],
+    "context": "Desktop app (WebView2)",
+    "priority": "high"
+  },
+  "wireguard_vpn": {
+    "agent": "sistemista",
+    "keywords": [
+      "wireguard",
+      "vpn",
+      "wg0",
+      "tunnel",
+      "peer",
+      "client",
+      "remote access",
+      "subnet",
+      "172.31"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/credentials.md",
+      "consegna/Accessi.md"
+    ],
+    "context": "WireGuard VPN setup",
+    "priority": "high"
+  },
+  "backup_restore": {
+    "agent": "sistemista",
+    "capability": "DISASTER_RECOVERY",
+    "keywords": [
+      "backup",
+      "restore",
+      "dump",
+      "recovery",
+      "disaster",
+      "snapshot",
+      "vzdump",
+      "rsync",
+      "retention"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/cron-jobs.md",
+      ".github/checklist/02-infrastructure.md"
+    ],
+    "context": "Backup e disaster recovery",
+    "priority": "critical"
+  },
+  "traefik_config": {
+    "agent": "sistemista",
+    "capability": "CONFIG_REVIEW",
+    "keywords": [
+      "traefik",
+      "router",
+      "middleware",
+      "tls",
+      "certificate",
+      "entrypoint",
+      "websecure",
+      "acme",
+      "letsencrypt"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/architecture.md",
+      ".github/subdetail/architecture-deep.md"
+    ],
+    "context": "Traefik reverse proxy",
+    "priority": "high"
+  },
+  "certificates": {
+    "agent": "sistemista",
+    "capability": "CONFIG_REVIEW",
+    "keywords": [
+      "certificate",
+      "cert",
+      "ssl",
+      "tls",
+      "letsencrypt",
+      "self-signed",
+      "acme",
+      "renewal",
+      "expiry",
+      "openssl"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      "consegna/Certificati-SSL-Monitoraggio.md",
+      "consegna/Setup-Dominio-Pubblico.md"
+    ],
+    "context": "SSL/TLS certificates",
+    "priority": "high"
+  },
+  "proxmox": {
+    "agent": "sistemista",
+    "keywords": [
+      "proxmox",
+      "pve",
+      "qm",
+      "vm",
+      "snapshot",
+      "clone",
+      "console",
+      "storage",
+      "datacenter",
+      "node"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/architecture.md",
+      "consegna/Architettura-Macchina.md"
+    ],
+    "context": "Proxmox VE management",
+    "priority": "medium"
+  },
+  "netplan_network": {
+    "agent": "sistemista",
+    "keywords": [
+      "netplan",
+      "network",
+      "ip",
+      "route",
+      "gateway",
+      "interface",
+      "static ip",
+      "enp6s19",
+      "<SERVER_IP>"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/network.md",
+      ".github/subdetail/architecture-deep.md"
+    ],
+    "context": "Ubuntu network config",
+    "priority": "medium"
+  },
+  "samba_cifs": {
+    "agent": "sistemista",
+    "keywords": [
+      "samba",
+      "cifs",
+      "share",
+      "mount",
+      "z:",
+      "smb",
+      "pms-stack",
+      "network drive",
+      "windows",
+      "winfarm"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/network.md",
+      ".github/subdetail/credentials.md"
+    ],
+    "context": "Samba/CIFS shares",
+    "priority": "medium"
+  },
+  "cron_automation": {
+    "agent": "sistemista",
+    "keywords": [
+      "cron",
+      "crontab",
+      "schedule",
+      "job",
+      "automation",
+      "periodic",
+      "backup_job",
+      "merge_runner"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/cron-jobs.md"
+    ],
+    "context": "Cron jobs scheduling",
+    "priority": "medium"
+  },
+  "joomla": {
+    "agent": "fullstack",
+    "keywords": [
+      "joomla",
+      "component",
+      "plugin",
+      "module",
+      "sourcerer",
+      "runner",
+      "casse",
+      "legacy",
+      "migration"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/Vision-e-Roadmap.md"
+    ],
+    "context": "Joomla CMS",
+    "priority": "medium"
+  },
+  "database_optimization": {
+    "agent": "fullstack",
+    "capability": "OPTIMIZE",
+    "keywords": [
+      "mariadb",
+      "mysql",
+      "optimize",
+      "index",
+      "query",
+      "explain",
+      "slow query",
+      "innodb",
+      "performance",
+      "buffer pool"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/database-casse-sync.md"
+    ],
+    "context": "Database optimization",
+    "priority": "high"
+  },
+  "apache_config": {
+    "agent": "sistemista",
+    "keywords": [
+      "apache",
+      "httpd",
+      "virtualhost",
+      "htaccess",
+      "rewrite",
+      "mod_rewrite",
+      "documentroot",
+      "php-apache"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/architecture.md"
+    ],
+    "context": "Apache configuration",
+    "priority": "medium"
+  },
+  "auth_session": {
+    "agent": "fullstack",
+    "capability": "DEBUG",
+    "keywords": [
+      "authentication",
+      "login",
+      "session",
+      "authservice",
+      "password",
+      "user",
+      "credential",
+      "sessionservice",
+      "auth.php",
+      "api auth",
+      "hmac-guard",
+      "auth-hmac",
+      "dispatcher",
+      "psm_api_auth_mode",
+      "psm_api_hmac_scope_prefix",
+      "psm_api_invalid_status_code",
+      "session hmac"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md"
+    ],
+    "context": "Auth & session mgmt",
+    "priority": "high"
+  },
+  "db_sync": {
+    "agent": "fullstack",
+    "capability": "OPTIMIZE",
+    "keywords": [
+      "sync",
+      "synchronize",
+      "vm",
+      "nas",
+      "replica",
+      "merge",
+      "conflict",
+      "incremental",
+      "intelligent mode"
+    ],
+    "files": [
+      ".github/avanzamento-lavori.md",
+      ".github/subdetail/database-casse-sync.md",
+      ".github/checklist/02-infrastructure.md"
+    ],
+    "context": "DB sync VM\u2194NAS",
+    "priority": "critical"
+  },
+  "error_logging": {
+    "agent": "fullstack",
+    "capability": "DEBUG",
+    "keywords": [
+      "error",
+      "exception",
+      "log",
+      "logphp",
+      "debugging",
+      "troubleshoot",
+      "stderr",
+      "error_log"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md"
+    ],
+    "context": "Error handling & logging",
+    "priority": "medium"
+  },
+  "performance": {
+    "agent": "fullstack",
+    "capability": "OPTIMIZE",
+    "keywords": [
+      "performance",
+      "slow",
+      "optimize",
+      "cache",
+      "opcache",
+      "redis",
+      "latency",
+      "speed",
+      "bottleneck"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/Vision-e-Roadmap.md"
+    ],
+    "context": "Performance optimization",
+    "priority": "high"
+  },
+  "testing": {
+    "agent": "fullstack",
+    "capability": "VALIDATE",
+    "keywords": [
+      "test",
+      "testing",
+      "validation",
+      "verify",
+      "smoke test",
+      "unit test",
+      "curl",
+      "debug"
+    ],
+    "files": [
+      ".github/esperti/esperto_orchestratore.md",
+      ".github/subdetail/commands-quick.md"
+    ],
+    "context": "Testing & validation",
+    "priority": "medium"
+  },
+  "powershell_scripts": {
+    "agent": "sistemista",
+    "keywords": [
+      "powershell",
+      "ps1",
+      "script",
+      "windows",
+      "backup-pmsstack",
+      "connect-networkdrives",
+      "automation"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/workspace.md"
+    ],
+    "context": "PowerShell scripts",
+    "priority": "medium"
+  },
+  "git_version_control": {
+    "agent": "documentazione",
+    "keywords": [
+      "git",
+      "commit",
+      "repository",
+      "github",
+      "version control",
+      "push",
+      "pull",
+      "branch",
+      "psm_stack"
+    ],
+    "files": [
+      ".github/esperti/esperto_documentazione.md",
+      ".github/avanzamento-lavori.md"
+    ],
+    "context": "Git version control",
+    "priority": "low"
+  },
+  "email_smtp": {
+    "agent": "sistemista",
+    "keywords": [
+      "smtp",
+      "sendmail",
+      "msmtp",
+      "smtp host",
+      "smtp port",
+      "smtp connectivity",
+      "test-smtp",
+      "test-smtp-connectivity",
+      "mail server",
+      "postfix",
+      "exim"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/subdetail/cron-jobs.md"
+    ],
+    "context": "SMTP server/infra configuration",
+    "priority": "medium"
+  },
+  "notification_system": {
+    "agent": "fullstack",
+    "keywords": [
+      "email",
+      "mail",
+      "notification",
+      "notify",
+      "phpmailer",
+      "mailer",
+      "psm_mail",
+      "notify-due-invoices",
+      "invoice notification",
+      "due date email",
+      "alert email",
+      "cli script",
+      "cron email",
+      "init-mail-table",
+      "mail log",
+      "resend"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md",
+      ".github/subdetail/cron-jobs.md"
+    ],
+    "context": "Email notification system (PHPMailer, Mailer class, CLI scripts, DB logging)",
+    "priority": "high"
+  },
+  "monitoring_alerts": {
+    "agent": "sistemista",
+    "keywords": [
+      "monitoring",
+      "alert",
+      "uptime",
+      "healthcheck",
+      "status",
+      "prometheus",
+      "grafana",
+      "watchdog"
+    ],
+    "files": [
+      ".github/esperti/esperto_sistemista.md",
+      ".github/checklist/02-infrastructure.md"
+    ],
+    "context": "Monitoring & alerts",
+    "priority": "medium"
+  },
+  "runner_casse": {
+    "agent": "fullstack",
+    "capability": "DOMAIN_CASSE",
+    "keywords": [
+      "runner",
+      "casse",
+      "runnerajax",
+      "movimento",
+      "cassa",
+      "tipo_movimento",
+      "valore",
+      "indice"
+    ],
+    "files": [
+      ".github/avanzamento-lavori.md",
+      ".github/esperti/esperto_fullstack.md"
+    ],
+    "context": "Runner casse app",
+    "priority": "high"
+  },
+  "cli_tools": {
+    "agent": "fullstack",
+    "keywords": [
+      "cli",
+      "command line",
+      "php cli",
+      "dry-run",
+      "init-mail",
+      "cli script",
+      "docker exec php",
+      "bootstrap-default-accounts",
+      "bootstrap-supervisor",
+      "default accounts",
+      "supervisor bootstrap"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md"
+    ],
+    "context": "CLI tools (www/cli/ scripts)",
+    "priority": "medium"
+  },
+  "settings_config": {
+    "agent": "fullstack",
+    "keywords": [
+      "settings",
+      "config",
+      "configuration",
+      ".env",
+      "getinstance",
+      "singleton",
+      "db_host",
+      "psm_secure_key",
+      "settingsmanager",
+      "settings_priority",
+      "psm_settings",
+      "settings-seed",
+      "seed",
+      "np2gn_psm_settings",
+      "castvalue",
+      "ensuretable",
+      "htaccess"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md",
+      ".github/subdetail/architecture.md"
+    ],
+    "context": "Settings & config mgmt (SettingsManager, .env, DB priority chain, CLI seed)",
+    "priority": "medium"
+  },
+  "connection_database": {
+    "agent": "fullstack",
+    "keywords": [
+      "connection",
+      "pdo",
+      "database",
+      "connectdb",
+      "executequery",
+      "transaction",
+      "prepared statement"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md"
+    ],
+    "context": "DB connection class",
+    "priority": "high"
+  },
+  "security_helper": {
+    "agent": "fullstack",
+    "capability": "SECURITY_AUDIT",
+    "keywords": [
+      "securityhelper",
+      "getinput",
+      "escapehtml",
+      "sanitize",
+      "validate",
+      "input validation",
+      "xss prevention"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/subdetail/psm-cms-conventions.md"
+    ],
+    "context": "SecurityHelper class",
+    "priority": "critical"
+  },
+  "go_live": {
+    "agent": "orchestratore",
+    "keywords": [
+      "go-live",
+      "golive",
+      "deployment",
+      "production",
+      "launch",
+      "switch",
+      "cutover",
+      "milestone"
+    ],
+    "files": [
+      ".github/esperti/esperto_orchestratore.md",
+      ".github/Checklist-Progetto.md",
+      ".github/Vision-e-Roadmap.md"
+    ],
+    "context": "Go-live procedures",
+    "priority": "critical"
+  },
+  "troubleshooting": {
+    "agent": "orchestratore",
+    "capability": "DEBUG",
+    "keywords": [
+      "troubleshoot",
+      "error",
+      "debug",
+      "fix",
+      "problem",
+      "issue",
+      "broken",
+      "not working",
+      "fail"
+    ],
+    "files": [
+      ".github/esperti/esperto_orchestratore.md",
+      ".github/subdetail/troubleshooting.md",
+      ".github/subdetail/commands-quick.md"
+    ],
+    "context": "General troubleshooting",
+    "priority": "high"
+  },
+  "checklist_progress": {
+    "agent": "documentazione",
+    "capability": "AUDIT",
+    "keywords": [
+      "checklist",
+      "progress",
+      "task",
+      "todo",
+      "completed",
+      "pending",
+      "milestone",
+      "phase"
+    ],
+    "files": [
+      ".github/esperti/esperto_documentazione.md",
+      ".github/Checklist-Progetto.md",
+      ".github/checklist/README.md"
+    ],
+    "context": "Checklist tracking",
+    "priority": "medium"
+  },
+  "security_hardening": {
+    "agent": "fullstack",
+    "capability": "SECURITY_AUDIT",
+    "keywords": [
+      "hardening",
+      "security audit",
+      "waf",
+      "firewall",
+      "rate limiting",
+      "whitelist",
+      "ip restriction"
+    ],
+    "files": [
+      ".github/esperti/esperto_fullstack.md",
+      ".github/checklist/03-security-hardening.md"
+    ],
+    "context": "Security hardening",
+    "priority": "critical"
+  },
+  "intervention_memory": {
+    "agent": "orchestratore",
+    "keywords": [
+      "intervention",
+      "memory",
+      "history",
+      "storico",
+      "past interventions",
+      "learning",
+      "hotspot",
+      "recurrence",
+      "misrouted",
+      "sqlite",
+      "fts5"
+    ],
+    "files": [
+      ".github/esperti/esperto_orchestratore.md",
+      ".github/interventions.py"
+    ],
+    "context": "Intervention memory and learning system",
+    "priority": "medium"
+  },
+  "routing_system": {
+    "agent": "orchestratore",
+    "capability": "AUDIT",
+    "keywords": [
+      "routing",
+      "routing map",
+      "routing-map",
+      "router.py",
+      "router",
+      "scenario",
+      "scenarios",
+      "keywords",
+      "overlap",
+      "stats",
+      "audit routing",
+      "misroute",
+      "dispatcher"
+    ],
+    "files": [
+      ".github/esperti/esperto_orchestratore.md",
+      ".github/dispatcher.md",
+      ".github/router.py",
+      ".github/router_audit.py",
+      ".github/routing-map.json"
+    ],
+    "context": "Routing and dispatcher system analysis",
+    "priority": "high"
+  },
+  "mcp_server": {
+    "agent": "orchestratore",
+    "keywords": [
+      "mcp",
+      "model context protocol",
+      "mcp server",
+      "mcp tool",
+      "mcp_server"
+    ],
+    "files": [
+      ".github/esperti/esperto_orchestratore.md",
+      ".github/mcp_server.py"
+    ],
+    "context": "MCP server configuration and tools",
+    "priority": "medium"
+  }
+}

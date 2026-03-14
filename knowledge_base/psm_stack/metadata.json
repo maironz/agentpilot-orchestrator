@@ -1,0 +1,30 @@
+{
+  "id": "psm_stack",
+  "name": "PSM Stack (PHP + Docker + MariaDB)",
+  "description": "Full-stack web application with PHP, Docker containers, MariaDB, Joomla CMS, Traefik reverse proxy, Proxmox VE, WireGuard VPN.",
+  "tech_stack": ["php", "javascript", "docker", "mariadb", "mysql", "nginx", "apache", "traefik", "proxmox", "wireguard", "redis", "joomla"],
+  "agents": ["fullstack", "sistemista", "documentazione", "orchestratore"],
+  "agent_descriptions": {
+    "fullstack": "PHP/JS/API developer, database, security, Joomla",
+    "sistemista": "Infrastructure, Docker, networking, backups",
+    "documentazione": "Docs, checklists, versioning",
+    "orchestratore": "Coordination, troubleshooting, routing"
+  },
+  "scenarios_count": 41,
+  "generic_scenarios": [
+    "security",
+    "troubleshooting",
+    "docs",
+    "git_version_control",
+    "checklist_progress",
+    "monitoring_alerts",
+    "error_logging"
+  ],
+  "domain_scenarios": [
+    "fatture",
+    "fatture_sync",
+    "runner_casse",
+    "desktop_webview2",
+    "joomla"
+  ]
+}

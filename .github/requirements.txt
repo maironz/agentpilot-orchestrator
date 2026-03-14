@@ -1,0 +1,5 @@
+# PSM Stack Router - Python dependencies
+# Install: pip install -r .github/requirements.txt
+
+# MCP SDK for Model Context Protocol server
+mcp[cli]>=1.0.0
