@@ -1,102 +1,74 @@
-# routing-generator — AI Dispatcher
+# routing-generator -- AI Dispatcher
 
-**Non toccare `knowledge_base/psm_stack/`** senza backup esplicito.
+## DISPATCHER
 
-## DISPATCHER (BOOTSTRAP)
-
-### Prima risposta della sessione
-
+### Session bootstrap (obbligatorio)
+All'inizio di ogni sessione operativa:
 1. Esegui `python .github/router.py --stats`
-2. Mostra header:
+2. Pubblica l'header di stato con i dati del router
+
+### Per-request protocol (obbligatorio)
+Prima di ogni risposta operativa:
+1. Esegui routing della richiesta:
+   ```
+   python .github/router.py --direct "<query>"
+   ```
+2. Determina il **budget token** dal campo `priority` del routing risultante:
+
+   | Priority | Budget stimato | Uso tipico |
+   |----------|---------------|------------|
+   | `high`   | ~20 000 tok   | Fix chirurgici, codice critico |
+   | `medium` | ~35 000 tok   | Feature nuove, refactor |
+   | `low`    | ~15 000 tok   | Docs, style, configurazione |
+   | nessun match | ~10 000 tok | Chiarimento, domanda veloce |
+
+3. Pubblica header **obbligatorio** in questa forma:
+   ```
+   🤖 <model> | Agente: <agent> | Scenario: <scenario> | Budget: ~<N>k tok | Routing: <stats>
+   ```
+   Esempio reale:
+   ```
+   🤖 Claude claude-opus-4-5 | Agente: backend | Scenario: python_code | Budget: ~20k tok | Routing: 13scn/169kw|overlap:1.8%|[OK]
+   ```
+
+4. Limita la risposta al budget dichiarato. Se prevedi di superarlo, avvisa l'utente e chiedi conferma.
+
+### Agents
+| Agent | Domain |
+|-------|--------|
+| `backend` | routing-generator -- backend domain |
+| `devops` | routing-generator -- devops domain |
+| `documentazione` | routing-generator -- documentazione domain |
+| `orchestratore` | routing-generator -- orchestratore domain |
+
+### Key scenarios
+- `python_code`
+- `api_endpoints`
+- `database`
+- `auth`
+- `caching`
+- `testing`
+- `docker_infra`
+- `performance`
+
+### Router commands
 ```
-🤖 [Modello] | Agente: [agente] | Priorità: [priority] | Routing: [stats]
-```
-
-### Router — modalità
-
-| Modalità | Comando | Quando |
-|----------|---------|--------|
-| Diretto | `python .github/router.py --direct "query"` | Task semplici |
-| Follow-up | `python .github/router.py --follow-up "query"` | Stessa sessione |
-| Stats | `python .github/router.py --stats` | Inizio sessione |
-| Audit | `python .github/router.py --audit` | Dopo modifiche routing-map |
-
-**Ogni richiesta deve passare dal router.** Eccezione: coda documentale
-dello stesso task (es. "aggiorna README dopo step completato").
-
-### Postflight check (task non banali)
-1. Router usato
-2. Agente coerente con il task
-3. Test verdi prima di dichiarare lo step completato
-4. README tabella step aggiornata
-5. **Se modificato `core/`** → propagare ai consumer: `rgen --update --target <path>` per ogni progetto in «Progetti consumer»
-
----
-
-## PROGETTO
-
-**routing-generator** — tool Python che genera automaticamente sistemi
-di routing AI per qualsiasi progetto, partendo da pattern esistenti.
-
-### Stack
-- Python 3.12, pathlib, dataclasses, json, subprocess, re
-- pytest + pytest-cov per i test
-- Nessuna dipendenza esterna per il core (solo stdlib)
-
-### Path workspace
-| Path | Contenuto |
-|------|-----------|
-| `rgen/` | Package principale |
-| `knowledge_base/` | Pattern disponibili |
-| `core/` | File invarianti da copiare nei progetti target |
-| `tests/` | Test pytest |
-
-### Agenti disponibili
-| Agente | Dominio |
-|--------|---------|
-| `developer` | Implementazione moduli rgen/ |
-| `tester` | pytest, fixtures, coverage |
-| `documentazione` | README, docstring, step tracking |
-| `orchestratore` | Coordinamento, troubleshooting, architettura |
-
-### Step di sviluppo
-```
-0 ✅  Scaffolding
-1 ✅  models.py + backup.py
-2 ✅  knowledge_base/psm_stack/ + PatternLoader
-3 ✅  questionnaire.py
-4 ✅  adapter.py
-5+6 ✅ writer.py + core files
-7 ✅  self_checker.py
-8 ✅  cli.py + integration test
-```
-
-### Vincoli critici
-- **Test verde a ogni step** — nessuno step avanza senza test verdi
-- **Backup sempre** — BackupEngine attivo prima di ogni write su disco
-- **tmp_path nei test** — mai scrivere su disco reale nei test
-- **Nessun {{VAR}} rimasto** — l'adapter verifica sempre la sostituzione completa
-
-### Progetti consumer
-Progetti che usano i `core/` files di questo repo e devono essere aggiornati
-quando `core/` cambia (step 5 del Postflight):
-
-| Progetto | Path locale | Layout | Comando update |
-|----------|-------------|--------|----------------|
-| ClaudeCodeTest | `<path-locale>` | flat (root) | `rgen --update --flat --target "<path-locale>"` |
-
----
-
-## QUICK REFERENCE
-
-```bash
-# Sviluppo
-pytest                          # tutti i test
-pytest tests/test_backup.py -v  # step specifico
-pytest --cov=rgen --cov-report=term-missing
-
-# Router
+python .github/router.py --direct "<query>"
+python .github/router.py --follow-up "<query>"
 python .github/router.py --stats
-python .github/router.py --direct "implementa backup engine"
 python .github/router.py --audit
 ```
+
+### Policy esplorazione repo
+1. Parti sempre dai file instradati dal router
+2. Mantieni scope ridotto se confidence > soglia
+3. Allarga all'intero repo solo se `repo_exploration.allowed: true`
+
+## PROJECT
+
+**routing-generator** | Stack: python, fastapi, flask, postgresql, postgres, redis, docker, pytest, sqlalchemy, alembic, pydantic, nginx
+
+## Postflight
+- Verifica che l'agente scelto sia coerente con la richiesta
+- Esegui i test rilevanti prima di chiudere il task
+- Mantieni documentazione e artefatti di routing allineati
