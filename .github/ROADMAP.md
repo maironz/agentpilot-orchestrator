@@ -8,7 +8,7 @@
 
 | # | Feature | Priority | Impact | Effort | Owner | Status |
 |----|---------|----------|--------|--------|-------|--------|
-| 1 | Live Router Metrics Dashboard | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐ | orchestratore | ❌ Backlog |
+| 1 | Live Router Metrics Dashboard | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐ | orchestratore | 🔄 In Progress |
 | 2 | ML Feedback Loop (auto-calibrate weights) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | developer | ❌ Backlog |
 | 3 | Multi-Language Agent Templates | 🟠 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
 | 4 | Scenario Evolution Generator | 🟠 P2 | 🟢 High | ⭐⭐⭐ | orchestratore | ❌ Backlog |
