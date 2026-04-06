@@ -1,4 +1,5 @@
-<div align="center">
+<div>
+<div align="Left">
 
 ```
  ____   ___  _   _ _____ ___ _   _  ____
@@ -12,15 +13,17 @@
       | |_| | |___ | |\  | |___|  _ <  / ___ \| || |_| |  _ <
        \____|_____||_| \_|_____|_| \_\/_/   \_\_| \___/|_| \_\
 ```
-
+</div>
+<div align="Center">
 **Genera automaticamente un sistema di routing AI semantico per qualsiasi progetto.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-156%2F156-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-187%2F187-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
+</div>
 </div>
 
 ---
@@ -319,6 +322,72 @@ KEYWORD BOOSTS (top 15):
 - Dry-run mode to preview changes
 - Exports to `calibrated_weights.json`
 - Configurable minimum sample threshold
+
+---
+
+### 🔗 Graph Routing — Multi-Agent Cascade (P1.3 — DONE)
+
+Route queries through agent dependency graphs for multi-domain tasks:
+
+```bash
+python .github/router.py --graph-mode "fix auth bug AND deploy to production"
+```
+
+**Features**:
+- Primary + secondary agents per scenario
+- Automatic cascade execution with context forwarding
+- Cycle detection (prevents circular routing)
+- Graceful fallback on failures
+
+**Example routing-map.json with dependencies:**
+```json
+{
+  "deployment": {
+    "agent": "backend",
+    "keywords": ["deploy", "release", "production"],
+    "dependencies": ["devops"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Full deployment workflow"
+  }
+}
+```
+
+**Output**: Multi-agent result with execution chain:
+```json
+{
+  "mode": "graph",
+  "primary": {
+    "agent": "backend",
+    "scenario": "deployment",
+    "confidence": 0.87,
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Full deployment workflow"
+  },
+  "secondary": [
+    {
+      "agent": "devops",
+      "scenario": "infrastructure",
+      "confidence": 0.75,
+      "files": [".github/esperti/esperto_devops.md"],
+      "context": "Infrastructure management"
+    }
+  ],
+  "execution_plan": ["backend", "devops"],
+  "context_forwarding": {
+    "prior_agent": "backend",
+    "prior_confidence": 0.87,
+    "prior_context": "Full deployment workflow"
+  },
+  "cascade_success": true
+}
+```
+
+**Workflow**:
+1. User query → routes to primary agent (backend)
+2. Backend identifies secondary need (devops)
+3. System checks dependency graph
+4. Devops agent invoked with forwarded context
+5. Unified response chain
 
 ---
 

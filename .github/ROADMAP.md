@@ -1,6 +1,6 @@
 # ROADMAP — routing-generator
 
-**Brainstorm session 2026-04-06** | Last update: 2026-04-06 | **Phase 1 + P1.2 COMPLETE** ✅
+**Brainstorm session 2026-04-06** | Last update: 2026-04-07 | **Phase 1 + P1.2 + P1.3 COMPLETE** ✅
 
 ---
 
@@ -10,14 +10,16 @@
 |-------|---------|--------|-----|
 | **Phase 1 (Week 1-2)** | Live Metrics Dashboard | ✅ Done | [#1](https://github.com/maironz/routing-generator/commits) |
 | **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | [#5](https://github.com/maironz/routing-generator/commits) |
-| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | 🟡 Final Testing | - |
+| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | ✅ Done | Pending |
 | Phase 2+ (Week 6+) | Scenario Evolution, Multi-Language, others | ❌ Backlog | - |
 
 **Metrics**:
-- **187/187 tests passing** ✅ (up from 156)
+- **187/187 tests passing** ✅ (up from 156 baseline)
 - **31 new tests** (GraphRouter unit + integration)
+- **3-panel TUI dashboard** (`python .github/router.py --dashboard`)
+- **ML-calibrated routing** (`python .github/router.py --calibrate-weights`)
 - **Graph cascade routing** (`python .github/router.py --graph-mode "query"`)
-- Ready for multi-domain agent cooperation
+- Ready for Phase 2 multi-domain + evolution features
 
 ---
 
@@ -27,7 +29,7 @@
 |----|---------|----------|--------|--------|-------|--------|
 | 1 | Live Router Metrics Dashboard | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐ | orchestratore | ✅ Done |
 | 2 | ML Feedback Loop (auto-calibrate weights) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | developer | ✅ Done |
-| 5 | Cross-Agent Context Bridge (graph routing) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | orchestratore | 🟡 Next |
+| 5 | Cross-Agent Context Bridge (graph routing) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | orchestratore | ✅ Done |
 | 3 | Multi-Language Agent Templates | 🟠 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
 | 4 | Scenario Evolution Generator | 🟠 P2 | 🟢 High | ⭐⭐⭐ | orchestratore | ❌ Backlog |
 | 6 | Pattern Marketplace / GitHub Discovery | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ❌ Backlog |
@@ -129,20 +131,34 @@ KEYWORD BOOSTS (top 15):
 
 ---
 
-### 🔴 P1.3 — Cross-Agent Context Bridge (Graph Routing) 🟡 NEXT
+### 🔴 P1.3 — Cross-Agent Context Bridge (Graph Routing) ✅ COMPLETE
 **Owner**: orchestratore | **Effort**: ⭐⭐⭐⭐⭐ | **Impact**: High
+**Plan**: [`.github/plans/p1-3-graph-routing.plan`](./plans/p1-3-graph-routing.plan)
 
-**Goal**: Routing a grafo, non 1:1 map
-- Agent A → "serve esperto B"  → chiama B in cascade
-- Primary + secondary agents per scenario
-- Context forwarding tra agenti
-- Exit: `routing-map.json` con `"dependencies": ["esperto_x"]`
+**Completed**:
+- ✅ `GraphRouter` class with DFS cycle detection
+- ✅ Dependency graph building from routing-map.json
+- ✅ Context forwarding between agent chain
+- ✅ CLI flag: `--graph-mode` for cascade routing
+- ✅ 31 new tests (unit + integration)
+- ✅ Full validation of DAG + graceful error handling
+- ✅ Exit: `python .github/router.py --graph-mode "query"` interactive cascade
 
-**Acceptance**:
-- [ ] Routing graph validazione (cicli?)
-- [ ] Primary fallback su failure
-- [ ] Context size limits
-- [ ] Test cascade scenario
+**Metrics collected**:
+```
+EXECUTION PLAN:
+  primary: backend (confidence: 0.87)
+  secondary: [devops, db_admin] (confidence: 0.75, 0.72)
+
+CONTEXT FORWARDING:
+  prior_agent: backend
+  prior_confidence: 0.87
+  cascade_success: true
+```
+
+---
+
+### 🟠 P2.1 — Multi-Language Agent Templates
 **Owner**: developer | **Effort**: ⭐⭐⭐ | **Impact**: Mid
 
 **Goal**: Agent risposte customizzate per lingua del progetto
