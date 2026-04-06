@@ -1,0 +1,30 @@
+{
+  "id": "node_ts",
+  "name": "Node.js TypeScript (Express/Fastify + PostgreSQL + Docker)",
+  "description": "Node.js TypeScript backend with Express or Fastify, PostgreSQL or MongoDB, React/Vue frontend, Docker, Jest testing.",
+  "tech_stack": ["node", "typescript", "javascript", "express", "fastify", "postgresql", "postgres", "mongodb", "redis", "react", "vue", "docker", "jest", "prisma", "nginx"],
+  "agents": ["backend", "frontend", "devops", "orchestratore"],
+  "agent_descriptions": {
+    "backend": "Node.js/TypeScript API developer, database, auth, testing",
+    "frontend": "React/Vue components, state management, UI, bundling",
+    "devops": "Docker, CI/CD, npm/yarn, infrastructure",
+    "orchestratore": "Coordination, troubleshooting, routing"
+  },
+  "scenarios_count": 13,
+  "generic_scenarios": [
+    "typescript_code",
+    "api_routes",
+    "database",
+    "auth",
+    "frontend_components",
+    "testing",
+    "docker_infra",
+    "performance",
+    "security",
+    "docs",
+    "troubleshooting",
+    "git_version_control",
+    "dependency_management"
+  ],
+  "domain_scenarios": []
+}
