@@ -1,6 +1,23 @@
 # ROADMAP — routing-generator
 
-**Brainstorm session 2026-04-06** | Next review: 2026-04-20
+**Brainstorm session 2026-04-06** | Last update: 2026-04-06 | **Phase 1 COMPLETE** ✅
+
+---
+
+## Progress Summary
+
+| Phase | Feature | Status | PR |
+|-------|---------|--------|-----|
+| **Phase 1 (Week 1-2)** | Live Metrics Dashboard | ✅ Done | [#1](https://github.com/maironz/routing-generator/commits) |
+| Phase 2 (Week 3-4) | ML Feedback Loop | ❌ Backlog | - |
+| Phase 3 (Week 5) | Scenario Evolution + Multi-Language | ❌ Backlog | - |
+| Phase 4 (Week 6+) | Graph Routing + Audit Trail | ❌ Backlog | - |
+
+**Metrics**:
+- 139/139 tests passing
+- 28 new tests added (metrics + dashboard + integration)
+- 3-panel TUI dashboard (`python .github/router.py --dashboard`)
+- Ready for real-time routing monitoring
 
 ---
 
@@ -8,7 +25,7 @@
 
 | # | Feature | Priority | Impact | Effort | Owner | Status |
 |----|---------|----------|--------|--------|-------|--------|
-| 1 | Live Router Metrics Dashboard | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐ | orchestratore | 🔄 In Progress |
+| 1 | Live Router Metrics Dashboard | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐ | orchestratore | ✅ Done |
 | 2 | ML Feedback Loop (auto-calibrate weights) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | developer | ❌ Backlog |
 | 3 | Multi-Language Agent Templates | 🟠 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
 | 4 | Scenario Evolution Generator | 🟠 P2 | 🟢 High | ⭐⭐⭐ | orchestratore | ❌ Backlog |
