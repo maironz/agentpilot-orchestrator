@@ -384,6 +384,117 @@ def test_adapt_scratch_adds_db_performance_only_for_database_stack(adapter_kb: P
     assert ".github/standard/sql-style-guide.md" not in without_db_result
 
 
+# ---------------------------------------------------------------------------
+# adapt — scratch path: tech-aware scenario generation (Path B)
+# ---------------------------------------------------------------------------
+
+def test_scratch_tech_docker_generates_docker_infra_scenario(adapter_kb: Path, tmp_path: Path) -> None:
+    profile = ProjectProfile(
+        project_name="infra-app",
+        target_path=tmp_path / "infra",
+        pattern_id="",
+        tech_stack=["docker"],
+        domain_keywords=[],
+    )
+    routing = json.loads(Adapter(adapter_kb).adapt(profile)[".github/routing-map.json"])
+    assert "docker_infra" in routing
+    assert "docker" in routing["docker_infra"]["keywords"]
+
+
+def test_scratch_tech_typescript_generates_typescript_code_scenario(adapter_kb: Path, tmp_path: Path) -> None:
+    profile = ProjectProfile(
+        project_name="ts-app",
+        target_path=tmp_path / "ts",
+        pattern_id="",
+        tech_stack=["typescript", "node"],
+        domain_keywords=[],
+    )
+    routing = json.loads(Adapter(adapter_kb).adapt(profile)[".github/routing-map.json"])
+    assert "typescript_code" in routing
+    assert "api_routes" in routing
+
+
+def test_scratch_tech_fastapi_generates_api_endpoints_scenario(adapter_kb: Path, tmp_path: Path) -> None:
+    profile = ProjectProfile(
+        project_name="api-app",
+        target_path=tmp_path / "api",
+        pattern_id="",
+        tech_stack=["fastapi"],
+        domain_keywords=[],
+    )
+    routing = json.loads(Adapter(adapter_kb).adapt(profile)[".github/routing-map.json"])
+    assert "api_endpoints" in routing
+
+
+def test_scratch_always_includes_cross_cutting_scenarios(adapter_kb: Path, tmp_path: Path) -> None:
+    profile = ProjectProfile(
+        project_name="any-app",
+        target_path=tmp_path / "any",
+        pattern_id="",
+        tech_stack=["python"],
+        domain_keywords=[],
+    )
+    routing = json.loads(Adapter(adapter_kb).adapt(profile)[".github/routing-map.json"])
+    for scenario in ("troubleshooting", "security", "docs", "git_version_control"):
+        assert scenario in routing, f"Missing always-present scenario: {scenario}"
+
+
+def test_scratch_empty_tech_uses_fallback_scenario(adapter_kb: Path, tmp_path: Path) -> None:
+    profile = ProjectProfile(
+        project_name="bare-app",
+        target_path=tmp_path / "bare",
+        pattern_id="",
+        tech_stack=[],
+        domain_keywords=[],
+    )
+    routing = json.loads(Adapter(adapter_kb).adapt(profile)[".github/routing-map.json"])
+    assert "general" in routing
+
+
+def test_scratch_multiple_tech_generates_multiple_scenarios(adapter_kb: Path, tmp_path: Path) -> None:
+    profile = ProjectProfile(
+        project_name="full-app",
+        target_path=tmp_path / "full",
+        pattern_id="",
+        tech_stack=["python", "docker", "postgres"],
+        domain_keywords=[],
+    )
+    routing = json.loads(Adapter(adapter_kb).adapt(profile)[".github/routing-map.json"])
+    assert "python_code" in routing
+    assert "docker_infra" in routing
+    assert "database" in routing
+
+
+def test_scratch_domain_matching_scenario_id_enriches_keywords(adapter_kb: Path, tmp_path: Path) -> None:
+    """Domain keyword equal to an existing scenario ID must enrich keywords, not create a duplicate."""
+    profile = ProjectProfile(
+        project_name="test-app",
+        target_path=tmp_path / "test",
+        pattern_id="",
+        tech_stack=["pytest"],   # creates scenario id "testing"
+        domain_keywords=["testing"],  # same id → should enrich, not duplicate
+    )
+    routing = json.loads(Adapter(adapter_kb).adapt(profile)[".github/routing-map.json"])
+    assert "testing" in routing
+    assert "testing" in routing["testing"]["keywords"]
+
+
+def test_scratch_unknown_tech_is_silently_skipped(adapter_kb: Path, tmp_path: Path) -> None:
+    """Tech keywords not in _TECH_SCENARIO_TEMPLATES must not raise errors."""
+    profile = ProjectProfile(
+        project_name="exotic-app",
+        target_path=tmp_path / "exotic",
+        pattern_id="",
+        tech_stack=["cobol", "fortran"],
+        domain_keywords=["billing"],
+    )
+    result = Adapter(adapter_kb).adapt(profile)
+    routing = json.loads(result[".github/routing-map.json"])
+    # Unknown tech silently skipped; domain and always-scenarios still generated
+    assert "billing" in routing
+    assert "troubleshooting" in routing
+
+
 def test_generated_registry_contains_overview_and_scenario_column(adapter_kb: Path, base_profile: ProjectProfile) -> None:
     adapter = Adapter(adapter_kb)
     result = adapter.adapt(base_profile)

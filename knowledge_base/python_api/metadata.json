@@ -1,0 +1,30 @@
+{
+  "id": "python_api",
+  "name": "Python API (FastAPI/Flask + PostgreSQL + Docker)",
+  "description": "Python REST API backend with FastAPI or Flask, PostgreSQL database, Redis cache, Docker containers, pytest testing.",
+  "tech_stack": ["python", "fastapi", "flask", "postgresql", "postgres", "redis", "docker", "pytest", "sqlalchemy", "alembic", "pydantic", "nginx"],
+  "agents": ["backend", "devops", "documentazione", "orchestratore"],
+  "agent_descriptions": {
+    "backend": "Python/API developer, database, auth, testing, performance",
+    "devops": "Docker, CI/CD, infrastructure, dependency management",
+    "documentazione": "Docs, OpenAPI, README, changelogs",
+    "orchestratore": "Coordination, troubleshooting, routing"
+  },
+  "scenarios_count": 13,
+  "generic_scenarios": [
+    "python_code",
+    "api_endpoints",
+    "database",
+    "auth",
+    "caching",
+    "testing",
+    "docker_infra",
+    "performance",
+    "security",
+    "docs",
+    "troubleshooting",
+    "git_version_control",
+    "dependency_management"
+  ],
+  "domain_scenarios": []
+}

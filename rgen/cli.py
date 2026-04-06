@@ -6,6 +6,8 @@ import argparse
 import sys
 from pathlib import Path
 
+from rgen import __version__
+
 # ---------------------------------------------------------------------------
 # Project-root relative paths (resolved at import time)
 # ---------------------------------------------------------------------------
@@ -204,7 +206,7 @@ def _cmd_direct(args: argparse.Namespace) -> int:
     q = Questionnaire(kb)
     profile = q.run_with_defaults(overrides)
 
-    return _run_generation(profile, core, dry_run=args.dry_run)
+    return _run_generation(profile, core, kb=kb, dry_run=args.dry_run)
 
 
 def _cmd_interactive(args: argparse.Namespace) -> int:
@@ -226,20 +228,19 @@ def _cmd_interactive(args: argparse.Namespace) -> int:
     if confirm in ("n", "no"):
         print("Annullato.")
         return 0
-    return _run_generation(profile, core, dry_run=False)
+    return _run_generation(profile, core, kb=kb, dry_run=False)
 
 
 # ---------------------------------------------------------------------------
 # Shared generation pipeline
 # ---------------------------------------------------------------------------
 
-def _run_generation(profile, core: Path, dry_run: bool = False) -> int:
+def _run_generation(profile, core: Path, kb: Path = _DEFAULT_KB, dry_run: bool = False) -> int:
     from rgen.adapter import Adapter
     from rgen.writer import Writer
     from rgen.self_checker import SelfChecker
 
-    kb = profile.target_path.parent.parent / "knowledge_base" if not profile.pattern_id else _DEFAULT_KB
-    adapter = Adapter(_DEFAULT_KB)
+    adapter = Adapter(kb)
     files = adapter.adapt(profile)
 
     if dry_run:
@@ -283,6 +284,7 @@ def _build_parser() -> argparse.ArgumentParser:
         prog="rgen",
         description="routing-generator -- genera sistemi di routing AI per qualsiasi progetto",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--direct", action="store_true", help="Generazione non interattiva")
     mode.add_argument("--dry-run", dest="dry_run", action="store_true", help="Mostra cosa verrebbe generato senza scrivere")
