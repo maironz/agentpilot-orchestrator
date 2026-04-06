@@ -16,7 +16,7 @@
 **Genera automaticamente un sistema di routing AI semantico per qualsiasi progetto.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-91%2F91-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-109%2F109-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Stdlib only](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
@@ -30,23 +30,23 @@
 `rgen` e' uno **strumento CLI** che genera in secondi l'infrastruttura completa di routing AI per il tuo progetto: scenari, agenti specializzati, system prompt e motore di routing — tutto calibrato sulla tua architettura.
 
 ```
-Il tuo progetto                     Routing system generato
-───────────────                     ───────────────────────
+Il tuo progetto              Routing system generato
+───────────────              ───────────────────────
 
-  "Ho un'app FastAPI               .github/
-   con PostgreSQL                  ├── router.py           <- motore semantico
-   e Redis cache..."               ├── routing-map.json    <- 20+ scenari custom
-                                   ├── copilot-instructions.md  <- system prompt
-        rgen                       ├── AGENT_REGISTRY.md
-         ─────►                      ├── subagent-brief.md
-                       ├── standard/
-                       │   ├── general-style.md
-                       │   ├── python-style-guide.md
-                       │   └── template.py
-                       └── esperti/
-                         ├── esperto_backend.md
-                         ├── esperto_database.md
-                         └── esperto_devops.md
+  "Ho un'app FastAPI        .github/
+   con PostgreSQL           ├── router.py                <- motore semantico
+   e Redis cache..."        ├── routing-map.json         <- 20+ scenari custom
+                            ├── copilot-instructions.md  <- system prompt
+        rgen                ├── AGENT_REGISTRY.md
+        ────►               ├── subagent-brief.md
+                            ├── standard/
+                            │   ├── general-style.md
+                            │   ├── python-style-guide.md
+                            │   └── template.py
+                            └── esperti/
+                                ├── esperto_backend.md
+                                ├── esperto_database.md
+                                └── esperto_devops.md
 ```
 
 ### Cosa ottieni
@@ -65,7 +65,7 @@ Il tuo progetto                     Routing system generato
 ```
                     ┌─────────────────────────────────────────┐
                     │              rgen --direct              │
-                    │   --pattern psm_stack --name my-app    │
+                    │    --pattern psm_stack --name my-app   │
                     └──────────────────┬──────────────────────┘
                                        │
                     ┌──────────────────▼──────────────────────┐
@@ -120,9 +120,10 @@ rgen --list-patterns
 ```
 
 ```
-Pattern disponibili (1):
-  psm_stack  v1.0.0  — PHP 8.3 + Docker + MariaDB + Traefik
-              tags: php, docker, mariadb, traefik, proxmox
+Pattern disponibili (3):
+  psm_stack   — PHP 8.3 + Docker + MariaDB + Traefik + Proxmox
+  python_api  — FastAPI/Flask + PostgreSQL + Redis + Docker
+  node_ts     — Node.js TypeScript + Express + React/Vue + Docker
 ```
 
 ### 2. Genera il routing per il tuo progetto
@@ -322,7 +323,7 @@ Puoi anche rinominare gli agenti via `RENAME_<AGENT>` nei `template_vars`.
 ## Sviluppo e test
 
 ```bash
-pytest                                         # tutti i test (91/91)
+pytest                                         # tutti i test (109/109)
 pytest --cov=rgen --cov-report=term-missing   # con coverage
 pytest tests/test_cli.py -v                   # integration test
 ```
@@ -340,7 +341,9 @@ routing-generator/
 │   ├── self_checker.py     <- 8 controlli post-generazione
 │   └── models.py           <- ProjectProfile, GenerationResult, CheckReport
 ├── knowledge_base/
-│   └── psm_stack/          <- Pattern 0: PHP + Docker + MariaDB + Traefik
+│   ├── psm_stack/          <- PHP + Docker + MariaDB + Traefik
+│   ├── python_api/         <- FastAPI/Flask + PostgreSQL + Redis + Docker
+│   └── node_ts/            <- Node.js TypeScript + Express + React/Vue
 ├── core/                   <- file invarianti copiati in ogni progetto
 │   ├── router.py           <- motore semantico (574 righe)
 │   ├── router_audit.py     <- audit copertura
