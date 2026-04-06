@@ -177,8 +177,44 @@ class Adapter:
 
         return result
 
+    # Tech keyword → scenario template mapping for Path B
+    _TECH_SCENARIO_TEMPLATES: dict[str, dict] = {
+        # Python ecosystem
+        "python":     {"id": "python_code",   "keywords": ["python", "function", "class", "module", "import", "refactor", "typing", "decorator", "async"], "context": "Python development", "priority": "high"},
+        "fastapi":    {"id": "api_endpoints",  "keywords": ["fastapi", "endpoint", "route", "pydantic", "schema", "request", "response", "api", "rest"],    "context": "API layer (FastAPI)", "priority": "high"},
+        "flask":      {"id": "api_endpoints",  "keywords": ["flask", "route", "blueprint", "request", "response", "api", "endpoint", "rest"],               "context": "API layer (Flask)",   "priority": "high"},
+        "django":     {"id": "api_endpoints",  "keywords": ["django", "view", "model", "serializer", "url", "orm", "migration", "admin"],                   "context": "API layer (Django)",  "priority": "high"},
+        "pytest":     {"id": "testing",        "keywords": ["test", "pytest", "fixture", "mock", "coverage", "assert", "unit", "integration"],              "context": "Testing (pytest)",    "priority": "medium"},
+        # Node / TypeScript
+        "node":       {"id": "api_routes",     "keywords": ["node", "express", "route", "middleware", "controller", "request", "response", "api"],          "context": "Node.js API",         "priority": "high"},
+        "typescript": {"id": "typescript_code","keywords": ["typescript", "type", "interface", "generic", "ts", "tsc", "eslint", "decorator", "enum"],      "context": "TypeScript",          "priority": "high"},
+        "react":      {"id": "frontend",       "keywords": ["react", "component", "hook", "state", "props", "jsx", "tsx", "render", "ui"],                  "context": "Frontend (React)",    "priority": "high"},
+        "vue":        {"id": "frontend",       "keywords": ["vue", "component", "composable", "pinia", "router", "template", "emit", "props"],              "context": "Frontend (Vue)",      "priority": "high"},
+        "jest":       {"id": "testing",        "keywords": ["jest", "vitest", "test", "mock", "coverage", "expect", "describe", "it"],                      "context": "Testing (Jest)",      "priority": "medium"},
+        # Database
+        "postgres":   {"id": "database",       "keywords": ["postgres", "postgresql", "sql", "query", "migration", "schema", "table", "index", "db"],       "context": "Database (PostgreSQL)", "priority": "high"},
+        "mysql":      {"id": "database",       "keywords": ["mysql", "mariadb", "sql", "query", "migration", "schema", "table", "index", "db"],             "context": "Database (MySQL)",    "priority": "high"},
+        "mongodb":    {"id": "database",       "keywords": ["mongo", "mongodb", "document", "collection", "aggregate", "schema", "nosql"],                  "context": "Database (MongoDB)",  "priority": "high"},
+        "redis":      {"id": "caching",        "keywords": ["redis", "cache", "invalidate", "ttl", "session", "queue", "pubsub"],                           "context": "Caching (Redis)",     "priority": "medium"},
+        # Infrastructure
+        "docker":     {"id": "docker_infra",   "keywords": ["docker", "compose", "container", "image", "dockerfile", "volume", "network", "registry"],     "context": "Container infrastructure", "priority": "medium"},
+        "kubernetes": {"id": "docker_infra",   "keywords": ["kubernetes", "k8s", "pod", "deployment", "service", "ingress", "helm", "kubectl"],            "context": "Kubernetes",          "priority": "medium"},
+        "terraform":  {"id": "infra_as_code",  "keywords": ["terraform", "infra", "provider", "resource", "plan", "apply", "state", "module"],             "context": "Infrastructure as Code", "priority": "medium"},
+        # PHP ecosystem
+        "php":        {"id": "php_code",       "keywords": ["php", "class", "namespace", "composer", "psr", "trait", "interface", "laravel", "symfony"],   "context": "PHP development",     "priority": "high"},
+        "javascript": {"id": "js_code",        "keywords": ["javascript", "js", "function", "async", "promise", "fetch", "dom", "event", "module"],        "context": "JavaScript",          "priority": "high"},
+    }
+
+    # Scenarios always added regardless of tech stack
+    _ALWAYS_SCENARIOS: list[dict] = [
+        {"id": "security",          "keywords": ["security", "vulnerability", "injection", "xss", "csrf", "owasp", "sanitize", "encrypt", "https"], "context": "Security audit",         "priority": "high",   "agent_idx": 0},
+        {"id": "troubleshooting",   "keywords": ["error", "debug", "fix", "problem", "issue", "crash", "exception", "traceback", "log", "bug"],     "context": "Troubleshooting",        "priority": "high",   "agent_idx": -1},
+        {"id": "docs",              "keywords": ["documenta", "readme", "docstring", "changelog", "wiki", "guide", "comment"],                       "context": "Documentation",          "priority": "low",    "agent_idx": 1},
+        {"id": "git_version_control","keywords": ["git", "commit", "branch", "merge", "rebase", "pull", "push", "conflict", "tag", "release"],      "context": "Git & version control",  "priority": "low",    "agent_idx": 1},
+    ]
+
     # ------------------------------------------------------------------
-    # Path B — from scratch (minimal scaffold)
+    # Path B — from scratch (tech-aware scaffold)
     # ------------------------------------------------------------------
 
     def _adapt_from_scratch(self, profile: ProjectProfile) -> dict[str, str]:
@@ -188,33 +224,70 @@ class Adapter:
             agent_list = ["developer", "documentazione", "orchestratore"]
 
         tech_label = ", ".join(profile.tech_stack) if profile.tech_stack else "non specificato"
-        domains = profile.domain_keywords or ["general"]
 
         routing_map: dict[str, Any] = {}
-        for i, domain in enumerate(profile.domain_keywords):
+        primary_agent = agent_list[0]
+        primary_file = f".github/esperti/esperto_{primary_agent}.md"
+
+        # 1. Tech-aware scenarios from declared stack
+        seen_scenario_ids: set[str] = set()
+        for tech in profile.tech_stack:
+            tmpl = self._TECH_SCENARIO_TEMPLATES.get(tech.lower())
+            if not tmpl or tmpl["id"] in seen_scenario_ids:
+                continue
+            seen_scenario_ids.add(tmpl["id"])
+            routing_map[tmpl["id"]] = {
+                "agent": primary_agent,
+                "keywords": tmpl["keywords"],
+                "files": [primary_file],
+                "context": tmpl["context"],
+                "priority": tmpl["priority"],
+            }
+
+        # 2. Domain-specific scenarios
+        for domain in profile.domain_keywords:
             scenario_id = domain.lower().replace(" ", "_")
+            if scenario_id in routing_map:
+                # Enrich keywords of existing scenario rather than duplicate
+                routing_map[scenario_id]["keywords"] = list(
+                    dict.fromkeys(routing_map[scenario_id]["keywords"] + [domain])
+                )
+                continue
             routing_map[scenario_id] = {
-                "agent": agent_list[0],
-                "keywords": [domain] + (profile.tech_stack[:3] if i == 0 else []),
-                "files": [f".github/esperti/esperto_{agent_list[0]}.md"],
+                "agent": primary_agent,
+                "keywords": [domain] + profile.tech_stack[:3],
+                "files": [primary_file],
                 "context": f"{domain} domain",
                 "priority": "high",
             }
+
+        # 3. Fallback if still empty
         if not routing_map:
             routing_map["general"] = {
-                "agent": agent_list[0],
-                "keywords": profile.tech_stack or ["code"],
-                "files": [f".github/esperti/esperto_{agent_list[0]}.md"],
+                "agent": primary_agent,
+                "keywords": profile.tech_stack or ["code", "develop", "implement"],
+                "files": [primary_file],
                 "context": "General development",
                 "priority": "medium",
             }
-        routing_map["troubleshooting"] = {
-            "agent": agent_list[-1],
-            "keywords": ["error", "debug", "fix", "problem", "issue"],
-            "files": [f".github/esperti/esperto_{agent_list[-1]}.md"],
-            "context": "Troubleshooting",
-            "priority": "high",
-        }
+
+        # 4. Always-present cross-cutting scenarios
+        doc_agent = agent_list[1] if len(agent_list) > 1 else primary_agent
+        last_agent = agent_list[-1]
+        for s in self._ALWAYS_SCENARIOS:
+            if s["id"] in routing_map:
+                continue
+            idx = s["agent_idx"]
+            agent = agent_list[idx] if abs(idx) < len(agent_list) else primary_agent
+            routing_map[s["id"]] = {
+                "agent": agent,
+                "keywords": s["keywords"],
+                "files": [f".github/esperti/esperto_{agent}.md"],
+                "context": s["context"],
+                "priority": s["priority"],
+            }
+
+        domains = profile.domain_keywords or ["general"]
 
         result: dict[str, str] = {}
         result[".github/routing-map.json"] = json.dumps(
