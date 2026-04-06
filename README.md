@@ -16,9 +16,9 @@
 **Genera automaticamente un sistema di routing AI semantico per qualsiasi progetto.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-109%2F109-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-121%2F121-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Stdlib only](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
+[![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
 </div>
