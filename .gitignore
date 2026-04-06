@@ -42,3 +42,6 @@ desktop.ini
 # SQLite (interventions db nei progetti target)
 *.db
 *.sqlite
+
+# Claude Code memory (locale, non condiviso)
+.claude/

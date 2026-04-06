@@ -500,6 +500,10 @@ def _build_subagent_prompt_prefix(agent: str, context: str) -> str:
 # ─── CLI ───
 
 def main():
+    # Force UTF-8 output (avoid cp1252 encoding issues on Windows)
+    if sys.stdout.encoding and sys.stdout.encoding.lower() not in ('utf-8', 'utf8'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore
+
     args = sys.argv[1:]
 
     if not args:
@@ -563,14 +567,14 @@ EXAMPLES:
                 th_w = stats['thresholds'].get(f'{k}_warn', '?')
                 th_c = stats['thresholds'].get(f'{k}_crit', '?')
                 print(f"  {icons[v['status']]} {k}: {v['value']} (warn:{th_w} crit:{th_c})")
-        print(json.dumps(stats, indent=2, ensure_ascii=True))
+        print(json.dumps(stats, indent=2, ensure_ascii=False))
         sys.exit(0)
 
     # Handle audit mode (no query needed)
     if mode == "audit":
         # Force UTF-8 output (avoid cp1252 encoding issues on Windows redirect)
         if sys.stdout.encoding and sys.stdout.encoding.lower() not in ('utf-8', 'utf8'):
-            sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            sys.stdout.reconfigure(encoding='utf-8', errors='replace') # type: ignore
 
         result = audit_routing_coverage()
         # Pretty-print audit results
@@ -602,7 +606,7 @@ EXAMPLES:
         # JSON output: exclude internal _covered_details
         json_result = {k: v for k, v in result.items() if not k.startswith('_')}
         print("\nJSON:")
-        print(json.dumps(json_result, indent=2, ensure_ascii=True))
+        print(json.dumps(json_result, indent=2, ensure_ascii=False))
         sys.exit(0)
 
     # Handle intervention memory modes
@@ -618,7 +622,7 @@ EXAMPLES:
                     if r.get('resolution'):
                         print(f"    → {r['resolution'][:120]}")
         else:
-            print(json.dumps(store.stats(), indent=2, ensure_ascii=True))
+            print(json.dumps(store.stats(), indent=2, ensure_ascii=False))
         store.close()
         sys.exit(0)
 
@@ -662,7 +666,7 @@ EXAMPLES:
         # Default: planner workflow
         result = handle_new_query(query)
 
-    print(json.dumps(result, indent=2, ensure_ascii=True))
+    print(json.dumps(result, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
