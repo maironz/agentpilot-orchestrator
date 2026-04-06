@@ -518,9 +518,10 @@ MODES:
   python .github/router.py --follow-up "query"  → Minimal context (same session)
   python .github/router.py --subagent "query"   → Compact brief for subagents
 
-HEALTH:
+HEALTH & MONITORING:
   python .github/router.py --stats              → Health metrics (session start)
   python .github/router.py --audit              → Scan codebase for routing gaps
+  python .github/router.py --dashboard          → Live metrics dashboard (TUI)
 
 MEMORY:
   python .github/router.py --history "query"    → Search intervention memory (FTS5)
@@ -535,12 +536,13 @@ EXAMPLES:
   python .github/router.py --direct "fix login API"
   python .github/router.py --follow-up "aggiungi validazione input"
   python .github/router.py --subagent "cerca tutti i file PHP con query SQL"
+  python .github/router.py --dashboard
         """)
         sys.exit(0)
 
     # Parse mode flag
     mode = None
-    if args[0] in ("--direct", "--follow-up", "--subagent", "--audit", "--stats", "--history", "--log-intervention"):
+    if args[0] in ("--direct", "--follow-up", "--subagent", "--audit", "--stats", "--history", "--log-intervention", "--dashboard"):
         mode = args[0].lstrip("-").replace("-", "_")
         query = " ".join(args[1:]).strip() if len(args) > 1 else ""
     else:
@@ -607,6 +609,22 @@ EXAMPLES:
         json_result = {k: v for k, v in result.items() if not k.startswith('_')}
         print("\nJSON:")
         print(json.dumps(json_result, indent=2, ensure_ascii=False))
+        sys.exit(0)
+
+    # Handle dashboard mode (metrics visualization)
+    if mode == "dashboard":
+        try:
+            from rgen.metrics_collector import RouterMetricsCollector
+            from rgen.dashboard_ui import DashboardUI
+
+            collector = RouterMetricsCollector()
+            ui = DashboardUI(collector)
+            ui.run()
+        except ImportError as e:
+            print(f"Dashboard requires: pip install rich>=13.0", file=sys.stderr)
+            sys.exit(1)
+        except KeyboardInterrupt:
+            sys.exit(0)
         sys.exit(0)
 
     # Handle intervention memory modes
