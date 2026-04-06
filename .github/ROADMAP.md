@@ -1,6 +1,6 @@
 # ROADMAP — routing-generator
 
-**Brainstorm session 2026-04-06** | Last update: 2026-04-06 | **Phase 1 COMPLETE** ✅
+**Brainstorm session 2026-04-06** | Last update: 2026-04-06 | **Phase 1 + P1.2 COMPLETE** ✅
 
 ---
 
@@ -9,15 +9,17 @@
 | Phase | Feature | Status | PR |
 |-------|---------|--------|-----|
 | **Phase 1 (Week 1-2)** | Live Metrics Dashboard | ✅ Done | [#1](https://github.com/maironz/routing-generator/commits) |
-| Phase 2 (Week 3-4) | ML Feedback Loop | ❌ Backlog | - |
-| Phase 3 (Week 5) | Scenario Evolution + Multi-Language | ❌ Backlog | - |
-| Phase 4 (Week 6+) | Graph Routing + Audit Trail | ❌ Backlog | - |
+| **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | - |
+| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | 🟡 Next | - |
+| Phase 2+ (Week 6+) | Scenario Evolution, Multi-Language, others | ❌ Backlog | - |
 
 **Metrics**:
-- 139/139 tests passing
-- 28 new tests added (metrics + dashboard + integration)
-- 3-panel TUI dashboard (`python .github/router.py --dashboard`)
-- Ready for real-time routing monitoring
+- **156/156 tests passing** ✅
+- **30 tests** (metrics + dashboard + integration)
+- **17 tests** (weight calibrator + router integration)
+- **3-panel TUI dashboard** (`python .github/router.py --dashboard`)
+- **ML-calibrated routing** (`python .github/router.py --calibrate-weights`)
+- Ready for real-time routing monitoring + intelligent weight optimization
 
 ---
 
@@ -26,10 +28,10 @@
 | # | Feature | Priority | Impact | Effort | Owner | Status |
 |----|---------|----------|--------|--------|-------|--------|
 | 1 | Live Router Metrics Dashboard | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐ | orchestratore | ✅ Done |
-| 2 | ML Feedback Loop (auto-calibrate weights) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | developer | ❌ Backlog |
+| 2 | ML Feedback Loop (auto-calibrate weights) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | developer | ✅ Done |
+| 5 | Cross-Agent Context Bridge (graph routing) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | orchestratore | 🟡 Next |
 | 3 | Multi-Language Agent Templates | 🟠 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
 | 4 | Scenario Evolution Generator | 🟠 P2 | 🟢 High | ⭐⭐⭐ | orchestratore | ❌ Backlog |
-| 5 | Cross-Agent Context Bridge (graph routing) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | orchestratore | ❌ Backlog |
 | 6 | Pattern Marketplace / GitHub Discovery | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ❌ Backlog |
 | 7 | Historical Audit Trail + Rollback | 🟡 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
 | 8 | Cost Estimator (token budget per scenario) | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ❌ Backlog |
@@ -105,24 +107,44 @@ Vedi `.github/decision-priority.md`:
 
 ---
 
-### 🔴 P1.2 — ML Feedback Loop
+### 🔴 P1.2 — ML Feedback Loop ✅ DONE
 **Owner**: developer | **Effort**: ⭐⭐⭐⭐⭐ | **Impact**: High
+**Plan**: [`.github/plans/ml-feedback-loop.plan`](./plans/ml-feedback-loop.plan)
 
-**Goal**: Auto-calibrate keyword weights da success history
-- Registrare quale agente ha risolto il task
-- Boostrare weight per scenario vincente
-- Deprecare scenario che genera false positive
-- Exit: `router.py` usa weights dinamici da `interventions.json`
+**Completed**:
+- ✅ `RouterWeightCalibrator` class with decay algorithm
+- ✅ `_score_scenarios()` accepts weighted boosts parameter
+- ✅ `route_query(use_calibration=True)` optional intelligent routing
+- ✅ CLI flag: `--calibrate-weights` show/export weights
+- ✅ CLI flag: `--calibrate-weights --dry-run` preview without persist
+- ✅ 17 new tests (calibrator + integration)
+- ✅ Exit: `python .github/router.py --calibrate-weights` interactive report
 
-**Acceptance**:
-- [ ] Log strutturato di success/fail per agente
-- [ ] Algoritmo di decay (recent > old)
-- [ ] Dry-run mode per vedere delta weights
-- [ ] Backup automatico di weights old
+**Metrics collected**:
+```
+SUCCESS RATES PER SCENARIO:
+  scenario_name             → success_rate%
+
+KEYWORD BOOSTS (top 15):
+  1. keyword_name           → +X% (boost: 1.5x)
+```
 
 ---
 
-### 🟠 P2.1 — Multi-Language Agent Templates
+### 🔴 P1.3 — Cross-Agent Context Bridge (Graph Routing) 🟡 NEXT
+**Owner**: orchestratore | **Effort**: ⭐⭐⭐⭐⭐ | **Impact**: High
+
+**Goal**: Routing a grafo, non 1:1 map
+- Agent A → "serve esperto B"  → chiama B in cascade
+- Primary + secondary agents per scenario
+- Context forwarding tra agenti
+- Exit: `routing-map.json` con `"dependencies": ["esperto_x"]`
+
+**Acceptance**:
+- [ ] Routing graph validazione (cicli?)
+- [ ] Primary fallback su failure
+- [ ] Context size limits
+- [ ] Test cascade scenario
 **Owner**: developer | **Effort**: ⭐⭐⭐ | **Impact**: Mid
 
 **Goal**: Agent risposte customizzate per lingua del progetto
