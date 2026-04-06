@@ -1,0 +1,255 @@
+# Plan: ML Feedback Loop — Auto-calibrate Routing Weights
+
+**Feature**: `.github/ROADMAP.md` line 8
+**Priority**: 🔴 P1 | **Effort**: ⭐⭐⭐⭐⭐
+**Owner**: developer | **Status**: ❌ Backlog
+
+---
+
+## Objective
+
+Implement **ML-based weight calibration** to automatically improve routing accuracy based on intervention history. System learns which scenarios actually solved problems and boosts their weights.
+
+Entry point: `RouterWeightCalibrator` + auto-inference on router startup
+
+---
+
+## Success Criteria
+
+- [ ] Track success/fail outcomes per scenario in interventions.db
+- [ ] Compute dynamic keyword weights from outcome frequency
+- [ ] Apply weights to routing.py scoring algorithm
+- [ ] Dry-run mode to preview weight changes
+- [ ] Test coverage > 85%
+- [ ] No performance regression (calibration < 100ms)
+
+---
+
+## Scope & Non-Scope
+
+### In Scope
+- Weight computation from intervention history
+- Decay function (recent > old)
+- Confidence gate: don't apply weights if data < N samples
+- Persist calibrated weights to JSON (optional)
+- Dry-run preview
+
+### Out of Scope
+- Training on external datasets
+- Neural networks / deep learning
+- Real-time online learning (batch updates only)
+- Hyperparameter tuning UI
+
+---
+
+## Design
+
+### Architecture
+
+```
+interventions.db
+    ↓
+RouterWeightCalibrator
+    ├─ _compute_scenario_success_rate()    → success % per scenario
+    ├─ _compute_keyword_weights()          → derived from scenarios
+    ├─ _apply_decay()                      → recent > old
+    └─ export_weights()                    → JSON or dict
+    ↓
+router.py route_query()
+    ├─ Load calibrated weights if available
+    └─ Use for keyword scoring boost
+```
+
+### File Changes
+
+**New files**:
+- `rgen/weight_calibrator.py` — RouterWeightCalibrator class
+- `tests/test_weight_calibrator.py` — calibrator unit tests
+- `core/calibrated_weights.json` (optional, generated)
+
+**Modified files**:
+- `core/router.py` — integrate weight loading in route_query()
+- `tests/test_router_runtime.py` — test with calibrated weights
+
+### Weight Algorithm
+
+```
+For each scenario:
+  success_count = interventions where outcome='success'
+  total_count = all interventions for that scenario
+  success_rate = success_count / total_count
+
+For each keyword in scenario:
+  keyword_boost = success_rate * (1 - decay_factor)
+
+In routing:
+  score = matched_keywords + sum(keyword_boosts)
+```
+
+**Decay function** (recent favored):
+```python
+def decay(ts: str, alpha=0.1) -> float:
+    """Exponential decay: recent interventions weighted higher."""
+    days_old = (datetime.now() - datetime.fromisoformat(ts)).days
+    return exp(-alpha * days_old)
+```
+
+---
+
+## Implementation Steps
+
+### Phase 1: Weight Computation (1 day)
+
+**File**: `rgen/weight_calibrator.py`
+
+```python
+class RouterWeightCalibrator:
+    def __init__(self, intervention_store, min_samples=5):
+        self.store = intervention_store
+        self.min_samples = min_samples
+
+    def calibrate(self) -> dict:
+        """
+        Compute calibrated weights from intervention history.
+
+        Returns:
+            {
+                "calibrated_weights": {"query_optimization": 1.2, ...},
+                "confidence": 0.87,
+                "scenarios_included": 5,
+                "data_freshness": "2026-04-06T10:23:15Z"
+            }
+        """
+
+    def _compute_scenario_success_rate(self) -> dict[str, float]:
+        """Per-scenario success rate (0.0 to 1.0)."""
+
+    def _compute_keyword_weights(self) -> dict[str, float]:
+        """Boost factor per keyword (1.0 = no boost, 1.5 = 50% boost)."""
+
+    def dry_run(self) -> dict:
+        """Show what weights WOULD be calibrated (no persistence)."""
+
+    def export_weights(self, filepath: str):
+        """Save calibrated weights to JSON."""
+```
+
+**Tests**:
+- `test_success_rate_calculation()`
+- `test_keyword_weight_boosting()`
+- `test_minimum_sample_gate()`
+- `test_decay_function()`
+
+### Phase 2: Router Integration (0.5 day)
+
+**File**: `core/router.py` modifications
+
+```python
+from rgen.weight_calibrator import RouterWeightCalibrator
+
+def _score_scenarios(query: str, routes: dict, calibrator=None) -> list[dict]:
+    """Enhanced scoring with calibrated weights."""
+    q = (query or "").lower()
+    weights = calibrator.calibrate() if calibrator else {}
+
+    # Scoring logic with weight boost applied
+    for scenario, data in routes.items():
+        keywords = data.get("keywords", [])
+        matched = [kw for kw in keywords if kw.lower() in q]
+        score = len(matched)
+
+        # Apply calibrated weight boost
+        if matched and weights:
+            weight_boost = weights.get(scenario, 1.0)
+            score *= weight_boost
+
+        # ... rest of scoring
+```
+
+**Tests**:
+- `test_router_uses_calibrated_weights()`
+- `test_router_fallback_without_calibrator()`
+
+### Phase 3: Tests & Docs (1 day)
+
+- Coverage > 85%
+- Update README with weight calibration explanation
+- CLI example: `rgen --calibrate-weights --dry-run`
+
+---
+
+## Testing Strategy
+
+### Unit Tests (`test_weight_calibrator.py`)
+
+```python
+def test_success_rate_high_success_scenarios():
+    """Scenario with 9/10 success should get 0.9 weight."""
+
+def test_keyword_boost_calculation():
+    """Keywords from high-success scenarios should get boost."""
+
+def test_minimum_samples_gate():
+    """Don't calibrate scenarios with < 5 interventions."""
+
+def test_decay_penalizes_old_data():
+    """Old interventions weighted less than recent."""
+
+def test_dry_run_no_persistence():
+    """Dry-run should not save weights to disk."""
+```
+
+### Integration Tests (`test_router_runtime.py`)
+
+```python
+def test_router_routes_with_calibrated_weights():
+    """High-success scenarios should rank higher."""
+
+def test_router_fallback_without_calibrator():
+    """Router should work without calibrator (baseline)."""
+```
+
+### Manual Testing
+
+- Generate test interventions with success/fail mix
+- Run `--calibrate-weights --dry-run`
+- Verify weights boost high-success scenarios
+- Compare routing confidence before/after calibration
+
+---
+
+## Risk & Mitigation
+
+| Risk | Mitigation |
+|------|------------|
+| Overfitting to small sample | min_samples gate (default 5) |
+| Old data skewing weights | Decay function favors recent |
+| Weights regressing performance | A/B test before applying |
+| DB query slow | Cache weights, rebuild on demand |
+| Circular dependency (router → calibrator) | Separate modules, calibrate once at startup |
+
+---
+
+## Acceptance Checklist
+
+- [ ] RouterWeightCalibrator class with 4 methods
+- [ ] Decay function (exponential)
+- [ ] Integration in router.py _score_scenarios()
+- [ ] Dry-run mode without persistence
+- [ ] All tests pass (coverage > 85%)
+- [ ] Baseline performance: weight computation < 100ms
+- [ ] README updated with examples
+- [ ] Code review passed
+
+---
+
+## Timeline
+
+| Phase | Days | Dev | Test |
+|-------|------|-----|------|
+| P1: Weight Computation | 1 | ✓ | ✓ |
+| P2: Router Integration | 0.5 | ✓ | ✓ |
+| P3: Tests & Docs | 1 | - | ✓ |
+| **Total** | **2.5** | | |
+
+**Slack**: 1-2 day buffer built in

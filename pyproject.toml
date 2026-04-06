@@ -7,7 +7,9 @@ name = "routing-generator"
 version = "0.2.0"
 description = "Auto-generates AI assistant routing systems from project patterns"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "rich>=13.0",  # For TUI dashboard rendering (optional feature)
+]
 
 [project.optional-dependencies]
 dev = [

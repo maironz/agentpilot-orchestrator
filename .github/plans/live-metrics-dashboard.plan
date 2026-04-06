@@ -1,0 +1,276 @@
+# Plan: Live Router Metrics Dashboard
+
+**Feature**: `.github/ROADMAP.md` line 7
+**Priority**: 🔴 P1 | **Effort**: ⭐⭐⭐⭐
+**Owner**: orchestratore | **Status**: ❌ Backlog
+
+---
+
+## Objective
+
+Implement **real-time TUI (Text UI) metrics dashboard** for router health monitoring.
+
+Entry point: `python .github/router.py --dashboard`
+
+Output: Interactive terminal UI showing:
+- Confidence trend (rolling avg of last N queries)
+- Scenario usage heatmap
+- Agent overlap indicators
+- Dead zones (unmatched queries)
+- Exit codes and error rates
+
+---
+
+## Success Criteria
+
+- [ ] TUI framework integrated (rich library, no external bloat)
+- [ ] Metrics collected from `router.py --stats`
+- [ ] Real-time refresh < 500ms (terminal I/O)
+- [ ] Graceful degradation on non-TTY
+- [ ] Test coverage > 85%
+- [ ] Documentation in README
+
+---
+
+## Scope & Non-Scope
+
+### In Scope
+- CLI flag `--dashboard` in router.py
+- Real-time metric collection from interventions.db
+- Text-based UI (curses/rich)
+- Export metrics to JSON (piping)
+
+### Out of Scope
+- Web-based dashboard
+- Persistent metric storage (beyond existing interventions.db)
+- Alert notifications (Slack, email)
+- Performance optimization tier 2 (post-MVP)
+
+---
+
+## Design
+
+### Architecture
+
+```
+router.py --dashboard
+    ↓
+RouterMetricsCollector (new class)
+    ├─ confidence_trend()        → last 50 queries
+    ├─ scenario_usage_heatmap()  → scenario frequency
+    ├─ agent_overlap()           → competing agents
+    ├─ dead_zones()              → unmatched patterns
+    ├─ error_rate()              → fail % recent
+    └─ refresh_interval (500ms)
+    ↓
+DashboardUI (curses/rich)
+    ├─ Top panel: real-time metrics
+    ├─ Middle: histogram scenarios
+    ├─ Bottom: status + controls
+    └─ Keyboard: 'q' quit, 'r' refresh, 'e' export
+```
+
+### File Changes
+
+**New files**:
+- `rgen/metrics_collector.py` — RouterMetricsCollector class
+- `rgen/dashboard_ui.py` — DashboardUI class (TUI)
+- `tests/test_dashboard_ui.py` — TUI unit tests
+- `tests/test_metrics_collector.py` — metrics unit tests
+
+**Modified files**:
+- `core/router.py` — add `--dashboard` flag + main loop
+- `tests/test_cli.py` — integration test for dashboard
+
+### Dependencies
+
+```diff
++ rich >= 13.0  (for TUI rendering, safe + lightweight)
+```
+
+(Avoid curses → platform-specific complexity)
+
+---
+
+## Implementation Steps
+
+### Phase 1: Metrics Collector (Week 1, Day 1-2)
+
+**File**: `rgen/metrics_collector.py`
+
+```python
+class RouterMetricsCollector:
+    def __init__(self, router_instance, history_window=50):
+        self.router = router_instance
+        self.history = []  # last N queries
+        self.window = history_window
+
+    def confidence_trend(self) -> list[float]:
+        """Return confidence scores from last N queries."""
+
+    def scenario_usage(self) -> dict[str, int]:
+        """Usage count per scenario (last window)."""
+
+    def agent_overlap(self) -> dict[str, list[str]]:
+        """Agents that compete for same keywords."""
+
+    def dead_zones(self) -> list[str]:
+        """Recent queries with confidence < threshold."""
+
+    def refresh(self):
+        """Pull latest from interventions.db."""
+```
+
+**Tests**:
+- `test_confidence_trend_calculates_correctly()`
+- `test_agent_overlap_finds_competitors()`
+- `test_dead_zones_filters_low_confidence()`
+
+### Phase 2: TUI Component (Week 1, Day 3-4)
+
+**File**: `rgen/dashboard_ui.py`
+
+```python
+from rich.live import Live
+from rich.table import Table
+from rich.layout import Layout
+
+class DashboardUI:
+    def __init__(self, metrics_collector):
+        self.metrics = metrics_collector
+
+    def render(self) -> Layout:
+        """Build live display layout."""
+
+    def run(self):
+        """Main loop: Live + refresh loop."""
+```
+
+**Panels**:
+1. **Top (summary)**:
+   - Routing: 15 scenarios | 184 keywords | overlap: 2.7%
+   - Router status: [✅ OK] [⚠ Dead zones: 3]
+
+2. **Middle (heatmap)**:
+   ```
+   Scenario           Usage  Trend    Confidence
+   ─────────────────────────────────────────
+   query_optimization   12   ↑↑↑      0.87 ✓
+   config_validation     8   ↑        0.92 ✓
+   error_handling        5   ↓        0.61 ⚠
+   [unknown?]            3   -        0.15 ✗
+   ```
+
+3. **Bottom (controls)**:
+   - Last refresh: 2026-04-06 14:23:15
+   - Hotkeys: [r]efresh [e]xport [q]uit
+
+**Tests**:
+- `test_dashboard_renders_without_crash()`
+- `test_dashboard_handles_empty_history()`
+- `test_dashboard_keyboard_quit()`
+
+### Phase 3: Integration (Week 2, Day 1)
+
+**File**: `core/router.py` modifications
+
+```python
+@click.command()
+@click.option('--dashboard', is_flag=True, help='Launch metrics dashboard')
+def main(dashboard):
+    if dashboard:
+        from rgen.metrics_collector import RouterMetricsCollector
+        from rgen.dashboard_ui import DashboardUI
+
+        collector = RouterMetricsCollector(router_instance)
+        ui = DashboardUI(collector)
+        ui.run()
+```
+
+**Tests**:
+- CLI integration: `test_router_dashboard_flag()`
+
+### Phase 4: Tests & Docs (Week 2, Day 2-3)
+
+- Spike coverage > 85%
+- Update README with usage example
+- Add screenshot/demo link
+
+---
+
+## Testing Strategy
+
+### Unit Tests (`test_metrics_collector.py`)
+```python
+def test_confidence_trend_recent_window():
+    """Ensure trend reflects only last N queries."""
+
+def test_agent_overlap_symmetric():
+    """If A overlaps B, B overlaps A."""
+
+def test_dead_zones_threshold():
+    """Dead zones = confidence < 0.50 (configurable)."""
+```
+
+### Integration Tests (`test_cli.py`)
+```python
+def test_dashboard_non_tty_graceful():
+    """On non-TTY, fallback to --stats output."""
+
+def test_dashboard_refresh_loop_stability():
+    """Run 10 iterations, check no crashes."""
+```
+
+### Manual Testing
+- Run `python .github/router.py --dashboard`
+- Generate queries: `router --direct "test query"`
+- Verify metrics update in real-time
+- Check Ctrl+C exit clean
+
+---
+
+## Acceptance Checklist
+
+- [ ] `--dashboard` flag implemented and documented
+- [ ] RouterMetricsCollector class with 4 methods
+- [ ] DashboardUI renders without errors
+- [ ] Refresh interval < 500ms
+- [ ] Non-TTY fallback to text output
+- [ ] All tests pass (`pytest tests/test_dashboard*.py`)
+- [ ] Coverage > 85%
+- [ ] README updated with usage
+- [ ] Code review passed
+
+---
+
+## Risk & Mitigation
+
+| Risk | Mitigation |
+|------|------------|
+| Rich library adds bloat | Lock to single version, no sub-deps |
+| TTY detection platform-specific | Test on Linux/macOS/Windows |
+| Refresh loop consumes CPU | Add configurable refresh interval |
+| DB lock on interventions.db | Use read-only cursor, timeout on lock |
+
+---
+
+## Links & References
+
+- `.github/ROADMAP.md` — feature details
+- `core/router.py:154` — existing --stats implementation
+- `rgen/models.py:GenerationResult` — data structures
+- Test coverage baseline: `pytest --cov=rgen --cov-report=term-missing`
+
+---
+
+## Timeline
+
+| Phase | Days | Dev | Test |
+|-------|------|-----|------|
+| P1: Metrics | 2 | ✓ | ✓ |
+| P2: UI | 2 | ✓ | ✓ |
+| P3: Integration | 1 | ✓ | ✓ |
+| P4: Docs+Review | 1.5 | - | ✓ |
+| **Total** | **6.5** | | |
+
+**Slack**: ~1 week buffer built in
