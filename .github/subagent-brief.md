@@ -1,20 +1,23 @@
-# routing-generator — Subagent Brief
+# routing-generator -- Subagent Brief
 
-Tool Python che genera sistemi di routing AI da pattern esistenti.
+## Contesto
+- Stack: python, fastapi, flask, postgresql, postgres, redis, docker, pytest, sqlalchemy, alembic, pydantic, nginx
+- Domini: general
+- Routing: `.github/routing-map.json`
 
-## Stack
-- Python 3.12 | pathlib | dataclasses | json | subprocess | pytest
+## Agenti Disponibili
+- backend
+- devops
+- documentazione
+- orchestratore
 
-## Path
-| Path | Contenuto |
-|------|-----------|
-| `rgen/` | Package: cli, questionnaire, adapter, writer, backup, self_checker, models |
-| `knowledge_base/psm_stack/` | Pattern PSM Stack (routing-map, agents, templates) |
-| `core/` | File invarianti copiati nei progetti target |
-| `tests/` | pytest unit + integration |
+## Template di Incarico
+Obiettivo: <descrizione sintetica>
 
-## Vincoli
-1. Test verde prima di avanzare allo step successivo
-2. BackupEngine attivo prima di ogni scrittura su disco
-3. tmp_path nei test — mai filesystem reale
-4. Nessun {{VAR}} rimasto dopo template substitution
+Vincoli:
+- <vincolo 1>
+- <vincolo 2>
+
+Output richiesto:
+- <modifiche>
+- <test/verifiche>
