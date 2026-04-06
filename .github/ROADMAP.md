@@ -9,17 +9,15 @@
 | Phase | Feature | Status | PR |
 |-------|---------|--------|-----|
 | **Phase 1 (Week 1-2)** | Live Metrics Dashboard | ✅ Done | [#1](https://github.com/maironz/routing-generator/commits) |
-| **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | - |
-| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | 🟡 Next | - |
+| **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | [#5](https://github.com/maironz/routing-generator/commits) |
+| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | 🟡 Final Testing | - |
 | Phase 2+ (Week 6+) | Scenario Evolution, Multi-Language, others | ❌ Backlog | - |
 
 **Metrics**:
-- **156/156 tests passing** ✅
-- **30 tests** (metrics + dashboard + integration)
-- **17 tests** (weight calibrator + router integration)
-- **3-panel TUI dashboard** (`python .github/router.py --dashboard`)
-- **ML-calibrated routing** (`python .github/router.py --calibrate-weights`)
-- Ready for real-time routing monitoring + intelligent weight optimization
+- **187/187 tests passing** ✅ (up from 156)
+- **31 new tests** (GraphRouter unit + integration)
+- **Graph cascade routing** (`python .github/router.py --graph-mode "query"`)
+- Ready for multi-domain agent cooperation
 
 ---
 
