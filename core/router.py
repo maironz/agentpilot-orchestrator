@@ -500,6 +500,10 @@ def _build_subagent_prompt_prefix(agent: str, context: str) -> str:
 # ─── CLI ───
 
 def main():
+    # Force UTF-8 output (avoid cp1252 encoding issues on Windows)
+    if sys.stdout.encoding and sys.stdout.encoding.lower() not in ('utf-8', 'utf8'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')  # type: ignore
+
     args = sys.argv[1:]
 
     if not args:
