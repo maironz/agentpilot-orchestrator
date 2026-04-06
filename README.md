@@ -6,19 +6,19 @@
 | |_) | | | | | | | | |  | ||  \| | |  _
 |  _ <| |_| | |_| | | |  | || |\  | |_| |
 |_| \_\\___/ \___/  |_| |___|_| \_|\____|
-        _____ _____   _   _ _____ ____      _  _____ ___  ____
-       / ___| ____| | \ | | ____|  _ \    / \|_   _/ _ \|  _ \
+        ____ _____  _   _ _____ ____      _  _____ ___  ____
+       / ___| ____|| \ | | ____|  _ \    / \|_   _/ _ \|  _ \
       | |  _|  _|  |  \| |  _| | |_) |  / _ \ | || | | | |_) |
       | |_| | |___ | |\  | |___|  _ <  / ___ \| || |_| |  _ <
-       \____|_____|_|_| \_|_____|_| \_\/_/   \_\_| \___/|_| \_\
+       \____|_____||_| \_|_____|_| \_\/_/   \_\_| \___/|_| \_\
 ```
 
 **Genera automaticamente un sistema di routing AI semantico per qualsiasi progetto.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-109%2F109-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-156%2F156-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Stdlib only](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
+[![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
 </div>
@@ -65,7 +65,7 @@ Il tuo progetto              Routing system generato
 ```
                     ┌─────────────────────────────────────────┐
                     │              rgen --direct              │
-                    │    --pattern psm_stack --name my-app   │
+                    │    --pattern psm_stack --name my-app    │
                     └──────────────────┬──────────────────────┘
                                        │
                     ┌──────────────────▼──────────────────────┐
@@ -264,6 +264,61 @@ Trigger ammessi per passare alla ricerca repo-wide:
 - routing ambiguo
 - confidence sotto soglia
 - file instradati insufficienti o incoerenti con il repo reale
+
+---
+
+## Advanced Router Features
+
+### 🎯 Live Metrics Dashboard (P1.1 — DONE)
+
+Monitor routing health in real-time:
+
+```bash
+python .github/router.py --dashboard
+```
+
+**Output**: Interactive TUI with:
+- Confidence trend (average recent queries)
+- Scenario usage heatmap
+- Agent overlap detection
+- Dead zones (unmatched queries)
+- Controls: `[r]efresh | [e]xport | [q]uit`
+
+---
+
+### 🧠 ML-Calibrated Weights (P1.2 — DONE)
+
+Auto-calibrate routing weights from intervention history:
+
+```bash
+# Show calibrated weights with success rates
+python .github/router.py --calibrate-weights
+
+# Preview weights without persisting
+python .github/router.py --calibrate-weights --dry-run
+
+# Use calibration in routing query
+python .github/router.py --direct "query" --use-calibration
+```
+
+**Report output**:
+```
+SUCCESS RATES PER SCENARIO:
+  query_optimization        → 87.5%
+  config_validation         → 92.1%
+  error_handling            → 61.3%
+
+KEYWORD BOOSTS (top 15):
+  1. optimize               → +50% (boost: 1.5x)
+  2. performance            → +25% (boost: 1.25x)
+  3. index                  → +40% (boost: 1.4x)
+```
+
+**Features**:
+- Decay algorithm: recent interventions weighted higher
+- Dry-run mode to preview changes
+- Exports to `calibrated_weights.json`
+- Configurable minimum sample threshold
 
 ---
 
