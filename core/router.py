@@ -30,8 +30,10 @@ from interventions import InterventionStore
 try:
     sys.path.insert(0, str(Path(__file__).parent.parent))
     from rgen.weight_calibrator import RouterWeightCalibrator
+    from rgen.graph_router import GraphRouter
 except ImportError:
     RouterWeightCalibrator = None
+    GraphRouter = None
 
 ROUTING_MAP = Path(__file__).parent / "routing-map.json"
 SUBAGENT_BRIEF = Path(__file__).parent / "subagent-brief.md"
@@ -562,6 +564,7 @@ MODES:
   python .github/router.py --direct "query"     → Direct routing (skip planner)
   python .github/router.py --follow-up "query"  → Minimal context (same session)
   python .github/router.py --subagent "query"   → Compact brief for subagents
+  python .github/router.py --graph-mode "query" → Graph cascade routing (multi-agent)
 
 HEALTH & MONITORING:
   python .github/router.py --stats              → Health metrics (session start)
@@ -589,7 +592,7 @@ EXAMPLES:
 
     # Parse mode flag
     mode = None
-    if args[0] in ("--direct", "--follow-up", "--subagent", "--audit", "--stats", "--history", "--log-intervention", "--dashboard", "--calibrate-weights"):
+    if args[0] in ("--direct", "--follow-up", "--subagent", "--audit", "--stats", "--history", "--log-intervention", "--dashboard", "--calibrate-weights", "--graph-mode"):
         mode = args[0].lstrip("-").replace("-", "_")
         query = " ".join(args[1:]).strip() if len(args) > 1 else ""
     else:
@@ -790,6 +793,25 @@ EXAMPLES:
         result = route_follow_up(query)
     elif mode == "subagent":
         result = route_subagent(query)
+    elif mode == "graph_mode":
+        # Graph cascade routing
+        if not GraphRouter:
+            print("Graph routing requires GraphRouter (bundled with rgen)", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            routes = _load_routes()
+            graph_router = GraphRouter(routes, route_query_fn=route_query)
+            result = graph_router.route_with_graph(query)
+        except Exception as e:
+            result = {
+                "mode": "graph",
+                "error": str(e),
+                "primary": None,
+                "secondary": [],
+                "execution_plan": [],
+                "cascade_success": False,
+            }
     else:
         # Default: planner workflow
         result = handle_new_query(query)
