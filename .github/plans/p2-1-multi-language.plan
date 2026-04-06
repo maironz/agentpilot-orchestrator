@@ -1,0 +1,480 @@
+# P2.1 — Multi-Language Agent Templates
+**Phase**: p2.1 | **Semantic**: v0.4.0 | **Status**: 🟡 PLANNING
+
+---
+
+## Overview
+
+**Goal**: Agents generati con awareness linguistico. Risposte in IT/EN/ES/FR con vincoli styleguide culturali.
+
+**Example workflow**:
+```
+User project: "FastAPI backend + PostgreSQL"
+Project language setting: "it_IT"
+    ↓
+rgen generates agents
+    ↓
+esperto_backend.md → Italian style guide + Italian examples
+esperto_database.md → Italian terminology + Italian best practices
+    ↓
+Agent responses adopt tone/language of project
+```
+
+**Acceptance**:
+- Support 4 lingue minimo (IT, EN, ES, FR)
+- Fallback a EN se lingua manca
+- i18n structure nel knowledge_base
+- CLI flag `--language it|en|es|fr` (default: detect from metadata)
+- Test coverage > 85%
+
+---
+
+## Architecture
+
+```
+knowledge_base/
+├── psm_stack/
+│   ├── metadata.json          ← ADD: language: ["it", "en"]
+│   ├── i18n/
+│   │   ├── it/
+│   │   │   └── esperti/
+│   │   │       ├── esperto_backend.template.md
+│   │   │       ├── esperto_database.template.md
+│   │   │       └── ...
+│   │   ├── en/
+│   │   │   └── esperti/
+│   │   │       └── ...
+│   │   ├── es/
+│   │   └── fr/
+│   └── agents.json
+```
+
+**New module**: `rgen/language_detector.py`
+```python
+class LanguageDetector:
+    """Detect project language from metadata/README/comments."""
+
+    def detect_from_metadata(self, metadata: dict) -> str:
+        """Detect language from project metadata."""
+
+    def detect_from_readme(self, readme_path: str) -> str:
+        """Detect language from README content (heuristic)."""
+
+    def get_default_language(self) -> str:
+        """Return default fallback language (en)."""
+```
+
+**New module**: `rgen/template_localizer.py`
+```python
+class TemplateLocalizer:
+    """Localize templates to target language."""
+
+    def __init__(self, language: str):
+        self.language = language
+        self.fallback = "en"
+
+    def load_template(self, pattern: str, agent_role: str) -> str:
+        """
+        Load agent template in target language.
+
+        Falls back to EN if language variant missing.
+        """
+
+    def substitute_language_context(self, template: str, vars: dict) -> str:
+        """
+        Substitute language-aware variables.
+
+        {{LANGUAGE}} → "Italian"
+        {{TONE}} → "Professional"
+        {{EXAMPLES_LANG}} → Examples in target language
+        """
+```
+
+---
+
+## Implementation Phases
+
+### Phase 1: Language Detection (Day 1)
+
+**Files**: `rgen/language_detector.py` (80-120 lines)
+
+```python
+class LanguageDetector:
+    SUPPORTED_LANGS = ["it", "en", "es", "fr"]
+    DEFAULT_LANG = "en"
+
+    def detect_from_metadata(self, metadata: dict) -> str:
+        """
+        Extract language from metadata.json.
+
+        metadata = {
+            "language": "it",  ← Look here
+            "project_name": "...",
+            ...
+        }
+        """
+        lang = metadata.get("language", "").lower()
+        if lang in self.SUPPORTED_LANGS:
+            return lang
+        return self.DEFAULT_LANG
+
+    def detect_from_readme(self, readme_path: str) -> str:
+        """
+        Heuristic: scan README first lines for language patterns.
+
+        - "# " + Italian keywords → it
+        - "# " + Spanish keywords → es
+        - etc.
+        """
+        try:
+            with open(readme_path, "r", encoding="utf-8") as f:
+                content = f.read(500).lower()
+
+            # Italian markers
+            if any(kw in content for kw in ["progetto", "descrizione", "requisiti"]):
+                return "it"
+
+            # Spanish markers
+            if any(kw in content for kw in ["proyecto", "descripción", "requisitos"]):
+                return "es"
+
+            # French markers
+            if any(kw in content for kw in ["projet", "description", "exigences"]):
+                return "fr"
+
+            return "en"  # default
+        except Exception:
+            return "en"
+
+    def detect(self, metadata: dict, readme_path: str | None = None) -> str:
+        """
+        Detect language with priority: metadata > readme > default.
+        """
+        lang = self.detect_from_metadata(metadata)
+        if lang != self.DEFAULT_LANG:
+            return lang
+
+        if readme_path:
+            lang = self.detect_from_readme(readme_path)
+            if lang != self.DEFAULT_LANG:
+                return lang
+
+        return self.DEFAULT_LANG
+```
+
+**Tests**:
+- `test_detect_from_metadata_valid_language()`
+- `test_detect_from_metadata_invalid_language_fallback()`
+- `test_detect_from_readme_italian()`
+- `test_detect_from_readme_spanish()`
+- `test_detect_from_readme_french()`
+- `test_detect_fallback_to_default()`
+
+### Phase 2: Template Localization (Day 1-2)
+
+**Files**: `rgen/template_localizer.py` (150-200 lines)
+
+```python
+class TemplateLocalizer:
+    LANGUAGE_METADATA = {
+        "it": {
+            "name": "Italian",
+            "tone": "Professionale, formale",
+            "examples_prefix": "Esempi:",
+        },
+        "en": {
+            "name": "English",
+            "tone": "Professional, concise",
+            "examples_prefix": "Examples:",
+        },
+        "es": {
+            "name": "Spanish",
+            "tone": "Profesional, formal",
+            "examples_prefix": "Ejemplos:",
+        },
+        "fr": {
+            "name": "French",
+            "tone": "Professionnel, formel",
+            "examples_prefix": "Exemples:",
+        },
+    }
+
+    def __init__(self, language: str, fallback: str = "en"):
+        self.language = language if language in self.LANGUAGE_METADATA else fallback
+        self.fallback = fallback
+
+    def load_template(self, pattern: str, agent_role: str) -> str:
+        """
+        Load template in target language.
+
+        priority:
+        1. knowledge_base/<pattern>/i18n/<lang>/esperti/esperto_<role>.template.md
+        2. knowledge_base/<pattern>/i18n/en/esperti/esperto_<role>.template.md  (fallback)
+        """
+        from pathlib import Path
+
+        kb_root = Path("knowledge_base") / pattern / "i18n"
+
+        # Try target language
+        target_path = kb_root / self.language / "esperti" / f"esperto_{agent_role}.template.md"
+        if target_path.exists():
+            return target_path.read_text(encoding="utf-8")
+
+        # Fallback to English
+        fallback_path = kb_root / self.fallback / "esperti" / f"esperto_{agent_role}.template.md"
+        if fallback_path.exists():
+            return fallback_path.read_text(encoding="utf-8")
+
+        raise FileNotFoundError(
+            f"Template not found: {agent_role} for pattern {pattern} "
+            f"(tried: {self.language}, {self.fallback})"
+        )
+
+    def substitute_language_context(self, template: str, vars: dict) -> str:
+        """
+        Substitute language-specific variables in template.
+
+        {{LANGUAGE}} → "Italian"
+        {{TONE}} → "Professionale, formale"
+        {{EXAMPLES_PREFIX}} → "Esempi:"
+        """
+        metadata = self.LANGUAGE_METADATA[self.language]
+        localized_vars = {
+            **vars,
+            "LANGUAGE": metadata["name"],
+            "TONE": metadata["tone"],
+            "EXAMPLES_PREFIX": metadata["examples_prefix"],
+        }
+
+        result = template
+        for var, value in localized_vars.items():
+            result = result.replace(f"{{{{{var}}}}}", str(value))
+
+        return result
+```
+
+**Tests**:
+- `test_load_template_target_language()`
+- `test_load_template_fallback_to_english()`
+- `test_load_template_missing_raises_error()`
+- `test_substitute_language_context_italian()`
+- `test_substitute_language_context_english()`
+- `test_substitute_language_context_spanish()`
+- `test_language_metadata_complete()`
+
+### Phase 3: Integration with rgen CLI (Day 2-3)
+
+**Files**: Modify `rgen/cli.py` + `rgen/adapter.py`
+
+```python
+# rgen/cli.py
+@click.command()
+@click.option("--language", default=None, help="Target language: it|en|es|fr (auto-detect if not set)")
+def questionnaire(language):
+    """Interactive questionnaire with language detection."""
+    if not language:
+        # Auto-detect from user input or defaults to EN
+        detector = LanguageDetector()
+        language = detector.detect_from_metadata({})  # or from README
+
+    print(f"[✓] Language: {language.upper()}")
+    # Continue normal flow...
+```
+
+```python
+# rgen/adapter.py
+class Adapter:
+    def __init__(self, pattern: str, language: str = "en"):
+        self.localizer = TemplateLocalizer(language)
+        self.language = language
+
+    def adapt_agents(self, agents_json: dict) -> dict:
+        """
+        Load agent templates in target language.
+        """
+        adapted = {}
+        for agent_role, config in agents_json.items():
+            template = self.localizer.load_template(self.pattern, agent_role)
+            adapted[agent_role] = {
+                **config,
+                "template_content": template,
+                "language": self.language,
+            }
+        return adapted
+```
+
+**CLI enhancement**:
+```bash
+# Auto-detect language (from README or metadata)
+rgen --direct
+
+# Force specific language
+rgen --direct --language it
+rgen --direct --language es
+
+# Show detected language
+rgen --list-patterns --language en
+```
+
+**Tests**:
+- `test_cli_auto_detects_language()`
+- `test_cli_accepts_language_flag()`
+- `test_adapter_localizes_templates()`
+- `test_adapter_respects_language_parameter()`
+
+### Phase 4: Knowledge Base i18n Structure (Day 3)
+
+**Files**: Create knowledge_base i18n structure
+
+```
+knowledge_base/psm_stack/
+├── metadata.json (UPDATE: add "language": ["it", "en"])
+├── i18n/
+│   ├── it/
+│   │   ├── esperti/
+│   │   │   ├── esperto_backend.template.md      ← Italian
+│   │   │   ├── esperto_database.template.md
+│   │   │   ├── esperto_sistemista.template.md
+│   │   │   └── esperto_documentazione.template.md
+│   │   └── standard/
+│   │       ├── general-style.md                 ← Italian
+│   │       ├── python-style-guide.md
+│   │       └── ...
+│   ├── en/
+│   │   ├── esperti/
+│   │   └── standard/
+│   └── es/, fr/ (partial or future)
+└── agents.json
+```
+
+**Template content example**:
+
+`it/esperti/esperto_backend.template.md`:
+```markdown
+# Esperto Backend — {{PROJECT_NAME}}
+
+**Lingua**: {{LANGUAGE}}
+**Tono comunicazione**: {{TONE}}
+
+## Responsabilità
+- Gestire logica applicativa in {{TECH_STACK}}
+- Ottimizzare performance API
+- Validare input utente
+
+{{EXAMPLES_PREFIX}}
+\`\`\`python
+# Esempio italiano: query database
+query = select(...).where(...)
+\`\`\`
+```
+
+`en/esperti/esperto_backend.template.md`:
+```markdown
+# Backend Expert — {{PROJECT_NAME}}
+
+**Language**: {{LANGUAGE}}
+**Communication Style**: {{TONE}}
+
+## Responsibilities
+- Manage application logic in {{TECH_STACK}}
+- Optimize API performance
+- Validate user input
+
+{{EXAMPLES_PREFIX}}
+\`\`\`python
+# Example: database query
+query = select(...).where(...)
+\`\`\`
+```
+
+**Tests**:
+- `test_knowledge_base_has_i18n_structure()`
+- `test_all_agents_exist_in_fallback_en()`
+- `test_templates_substitute_language_placeholders()`
+
+### Phase 5: Tests & Docs (Day 3-4)
+
+**Test suite**: 25+ new tests
+
+```bash
+pytest tests/test_language_detector.py -v
+pytest tests/test_template_localizer.py -v
+pytest tests/test_cli_language_integration.py -v
+```
+
+**Docs**:
+- README.md: "Multi-Language Support" section
+- ROADMAP.md: P2.1 marked DONE
+- `.github/i18n-GUIDE.md` → How to add new language
+
+**Example test**:
+```python
+def test_end_to_end_italian_generation(tmp_path):
+    """Test full Italian agent generation."""
+    detector = LanguageDetector()
+    lang = detector.detect_from_metadata({"language": "it"})
+
+    assert lang == "it"
+
+    localizer = TemplateLocalizer(lang)
+    template = localizer.load_template("psm_stack", "backend")
+
+    assert "Esperto Backend" in template
+    assert "{{LANGUAGE}}" not in template  # Should be substituted
+```
+
+---
+
+## Success Criteria
+
+- ✅ LanguageDetector class integrated
+- ✅ TemplateLocalizer supports 4+ languages
+- ✅ CLI accepts `--language` flag
+- ✅ Knowledge base has i18n structure
+- ✅ 187 → 220+ tests passing
+- ✅ README.md: Multi-Language section
+- ✅ ROADMAP.md: P2.1 DONE
+- ✅ Template fallback works (missing lang → EN)
+
+---
+
+## File Checklist
+
+- [ ] `rgen/language_detector.py` — Language detection logic
+- [ ] `rgen/template_localizer.py` — Template localization
+- [ ] `tests/test_language_detector.py` — Unit tests
+- [ ] `tests/test_template_localizer.py` — Unit tests
+- [ ] `tests/test_cli_language_integration.py` — Integration tests
+- [ ] `.github/i18n-GUIDE.md` — Guide for adding languages
+- [ ] `knowledge_base/*/i18n/` — Restructure with language dirs
+- [ ] `README.md` — Multi-Language section
+- [ ] `ROADMAP.md` — P2.1 marked DONE
+
+---
+
+## Timeline
+
+```
+Day 1:   Phase 1 (Language detection)
+Day 1-2: Phase 2 (Template localization)
+Day 2-3: Phase 3 (CLI integration)
+Day 3:   Phase 4 (Knowledge base structure)
+Day 3-4: Phase 5 (Tests + docs)
+
+Expected delivery: 4-5 days
+```
+
+---
+
+## Dependencies
+
+- ✅ P1.1, P1.2, P1.3 (optional context)
+- ❌ Nothing blocking
+
+---
+
+## Next After P2.1
+
+1. **P2.2** — Scenario Evolution Generator
+2. **P2.3** — Historical Audit Trail + Rollback
+3. **Quick Wins** — Colored CLI, tab completion

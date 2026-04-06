@@ -187,6 +187,7 @@ def _cmd_restore(args: argparse.Namespace) -> int:
 def _cmd_direct(args: argparse.Namespace) -> int:
     """Non-interactive generation using CLI arguments."""
     from rgen.questionnaire import Questionnaire
+    from rgen.language_detector import LanguageDetector
 
     overrides: dict[str, str] = {"use_pattern": "y" if args.pattern else "n"}
     if args.pattern:
@@ -200,13 +201,21 @@ def _cmd_direct(args: argparse.Namespace) -> int:
     if args.domains:
         overrides["domain_keywords"] = args.domains
 
+    # Detect or use explicit language
+    language = args.language
+    if not language:
+        detector = LanguageDetector()
+        # Try to detect from target path if available
+        metadata = overrides if args.name else {}
+        language = detector.detect(metadata=metadata)
+
     kb = Path(args.kb or _DEFAULT_KB)
     core = Path(args.core or _DEFAULT_CORE)
 
     q = Questionnaire(kb)
     profile = q.run_with_defaults(overrides)
 
-    return _run_generation(profile, core, kb=kb, dry_run=args.dry_run)
+    return _run_generation(profile, core, kb=kb, dry_run=args.dry_run, language=language)
 
 
 def _cmd_interactive(args: argparse.Namespace) -> int:
@@ -215,6 +224,7 @@ def _cmd_interactive(args: argparse.Namespace) -> int:
 
     kb = Path(args.kb or _DEFAULT_KB)
     core = Path(args.core or _DEFAULT_CORE)
+    language = args.language or "en"  # Default to English if not specified
 
     q = Questionnaire(kb)
     profile = q.run()
@@ -223,28 +233,30 @@ def _cmd_interactive(args: argparse.Namespace) -> int:
     print(f"  Progetto: {profile.project_name}")
     print(f"  Pattern:  {profile.pattern_id or 'da zero'}")
     print(f"  Output:   {profile.target_path}")
+    print(f"  Lingua:   {language.upper()}")
 
     confirm = input("\nProcedere con la generazione? [Y/n]: ").strip().lower()
     if confirm in ("n", "no"):
         print("Annullato.")
         return 0
-    return _run_generation(profile, core, kb=kb, dry_run=False)
+    return _run_generation(profile, core, kb=kb, dry_run=False, language=language)
 
 
 # ---------------------------------------------------------------------------
 # Shared generation pipeline
 # ---------------------------------------------------------------------------
 
-def _run_generation(profile, core: Path, kb: Path = _DEFAULT_KB, dry_run: bool = False) -> int:
+def _run_generation(profile, core: Path, kb: Path = _DEFAULT_KB, dry_run: bool = False, language: str = "en") -> int:
     from rgen.adapter import Adapter
     from rgen.writer import Writer
     from rgen.self_checker import SelfChecker
 
-    adapter = Adapter(kb)
+    adapter = Adapter(kb, language=language)
     files = adapter.adapt(profile)
 
     if dry_run:
         print(f"\n[DRY-RUN] Verrebbero scritti {len(files)} file in: {profile.target_path}")
+        print(f"[DRY-RUN] Lingua: {language.upper()}")
         for path in sorted(files):
             size = len(files[path])
             print(f"  {path} ({size} byte)")
@@ -256,6 +268,7 @@ def _run_generation(profile, core: Path, kb: Path = _DEFAULT_KB, dry_run: bool =
     print(f"\nGenerazione completata:")
     print(f"  Scritti:  {len(result.files_written)} file")
     print(f"  Saltati:  {len(result.files_skipped)} file")
+    print(f"  Lingua:   {language.upper()}")
     if result.errors:
         for err in result.errors:
             print(f"  [ERRORE] {err}", file=sys.stderr)
@@ -296,6 +309,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pattern", help="Pattern ID (es: psm_stack)")
     parser.add_argument("--name", help="Nome del progetto")
     parser.add_argument("--target", help="Directory di output")
+    parser.add_argument("--language", help="Lingua agenti: it|en|es|fr (default: auto-detect)", choices=["it", "en", "es", "fr"])
     parser.add_argument("--flat", action="store_true", help="Per --update: copia i core files nella root del target (layout piatto, es. progetti legacy)")
     parser.add_argument("--timestamp", help="Timestamp backup per --restore")
     parser.add_argument("--tech", help="Tecnologie (virgola-separate) per --direct senza pattern")
