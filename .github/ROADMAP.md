@@ -1,6 +1,6 @@
 # ROADMAP — routing-generator
 
-**Brainstorm session 2026-04-06** | Last update: 2026-04-07 | **Phase 1 + P2.1 COMPLETE** ✅ | **P2.2 IN PROGRESS** 🟡
+**Brainstorm session 2026-04-06** | Last update: 2026-04-07 | **Phase 1 + P2.1 COMPLETE** ✅ | **P2.2-P2.7 COMPLETE** ✅
 
 ---
 
@@ -12,16 +12,17 @@
 | **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | [#5](https://github.com/maironz/routing-generator/commits) |
 | **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | ✅ Done | [#7](https://github.com/maironz/routing-generator/commits) |
 | **P2.1 (Week 6)** | Multi-Language Agent Templates | ✅ Done | [#8](https://github.com/maironz/routing-generator/commits) |
-| Phase 2+ (Week 7+) | Scenario Evolution, Audit Trail, others | 🟡 In progress | - |
+| **P2.2-P2.7 (Week 7+)** | Scenario Evolution Generator increments | ✅ Done | [#10](https://github.com/maironz/routing-generator/commits) to [#15](https://github.com/maironz/routing-generator/commits) |
+| Phase 2+ (next) | Audit Trail, Marketplace, Cost Estimator | 🟡 In progress | - |
 
 **Metrics**:
-- **208/208 tests passing** ✅ (up from 156 baseline)
-- **52 new tests** (31 GraphRouter + 21 LanguageDetection)
+- **223/223 tests passing** ✅
+- **Scenario suggestion workflow complete**: JSON output, text preview, confidence/history filters, matched/unmatched analysis
 - **3-panel TUI dashboard** (`python .github/router.py --dashboard`)
 - **ML-calibrated routing** (`python .github/router.py --calibrate-weights`)
 - **Graph cascade routing** (`python .github/router.py --graph-mode "query"`)
 - **Multi-language support** (`rgen --language it|en|es|fr`)
-- Ready for Phase 2 scenario evolution + audit features
+- Ready for next Phase 2 item: audit trail + rollback
 
 ---
 
@@ -32,8 +33,8 @@
 | 1 | Live Router Metrics Dashboard | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐ | orchestratore | ✅ Done |
 | 2 | ML Feedback Loop (auto-calibrate weights) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | developer | ✅ Done |
 | 5 | Cross-Agent Context Bridge (graph routing) | 🔴 P1 | 🟢 High | ⭐⭐⭐⭐⭐ | orchestratore | ✅ Done |
-| 3 | Multi-Language Agent Templates | 🟠 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
-| 4 | Scenario Evolution Generator | 🟠 P2 | 🟢 High | ⭐⭐⭐ | orchestratore | 🟡 In progress |
+| 3 | Multi-Language Agent Templates | 🟠 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ✅ Done |
+| 4 | Scenario Evolution Generator | 🟠 P2 | 🟢 High | ⭐⭐⭐ | orchestratore | ✅ Done |
 | 6 | Pattern Marketplace / GitHub Discovery | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ❌ Backlog |
 | 7 | Historical Audit Trail + Rollback | 🟡 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
 | 8 | Cost Estimator (token budget per scenario) | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ❌ Backlog |
@@ -190,20 +191,35 @@ French (fr)       → Ton: Professionnel, formel
 
 ---
 
-### 🟠 P2.2 — Scenario Evolution Generator
+### 🟠 P2.2 — Scenario Evolution Generator ✅ COMPLETE
 **Owner**: orchestratore | **Effort**: ⭐⭐⭐ | **Impact**: High
+**Plan**: [`.github/plans/p2-2-scenario-evolution.plan`](./plans/p2-2-scenario-evolution.plan)
 
-**Goal**: Auto-detect pattern simili → suggerisci nuovo scenario
-- Analizza `interventions.db` (history)
-- Cluster query simili non categorizzate
-- Output: "Scenario candidato: `optimization_performance`, 7 query simili"
-- Exit: CLI tool `rgen --suggest-scenarios`
+**Completed across PR #10-#15**:
+- ✅ `rgen --suggest-scenarios` con clustering semantico leggero su `interventions.db`
+- ✅ soglia minima cluster configurabile (`--min-cluster-size`)
+- ✅ soglia similarita configurabile (`--similarity-threshold`)
+- ✅ filtro confidence (`--min-confidence`)
+- ✅ analisi limitata agli ultimi N interventi (`--history-limit`)
+- ✅ supporto include matched (`--include-matched`)
+- ✅ export JSON su file (`--suggest-output`)
+- ✅ preview leggibile a terminale (`--suggest-format text`)
+- ✅ test unitari e integrazione dedicati
+
+**Current usage**:
+```bash
+rgen --suggest-scenarios --target ./my-app
+rgen --suggest-scenarios --target ./my-app --min-confidence 0.7 --history-limit 50
+rgen --suggest-scenarios --target ./my-app --suggest-format text
+rgen --suggest-scenarios --target ./my-app --suggest-output artifacts/scenarios.json
+```
 
 **Acceptance**:
-- [ ] Clustering algorithm (cosine similarity)
-- [ ] Threshold di confidence configurabile
-- [ ] JSON output candidati
-- [ ] Test su dataset storico reale
+- [x] Clustering algorithm implemented
+- [x] Threshold di confidence configurabile
+- [x] JSON output candidati
+- [x] Preview text su stdout
+- [x] Test coverage aggiornata e suite green
 
 ---
 
@@ -226,6 +242,7 @@ French (fr)       → Ton: Professionnel, formel
 
 ### 🟡 P2.3 — Historical Audit Trail + Rollback
 **Owner**: developer | **Effort**: ⭐⭐⭐ | **Impact**: Mid
+**Plan**: [`.github/plans/p2-3-historical-audit-trail.plan`](./plans/p2-3-historical-audit-trail.plan)
 
 **Goal**: Timeline di tutte generazioni, rollback selettivo
 - Extend `.rgen-backups/` con metadata
@@ -243,6 +260,7 @@ French (fr)       → Ton: Professionnel, formel
 
 ### 🟡 P3.1 — Pattern Marketplace
 **Owner**: developer | **Effort**: ⭐⭐ | **Impact**: Mid
+**Plan**: [`.github/plans/p3-1-pattern-marketplace.plan`](./plans/p3-1-pattern-marketplace.plan)
 
 **Goal**: Condividere custom pattern tra team
 - Hub simple GitHub: `patterns/` registry o org
@@ -260,6 +278,7 @@ French (fr)       → Ton: Professionnel, formel
 
 ### 🟡 P3.2 — Cost Estimator
 **Owner**: developer | **Effort**: ⭐⭐ | **Impact**: Mid
+**Plan**: [`.github/plans/p3-2-cost-estimator.plan`](./plans/p3-2-cost-estimator.plan)
 
 **Goal**: Stimare token/scenario + alert su inefficienza
 - Model token estimator (GPT-4o pricing, Claude pricing, ...)
@@ -276,6 +295,7 @@ French (fr)       → Ton: Professionnel, formel
 
 ### 🔵 P4.1 — IDE Extensions (VS Code)
 **Owner**: external | **Effort**: ⭐⭐⭐⭐ | **Impact**: Low
+**Plan**: [`.github/plans/p4-1-ide-extensions.plan`](./plans/p4-1-ide-extensions.plan)
 
 **Goal**: Extension che mostra agent competente durante editing
 - Hover su task → preview agent + confidence
@@ -291,6 +311,7 @@ French (fr)       → Ton: Professionnel, formel
 
 ### 🔵 P4.2 — Stochastic Testing Mode
 **Owner**: tester | **Effort**: ⭐⭐⭐ | **Impact**: Low
+**Plan**: [`.github/plans/p4-2-stochastic-testing.plan`](./plans/p4-2-stochastic-testing.plan)
 
 **Goal**: Fuzz router su parameter variations
 - Variano keyword weights, thresholds, query lengths
@@ -307,24 +328,28 @@ French (fr)       → Ton: Professionnel, formel
 ## Quick Wins (No priority, do anytime)
 
 ### CLI Color Output
+**Plan**: [`.github/plans/quick-win-cli-color-output.plan`](./plans/quick-win-cli-color-output.plan)
 ```bash
 rgen --direct ... --color auto|always|never  # default: auto
 # Exit: colored output ✅❌⚠️ emojis
 ```
 
 ### Tab Completion
+**Plan**: [`.github/plans/quick-win-tab-completion.plan`](./plans/quick-win-tab-completion.plan)
 ```bash
 rgen --enable-completion bash  # generar .completions/rgen.bash
 source <(rgen --enable-completion bash)
 ```
 
 ### JSON Schema
+**Plan**: [`.github/plans/quick-win-routing-schema.plan`](./plans/quick-win-routing-schema.plan)
 ```
 .github/schema/routing-map.schema.json  # per IDE autocomplete
 .vscode/settings.json: associate
 ```
 
 ### Dry-run Preview
+**Plan**: [`.github/plans/quick-win-dry-run-preview.plan`](./plans/quick-win-dry-run-preview.plan)
 ```bash
 rgen --dry-run ... --show-files  # mostra file che verrebbero scritti
 # Ex: "+ .github/router.py", "~ .github/routing-map.json"

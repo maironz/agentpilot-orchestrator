@@ -2,7 +2,9 @@
 
 **Feature**: `.github/ROADMAP.md` line 7
 **Priority**: 🔴 P1 | **Effort**: ⭐⭐⭐⭐
-**Owner**: orchestratore | **Status**: ❌ Backlog
+**Owner**: orchestratore | **Status**: ✅ Complete
+
+Historical note: implemented and merged in Phase 1. Keep this file as feature record; do not use it as the current source of backlog truth.
 
 ---
 

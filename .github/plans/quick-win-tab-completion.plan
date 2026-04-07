@@ -1,0 +1,30 @@
+# Quick Win — Tab Completion
+**Track**: quick-win | **Status**: 🟡 PLANNING
+
+---
+
+## Goal
+
+Fornire script di completion per shell comuni a partire dal parser CLI corrente.
+
+Primary exit:
+- `rgen --enable-completion bash|zsh|powershell`
+
+---
+
+## Deliverables
+
+- generazione script completion
+- istruzioni installazione locale
+- test basici sul contenuto generato
+
+---
+
+## Technical Evaluation
+
+- Fattibilita complessiva: medio-alta
+- Il parser argparse attuale rende il completamento generabile, ma PowerShell richiede un po' piu' attenzione di bash/zsh
+- A costo zero e' fattibile, specialmente se il primo step copre bash e PowerShell con output statico o template semplice
+- Tempo stimato MVP: 1-2 giorni
+- Rischio principale: manutenzione del completion script quando il parser evolve
+- Priorita pratica: media, utile ma non urgente

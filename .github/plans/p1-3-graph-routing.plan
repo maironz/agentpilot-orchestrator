@@ -1,5 +1,7 @@
 # P1.3 — Cross-Agent Context Bridge (Graph Routing)
-**Phase**: p1.3 | **Semantic**: v0.3.0 | **Status**: 🟡 PLANNING
+**Phase**: p1.3 | **Semantic**: v0.3.0 | **Status**: ✅ COMPLETE
+
+Historical note: implemented and merged via PR #7. Keep this file as delivered-plan documentation.
 
 ---
 

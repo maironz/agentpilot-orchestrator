@@ -1,0 +1,48 @@
+# P2.7 — Scenario Suggestion Text Preview
+**Phase**: p2.7 | **Semantic**: v0.5.5 | **Status**: ✅ COMPLETE
+
+**Related merge**: PR #15 | Commit on master: `52584e1`
+**Depends on**: [p2-6-history-limit.plan](./p2-6-history-limit.plan)
+
+---
+
+## Overview
+
+Goal: aggiungere una preview leggibile a terminale per i suggerimenti scenario, senza rompere il formato JSON di default e senza perdere l'export file.
+
+---
+
+## Delivered
+
+- opzione CLI `--suggest-format text|json`
+- renderer testuale per stdout con scenario, confidence, size e keyword principali
+- comportamento invariato del default `json`
+- compatibilita con `--suggest-output` JSON su file anche in modalita text
+- allineamento ambiente dev con `rich>=13.0`
+- fix decoding UTF-8 nei test dashboard su Windows
+
+---
+
+## Usage
+
+```bash
+rgen --suggest-scenarios --target ./my-app --suggest-format text
+rgen --suggest-scenarios --target ./my-app --suggest-format text --suggest-output artifacts/scenarios.json
+```
+
+---
+
+## Files
+
+- `rgen/cli.py` — parser `--suggest-format` e renderer preview
+- `tests/test_scenario_clusterer_integration.py` — coverage preview testuale
+- `requirements-dev.txt` — dipendenza dev `rich>=13.0`
+- `tests/test_router_dashboard_integration.py` — fix subprocess UTF-8 su Windows
+- `README.md` — badge test e documentazione aggiornata
+
+---
+
+## Validation
+
+- merged on `master` via PR #15
+- suite verificata localmente a `223` test passati

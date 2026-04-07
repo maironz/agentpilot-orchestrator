@@ -179,7 +179,7 @@ Overall: OK (8/8 checks passed)
 
 ---
 
-### 5. Scenario Evolution (P2.x in progress)
+### 5. Scenario Evolution (P2.2-P2.7 complete)
 
 Puoi ottenere candidati scenario dai log storici in `.github/interventions.db`:
 
@@ -504,9 +504,9 @@ Puoi anche rinominare gli agenti via `RENAME_<AGENT>` nei `template_vars`.
 ## Sviluppo e test
 
 ```bash
-pytest                                         # tutti i test (109/109)
+pytest                                         # tutti i test (223/223)
 pytest --cov=rgen --cov-report=term-missing   # con coverage
-pytest tests/test_cli.py -v                   # integration test
+pytest tests/test_cli.py -v                   # test mirati sulla CLI
 ```
 
 ### Struttura del progetto
@@ -549,6 +549,35 @@ python .github/mcp_server.py
 5 tools disponibili: `route_query`, `search_history`, `log_intervention`, `get_stats`, `audit_coverage`.
 
 `route_query` restituisce anche la policy `repo_exploration`, utile per decidere se restare nei file instradati o aprire la ricerca all'intero repository.
+
+---
+
+## Futuri sviluppi
+
+Lo stato del backlog e' ora allineato tra `README`, `ROADMAP` e file in `.github/plans/`.
+
+### Miglior rapporto valore / tempo / costo zero
+
+- **Dry-run file preview** — mostra i file che verrebbero creati o aggiornati prima della scrittura effettiva
+- **Routing-map JSON Schema** — autocomplete e validazione editor con sforzo minimo
+- **CLI color output** — migliora leggibilita' e feedback operativo senza cambiare il core
+
+Questi tre interventi sono i candidati piu' semplici da implementare senza servizi esterni e con tempi stimati inferiori a 1-2 giorni ciascuno.
+
+### Prossime feature core realistiche a costo zero
+
+- **Historical Audit Trail + Rollback** — timeline delle generazioni, diff e rollback selettivo
+- **Cost Estimator** — stima euristica del costo per scenario usando history locale e pricing table versionata
+- **Stochastic Testing Mode** — harness di robustezza per stressare il router con input sintetici riproducibili
+
+Queste feature restano compatibili con un approccio `costo zero` se implementate solo con storage locale, fixture di test e file versionati nel repository.
+
+### Iniziative da trattare come medio termine
+
+- **Pattern Marketplace** — utile solo se emerge un bisogno reale di condividere pattern tra team o repository
+- **IDE Extension per VS Code** — fattibile, ma introduce un secondo stack e ha un costo-tempo sensibilmente superiore al lavoro sul core CLI
+
+Per il dettaglio tecnico di tempi, fattibilita' e priorita', vedi i plan in `.github/plans/` e la matrice aggiornata in `.github/ROADMAP.md`.
 
 ---
 

@@ -1,0 +1,31 @@
+# Quick Win — Routing Map JSON Schema
+**Track**: quick-win | **Status**: 🟡 PLANNING
+
+---
+
+## Goal
+
+Pubblicare uno schema JSON per `routing-map.json` e facilitare autocomplete e validazione in editor.
+
+Primary outcomes:
+- `.github/schema/routing-map.schema.json`
+- associazione editor documentata
+
+---
+
+## Deliverables
+
+- schema JSON iniziale
+- validazione dei campi core
+- documentazione VS Code association
+
+---
+
+## Technical Evaluation
+
+- Fattibilita complessiva: alta
+- Il formato `routing-map.json` e' gia abbastanza esplicito da poter essere descritto con uno schema incrementale
+- A costo zero e' pienamente fattibile
+- Tempo stimato MVP: 0.5-1 giorno
+- Rischio principale: schema troppo rigido rispetto all'evoluzione futura del formato
+- Priorita pratica: molto buona, perche' migliora editor support e validazione con poco sforzo
