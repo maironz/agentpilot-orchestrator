@@ -44,10 +44,16 @@ def _seed_interventions_db(target: Path) -> None:
 
 def test_suggest_scenarios_cli_flag_recognized() -> None:
     parser = _build_parser()
-    args = parser.parse_args(["--suggest-scenarios", "--min-cluster-size", "4", "--similarity-threshold", "0.2"])
+    args = parser.parse_args([
+        "--suggest-scenarios",
+        "--min-cluster-size", "4",
+        "--similarity-threshold", "0.2",
+        "--min-confidence", "0.6",
+    ])
     assert args.suggest_scenarios is True
     assert args.min_cluster_size == 4
     assert abs(args.similarity_threshold - 0.2) < 1e-9
+    assert abs(args.min_confidence - 0.6) < 1e-9
 
 
 def test_cli_suggest_scenarios_returns_json(tmp_path: Path, capsys) -> None:
@@ -93,3 +99,16 @@ def test_cli_suggest_scenarios_writes_output_file(tmp_path: Path, capsys) -> Non
     file_payload = json.loads(output_file.read_text(encoding="utf-8"))
     assert file_payload == stdout_payload
     assert len(file_payload) >= 1
+
+
+def test_cli_suggest_scenarios_honors_min_confidence(tmp_path: Path, capsys) -> None:
+    _seed_interventions_db(tmp_path)
+    ret = main([
+        "--suggest-scenarios",
+        "--target", str(tmp_path),
+        "--min-confidence", "0.95",
+    ])
+    assert ret == 0
+    out = capsys.readouterr().out
+    data = json.loads(out)
+    assert data == []

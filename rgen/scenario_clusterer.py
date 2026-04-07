@@ -32,10 +32,17 @@ _TOKEN_NORMALIZATION = {
 class ScenarioClusterer:
     """Detects similar query clusters and suggests new scenarios."""
 
-    def __init__(self, store: Any, min_cluster_size: int = 3, similarity_threshold: float = 0.35):
+    def __init__(
+        self,
+        store: Any,
+        min_cluster_size: int = 3,
+        similarity_threshold: float = 0.35,
+        min_confidence: float = 0.0,
+    ):
         self.store = store
         self.min_cluster_size = min_cluster_size
         self.similarity_threshold = similarity_threshold
+        self.min_confidence = min_confidence
 
     def load_interventions(self, limit: int = 100) -> list[dict]:
         """Load recent interventions from store."""
@@ -100,6 +107,8 @@ class ScenarioClusterer:
 
             scenario_name = "_".join(keywords[:3])
             confidence = self._cluster_confidence(cluster_queries)
+            if confidence < self.min_confidence:
+                continue
             suggestions.append(
                 {
                     "cluster_id": cluster_id,
