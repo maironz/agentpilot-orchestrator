@@ -174,6 +174,32 @@ Overall: OK (8/8 checks passed)
 
 ---
 
+### 5. Scenario Evolution (P2.2 in progress)
+
+Puoi ottenere candidati scenario dai log storici in `.github/interventions.db`:
+
+```bash
+rgen --suggest-scenarios --target ./my-app
+```
+
+Output: JSON con cluster di query simili, keywords estratte, scenario suggerito e confidence.
+
+Esempio (estratto):
+
+```json
+[
+  {
+    "cluster_id": 0,
+    "suggested_scenario": "database_query_performance",
+    "confidence": 0.81,
+    "size": 7,
+    "keywords": ["database", "query", "performance"]
+  }
+]
+```
+
+---
+
 ## Standard di programmazione generati
 
 Ogni progetto generato include una cartella `.github/standard/` con:

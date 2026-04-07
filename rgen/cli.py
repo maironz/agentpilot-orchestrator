@@ -31,6 +31,8 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_list_patterns(args)
         if args.check:
             return _cmd_check(args)
+        if args.suggest_scenarios:
+            return _cmd_suggest_scenarios(args)
         if args.restore:
             return _cmd_restore(args)
         if args.update:
@@ -91,6 +93,30 @@ def _cmd_check(args: argparse.Namespace) -> int:
     overall = "OK" if report.overall else "FAILED"
     print(f"\nRisultato: {overall} — {len(report.passed)} pass, {len(report.warnings)} warn, {len(report.errors)} errori")
     return 0 if report.overall else 1
+
+
+def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
+    """Suggests candidate scenarios from intervention history."""
+    import json
+
+    from rgen.interventions import InterventionStore
+    from rgen.scenario_clusterer import ScenarioClusterer
+
+    target = Path(args.target or ".")
+    db_path = target / ".github" / "interventions.db"
+    store = InterventionStore(db_path=db_path)
+    try:
+        clusterer = ScenarioClusterer(
+            store,
+            min_cluster_size=args.min_cluster_size,
+            similarity_threshold=args.similarity_threshold,
+        )
+        suggestions = clusterer.suggest_scenarios(limit=200)
+    finally:
+        store.close()
+
+    print(json.dumps(suggestions, indent=2, ensure_ascii=False))
+    return 0
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
@@ -302,6 +328,7 @@ def _build_parser() -> argparse.ArgumentParser:
     mode.add_argument("--direct", action="store_true", help="Generazione non interattiva")
     mode.add_argument("--dry-run", dest="dry_run", action="store_true", help="Mostra cosa verrebbe generato senza scrivere")
     mode.add_argument("--check", action="store_true", help="Esegui self-check su progetto esistente")
+    mode.add_argument("--suggest-scenarios", dest="suggest_scenarios", action="store_true", help="Suggerisci nuovi scenari da interventions.db")
     mode.add_argument("--restore", action="store_true", help="Ripristina da backup")
     mode.add_argument("--update", action="store_true", help="Aggiorna i core files in un progetto esistente (senza rigenerare)")
     mode.add_argument("--list-patterns", dest="list_patterns", action="store_true", help="Mostra pattern disponibili")
@@ -314,6 +341,8 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--timestamp", help="Timestamp backup per --restore")
     parser.add_argument("--tech", help="Tecnologie (virgola-separate) per --direct senza pattern")
     parser.add_argument("--domains", help="Domini (virgola-separati) per --direct senza pattern")
+    parser.add_argument("--min-cluster-size", type=int, default=3, help="Per --suggest-scenarios: dimensione minima cluster (default: 3)")
+    parser.add_argument("--similarity-threshold", type=float, default=0.35, help="Per --suggest-scenarios: soglia similarita 0..1 (default: 0.35)")
     parser.add_argument("--kb", help=f"Directory knowledge_base (default: {_DEFAULT_KB})")
     parser.add_argument("--core", help=f"Directory core files (default: {_DEFAULT_CORE})")
     return parser
