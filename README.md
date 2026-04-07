@@ -18,13 +18,18 @@
 **Genera automaticamente un sistema di routing AI semantico per qualsiasi progetto.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-187%2F187-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-223%2F223-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
 </div>
 </div>
+
+Test inventory verificato al 2026-04-07:
+- `223/223` test passano nella suite completa
+- raccolta completa `pytest --collect-only -q` ripristinata correttamente
+- nessun warning residuo nella suite completa dopo fix dipendenza `rich` e decoding UTF-8 nei test dashboard
 
 ---
 
@@ -109,7 +114,7 @@ python -m venv .venv
 # source .venv/bin/activate     # macOS/Linux
 
 pip install -e .
-pip install -r requirements-dev.txt   # solo per i test
+pip install -r requirements-dev.txt   # dipendenze di test + supporto dashboard Rich
 ```
 
 ---
@@ -191,6 +196,9 @@ rgen --suggest-scenarios --target ./my-app --min-cluster-size 4 --min-confidence
 # Limita l'analisi agli ultimi 50 interventi
 rgen --suggest-scenarios --target ./my-app --history-limit 50
 
+# Preview leggibile per terminale
+rgen --suggest-scenarios --target ./my-app --suggest-format text
+
 # Analizza tutta la history, non solo gli unmatched
 rgen --suggest-scenarios --target ./my-app --include-matched
 ```
@@ -203,6 +211,7 @@ Opzioni principali:
 - `--similarity-threshold` per rendere il clustering piu' o meno aggressivo
 - `--min-confidence` per escludere suggerimenti poco affidabili
 - `--history-limit` per controllare quanti interventi recenti vengono analizzati
+- `--suggest-format text` per una preview leggibile a terminale
 - `--suggest-output` per esportare il JSON su file oltre a stamparlo su stdout
 - `--include-matched` per includere anche interventi gia' categorizzati
 
@@ -522,7 +531,7 @@ routing-generator/
 │   ├── router_planner.py   <- integrazione planner
 │   ├── interventions.py    <- memoria SQLite+FTS5
 │   └── mcp_server.py       <- MCP server 5 tools
-└── tests/                  <- 91 test, tutti con tmp_path
+└── tests/                  <- 223 test definiti nel repo
 ```
 
 ---

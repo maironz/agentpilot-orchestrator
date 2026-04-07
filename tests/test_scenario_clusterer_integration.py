@@ -50,6 +50,7 @@ def test_suggest_scenarios_cli_flag_recognized() -> None:
         "--similarity-threshold", "0.2",
         "--min-confidence", "0.6",
         "--history-limit", "50",
+        "--suggest-format", "text",
         "--include-matched",
     ])
     assert args.suggest_scenarios is True
@@ -57,6 +58,7 @@ def test_suggest_scenarios_cli_flag_recognized() -> None:
     assert abs(args.similarity_threshold - 0.2) < 1e-9
     assert abs(args.min_confidence - 0.6) < 1e-9
     assert args.history_limit == 50
+    assert args.suggest_format == "text"
     assert args.include_matched is True
 
 
@@ -165,3 +167,35 @@ def test_cli_suggest_scenarios_honors_history_limit(tmp_path: Path, capsys) -> N
     data = json.loads(out)
     assert len(data) == 1
     assert data[0]["size"] == 3
+
+
+def test_cli_suggest_scenarios_supports_text_preview(tmp_path: Path, capsys) -> None:
+    _seed_interventions_db(tmp_path)
+    ret = main([
+        "--suggest-scenarios",
+        "--target", str(tmp_path),
+        "--suggest-format", "text",
+    ])
+    assert ret == 0
+    out = capsys.readouterr().out
+    assert "Suggested scenarios:" in out
+    assert "confidence:" in out
+    assert "database" in out.lower()
+
+
+def test_cli_suggest_scenarios_text_preview_keeps_json_file_output(tmp_path: Path, capsys) -> None:
+    _seed_interventions_db(tmp_path)
+    output_file = tmp_path / "artifacts" / "scenario-suggestions.json"
+    ret = main([
+        "--suggest-scenarios",
+        "--target", str(tmp_path),
+        "--suggest-format", "text",
+        "--suggest-output", str(output_file),
+    ])
+    assert ret == 0
+    out = capsys.readouterr().out
+    assert out.startswith("Suggested scenarios:")
+
+    file_payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert isinstance(file_payload, list)
+    assert len(file_payload) >= 1

@@ -125,8 +125,25 @@ def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(payload + "\n", encoding="utf-8")
 
-    print(payload)
+    if args.suggest_format == "text":
+        print(_render_scenario_suggestions_text(suggestions))
+    else:
+        print(payload)
     return 0
+
+
+def _render_scenario_suggestions_text(suggestions: list[dict]) -> str:
+    """Render human-friendly preview for scenario suggestions."""
+    if not suggestions:
+        return "No scenario suggestions found."
+
+    lines = [f"Suggested scenarios: {len(suggestions)}"]
+    for idx, suggestion in enumerate(suggestions, 1):
+        lines.append(f"{idx}. {suggestion['suggested_scenario']}")
+        lines.append(f"   confidence: {suggestion['confidence']:.0%}")
+        lines.append(f"   size: {suggestion['size']} queries")
+        lines.append(f"   keywords: {', '.join(suggestion['keywords'][:5])}")
+    return "\n".join(lines)
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
@@ -356,6 +373,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--min-confidence", type=float, default=0.0, help="Per --suggest-scenarios: confidence minima del cluster 0..1")
     parser.add_argument("--history-limit", type=int, default=200, help="Per --suggest-scenarios: numero massimo di interventi da analizzare")
     parser.add_argument("--include-matched", action="store_true", help="Per --suggest-scenarios: include anche interventi gia categorizzati")
+    parser.add_argument("--suggest-format", choices=["json", "text"], default="json", help="Per --suggest-scenarios: formato output stdout")
     parser.add_argument("--suggest-output", help="Per --suggest-scenarios: salva JSON anche su file")
     parser.add_argument("--kb", help=f"Directory knowledge_base (default: {_DEFAULT_KB})")
     parser.add_argument("--core", help=f"Directory core files (default: {_DEFAULT_CORE})")

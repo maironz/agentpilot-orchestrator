@@ -44,6 +44,8 @@ def test_router_dashboard_version_check():
         [sys.executable, str(router_path), "--dashboard"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         timeout=2,
         input="q\n",  # Send quit immediately to avoid hanging
     )
