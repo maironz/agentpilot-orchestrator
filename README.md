@@ -174,15 +174,33 @@ Overall: OK (8/8 checks passed)
 
 ---
 
-### 5. Scenario Evolution (P2.2 in progress)
+### 5. Scenario Evolution (P2.x in progress)
 
 Puoi ottenere candidati scenario dai log storici in `.github/interventions.db`:
 
 ```bash
+# Analisi standard: usa prima i fallback / unmatched
 rgen --suggest-scenarios --target ./my-app
+
+# Salva anche il payload JSON su file
+rgen --suggest-scenarios --target ./my-app --suggest-output ./artifacts/scenario-suggestions.json
+
+# Filtra cluster deboli o troppo piccoli
+rgen --suggest-scenarios --target ./my-app --min-cluster-size 4 --min-confidence 0.65
+
+# Analizza tutta la history, non solo gli unmatched
+rgen --suggest-scenarios --target ./my-app --include-matched
 ```
 
 Output: JSON con cluster di query simili, keywords estratte, scenario suggerito e confidence.
+
+Opzioni principali:
+
+- `--min-cluster-size` per ignorare gruppi troppo piccoli
+- `--similarity-threshold` per rendere il clustering piu' o meno aggressivo
+- `--min-confidence` per escludere suggerimenti poco affidabili
+- `--suggest-output` per esportare il JSON su file oltre a stamparlo su stdout
+- `--include-matched` per includere anche interventi gia' categorizzati
 
 Esempio (estratto):
 

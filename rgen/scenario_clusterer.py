@@ -81,17 +81,20 @@ class ScenarioClusterer:
 
         return {i: c["queries"] for i, c in enumerate(clusters)}
 
-    def suggest_scenarios(self, limit: int = 100) -> list[dict]:
+    def suggest_scenarios(self, limit: int = 100, unmatched_only: bool = True) -> list[dict]:
         """Returns candidate scenarios derived from unmatched clusters."""
         interventions = self.load_interventions(limit=limit)
         if not interventions:
             return []
 
-        unmatched_queries = [
-            i["query"] for i in interventions
-            if self._is_unmatched_scenario(str(i.get("scenario", "")))
-        ]
-        queries = unmatched_queries if unmatched_queries else [i["query"] for i in interventions]
+        if unmatched_only:
+            unmatched_queries = [
+                i["query"] for i in interventions
+                if self._is_unmatched_scenario(str(i.get("scenario", "")))
+            ]
+            queries = unmatched_queries if unmatched_queries else [i["query"] for i in interventions]
+        else:
+            queries = [i["query"] for i in interventions]
 
         clustered = self.cluster_queries(queries)
         suggestions: list[dict] = []

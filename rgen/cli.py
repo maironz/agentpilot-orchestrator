@@ -112,7 +112,10 @@ def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
             similarity_threshold=args.similarity_threshold,
             min_confidence=args.min_confidence,
         )
-        suggestions = clusterer.suggest_scenarios(limit=200)
+        suggestions = clusterer.suggest_scenarios(
+            limit=200,
+            unmatched_only=not args.include_matched,
+        )
     finally:
         store.close()
 
@@ -351,6 +354,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--min-cluster-size", type=int, default=3, help="Per --suggest-scenarios: dimensione minima cluster (default: 3)")
     parser.add_argument("--similarity-threshold", type=float, default=0.35, help="Per --suggest-scenarios: soglia similarita 0..1 (default: 0.35)")
     parser.add_argument("--min-confidence", type=float, default=0.0, help="Per --suggest-scenarios: confidence minima del cluster 0..1")
+    parser.add_argument("--include-matched", action="store_true", help="Per --suggest-scenarios: include anche interventi gia categorizzati")
     parser.add_argument("--suggest-output", help="Per --suggest-scenarios: salva JSON anche su file")
     parser.add_argument("--kb", help=f"Directory knowledge_base (default: {_DEFAULT_KB})")
     parser.add_argument("--core", help=f"Directory core files (default: {_DEFAULT_CORE})")
