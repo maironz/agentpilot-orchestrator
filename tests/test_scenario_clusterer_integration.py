@@ -49,12 +49,14 @@ def test_suggest_scenarios_cli_flag_recognized() -> None:
         "--min-cluster-size", "4",
         "--similarity-threshold", "0.2",
         "--min-confidence", "0.6",
+        "--history-limit", "50",
         "--include-matched",
     ])
     assert args.suggest_scenarios is True
     assert args.min_cluster_size == 4
     assert abs(args.similarity_threshold - 0.2) < 1e-9
     assert abs(args.min_confidence - 0.6) < 1e-9
+    assert args.history_limit == 50
     assert args.include_matched is True
 
 
@@ -140,3 +142,26 @@ def test_cli_suggest_scenarios_can_include_matched_queries(tmp_path: Path, capsy
     data = json.loads(out)
     assert len(data) >= 1
     assert data[0]["size"] >= 5
+
+
+def test_cli_suggest_scenarios_honors_history_limit(tmp_path: Path, capsys) -> None:
+    _seed_interventions_db(tmp_path)
+    db = tmp_path / ".github" / "interventions.db"
+    conn = sqlite3.connect(str(db))
+    conn.execute(
+        "INSERT INTO interventions (agent, scenario, query, resolution, files_touched, tags, duration_min, outcome) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        ("orchestratore", "_fallback", "totally unrelated topic", "", "[]", "[]", 1.0, "success"),
+    )
+    conn.commit()
+    conn.close()
+
+    ret = main([
+        "--suggest-scenarios",
+        "--target", str(tmp_path),
+        "--history-limit", "3",
+    ])
+    assert ret == 0
+    out = capsys.readouterr().out
+    data = json.loads(out)
+    assert len(data) == 1
+    assert data[0]["size"] == 3

@@ -188,6 +188,9 @@ rgen --suggest-scenarios --target ./my-app --suggest-output ./artifacts/scenario
 # Filtra cluster deboli o troppo piccoli
 rgen --suggest-scenarios --target ./my-app --min-cluster-size 4 --min-confidence 0.65
 
+# Limita l'analisi agli ultimi 50 interventi
+rgen --suggest-scenarios --target ./my-app --history-limit 50
+
 # Analizza tutta la history, non solo gli unmatched
 rgen --suggest-scenarios --target ./my-app --include-matched
 ```
@@ -199,6 +202,7 @@ Opzioni principali:
 - `--min-cluster-size` per ignorare gruppi troppo piccoli
 - `--similarity-threshold` per rendere il clustering piu' o meno aggressivo
 - `--min-confidence` per escludere suggerimenti poco affidabili
+- `--history-limit` per controllare quanti interventi recenti vengono analizzati
 - `--suggest-output` per esportare il JSON su file oltre a stamparlo su stdout
 - `--include-matched` per includere anche interventi gia' categorizzati
 
