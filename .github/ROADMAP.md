@@ -1,6 +1,6 @@
 # ROADMAP — routing-generator
 
-**Brainstorm session 2026-04-06** | Last update: 2026-04-07 | **Phase 1 + P1.2 + P1.3 COMPLETE** ✅
+**Brainstorm session 2026-04-06** | Last update: 2026-04-07 | **Phase 1 + P2.1 COMPLETE** ✅
 
 ---
 
@@ -10,16 +10,18 @@
 |-------|---------|--------|-----|
 | **Phase 1 (Week 1-2)** | Live Metrics Dashboard | ✅ Done | [#1](https://github.com/maironz/routing-generator/commits) |
 | **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | [#5](https://github.com/maironz/routing-generator/commits) |
-| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | ✅ Done | Pending |
-| Phase 2+ (Week 6+) | Scenario Evolution, Multi-Language, others | ❌ Backlog | - |
+| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | ✅ Done | [#7](https://github.com/maironz/routing-generator/commits) |
+| **P2.1 (Week 6)** | Multi-Language Agent Templates | ✅ Done | [#8](https://github.com/maironz/routing-generator/commits) |
+| Phase 2+ (Week 7+) | Scenario Evolution, Audit Trail, others | ❌ Backlog | - |
 
 **Metrics**:
-- **187/187 tests passing** ✅ (up from 156 baseline)
-- **31 new tests** (GraphRouter unit + integration)
+- **208/208 tests passing** ✅ (up from 156 baseline)
+- **52 new tests** (31 GraphRouter + 21 LanguageDetection)
 - **3-panel TUI dashboard** (`python .github/router.py --dashboard`)
 - **ML-calibrated routing** (`python .github/router.py --calibrate-weights`)
 - **Graph cascade routing** (`python .github/router.py --graph-mode "query"`)
-- Ready for Phase 2 multi-domain + evolution features
+- **Multi-language support** (`rgen --language it|en|es|fr`)
+- Ready for Phase 2 scenario evolution + audit features
 
 ---
 
@@ -158,19 +160,33 @@ CONTEXT FORWARDING:
 
 ---
 
-### 🟠 P2.1 — Multi-Language Agent Templates
+---
+
+### 🟠 P2.1 — Multi-Language Agent Templates ✅ COMPLETE
 **Owner**: developer | **Effort**: ⭐⭐⭐ | **Impact**: Mid
+**Plan**: [`.github/plans/p2-1-multi-language.plan`](./plans/p2-1-multi-language.plan)
 
-**Goal**: Agent risposte customizzate per lingua del progetto
-- Detect documentazione lingua da metadata
-- Template agente in IT/EN/ES/FR
-- Vincoli styleguide culturali
-- Exit: agents generati con `{{LANGUAGE}}` context
+**Completed**:
+- ✅ `TemplateLocalizer` class with language metadata substitution
+- ✅ `LanguageDetector` with metadata → README → content analysis
+- ✅ CLI flag: `--language it|en|es|fr` (default: auto-detect)
+- ✅ Adapter integration: language parameter through pipeline
+- ✅ 21 new tests (CLI + localizer + detector)
+- ✅ Exit: `rgen --direct --language it` → Italian agent templates
 
-**Acceptance**:
-- [ ] Support 4 lingue minimo
-- [ ] Fallback a EN se manca lingua
-- [ ] i18n structure nel knowledge_base
+**Language Support**:
+```
+Italian (it)      → Tono: Professionale, formale
+English (en)      → Tone: Professional, concise
+Spanish (es)      → Tono: Profesional, formal
+French (fr)       → Ton: Professionnel, formel
+```
+
+**Features**:
+- `TemplateLocalizer.substitute_language_context()` → {{LANGUAGE}}, {{TONE}}, etc.
+- `LanguageDetector.detect()` → auto-detection strategy
+- Fallback to English if target language missing
+- Full CLI pipeline support (direct + interactive)
 
 ---
 

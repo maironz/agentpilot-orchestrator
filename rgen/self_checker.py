@@ -201,14 +201,52 @@ class SelfChecker:
                 f"router_stats: exit {proc.returncode} -- {proc.stderr[:200]}"
             )
             return
-        # Validate JSON output (last non-empty line)
-        lines = [l for l in proc.stdout.splitlines() if l.strip()]
-        if not lines:
+        # Validate JSON payload in stdout.
+        # router --stats prints a human header plus pretty-printed JSON.
+        stdout = proc.stdout.strip()
+        if not stdout:
             report.warnings.append("router_stats: no output produced")
             return
         try:
-            data = json.loads(lines[-1])
+            data = self._extract_json_from_stats_output(stdout)
             if "overall" not in data:
                 report.warnings.append("router_stats: JSON missing 'overall' key")
         except json.JSONDecodeError:
             report.warnings.append("router_stats: output is not valid JSON")
+
+    def _extract_json_from_stats_output(self, stdout: str) -> dict:
+        """Extracts stats JSON from mixed human-readable + JSON output."""
+        # Fast path: pure JSON payload.
+        try:
+            parsed = json.loads(stdout)
+            if isinstance(parsed, dict):
+                return parsed
+        except json.JSONDecodeError:
+            pass
+
+        # Fallback: take the last JSON object block printed in stdout.
+        start = stdout.rfind("{")
+        end = stdout.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            raise json.JSONDecodeError("No JSON object found", stdout, 0)
+
+        # Walk back to the outermost opening brace for the final JSON block.
+        depth = 0
+        outer_start = -1
+        for i in range(end, -1, -1):
+            ch = stdout[i]
+            if ch == '}':
+                depth += 1
+            elif ch == '{':
+                depth -= 1
+                if depth == 0:
+                    outer_start = i
+                    break
+        if outer_start == -1:
+            raise json.JSONDecodeError("Unbalanced JSON braces", stdout, start)
+
+        payload = stdout[outer_start:end + 1]
+        data = json.loads(payload)
+        if not isinstance(data, dict):
+            raise json.JSONDecodeError("Stats payload is not a JSON object", payload, 0)
+        return data

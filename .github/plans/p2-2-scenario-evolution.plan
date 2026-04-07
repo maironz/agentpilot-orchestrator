@@ -1,0 +1,224 @@
+# P2.2 — Scenario Evolution Generator
+**Phase**: p2.2 | **Semantic**: v0.5.0 | **Status**: 🟡 READY TO START
+
+**See also**: [`.github/ROADMAP.md`](../ROADMAP.md#-p22--scenario-evolution-generator) for project timeline and dependencies
+
+---
+
+## Overview
+
+**Goal**: Auto-detect pattern simili in intervention history → suggerisci nuovi scenario automaticamente
+
+**Example workflow**:
+```
+User query: "optimize database query performance"
+User query: "improve postgres performance"
+User query: "speed up database operations"
+...
+[3 more similar queries]
+
+System detects: "7 unmatched queries cluster around 'database_performance'"
+Suggestion: "Create scenario: query_performance_optimization"
+             Keywords: [optimize, performance, speed, database, query, postgres]
+             Confidence: 0.87
+```
+
+**Acceptance**:
+- Clustering accuracy > 80%
+- Detects 3+ real scenarios from sample data
+- CLI exports JSON candidates
+- 15+ tests passing
+
+---
+
+## Architecture
+
+```
+Phase 1: ScenarioClusterer (Days 1-2)
+├─ Load intervention history
+├─ Vectorize queries
+├─ Cluster similar patterns
+└─ Identify unmatched clusters
+
+Phase 2: CLI Integration (Day 2-3)
+├─ rgen --suggest-scenarios
+└─ JSON output
+
+Phase 3: Tests + Docs (Day 3)
+├─ Unit tests
+├─ Integration tests
+└─ README examples
+```
+
+---
+
+## Phase 1: ScenarioClusterer
+
+### File: `rgen/scenario_clusterer.py`
+
+```python
+class ScenarioClusterer:
+    """
+    Detect similar queries in intervention history.
+
+    Suggests new scenarios based on unmatched query patterns.
+    """
+
+    def __init__(self, store: InterventionStore, min_cluster_size: int = 3):
+        """Initialize clusterer with intervention store."""
+        self.store = store
+        self.min_cluster_size = min_cluster_size
+
+    def load_interventions(self, limit: int = 100) -> list[dict]:
+        """Load recent interventions from DB."""
+
+    def vectorize_query(self, query: str) -> list[float]:
+        """Convert query to vector (TF-IDF or keyword-based)."""
+
+    def cluster_queries(self, queries: list[str]) -> dict[int, list[str]]:
+        """Cluster similar queries using cosine similarity."""
+
+    def suggest_scenarios(self) -> list[dict]:
+        """
+        Returns candidate scenarios:
+        [
+          {
+            "cluster_id": 0,
+            "queries": ["optimize query", "improve performance"],
+            "keywords": ["optimize", "performance"],
+            "suggested_scenario": "query_optimization",
+            "confidence": 0.87,
+            "size": 7
+          },
+          ...
+        ]
+        """
+```
+
+### Tests: `tests/test_scenario_clusterer.py`
+
+- `test_vectorize_query_basic()`
+- `test_cluster_queries_finds_similar()`
+- `test_cluster_queries_returns_empty_for_dissimilar()`
+- `test_suggest_scenarios_returns_candidates()`
+- `test_min_cluster_size_filter()`
+- `test_clustering_accuracy_gt_80()`
+
+---
+
+## Phase 2: CLI Integration
+
+### File: `rgen/cli.py` modification
+
+```python
+def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
+    """Suggest new scenarios from intervention history."""
+    from rgen.scenario_clusterer import ScenarioClusterer
+    from rgen.interventions import InterventionStore
+
+    store = InterventionStore()
+    clusterer = ScenarioClusterer(store, min_cluster_size=3)
+    suggestions = clusterer.suggest_scenarios()
+
+    if not suggestions:
+        print("No new scenario suggestions at this time.")
+        return 0
+
+    print(f"\n🎯 Suggested Scenarios ({len(suggestions)} candidates):\n")
+    for idx, sugg in enumerate(suggestions, 1):
+        print(f"{idx}. {sugg['suggested_scenario']}")
+        print(f"   Confidence: {sugg['confidence']:.0%}")
+        print(f"   Size: {sugg['size']} queries")
+        print(f"   Keywords: {', '.join(sugg['keywords'][:5])}")
+        print()
+
+    store.close()
+    return 0
+```
+
+### Parser modification:
+
+```python
+mode.add_argument("--suggest-scenarios", dest="suggest_scenarios", action="store_true",
+                  help="Suggest new scenarios from intervention history")
+```
+
+### Usage:
+
+```bash
+rgen --suggest-scenarios
+# OR
+rgen --suggest-scenarios --dry-run  # preview only
+```
+
+---
+
+## Phase 3: Tests + Docs
+
+### Tests: `tests/test_scenario_clusterer_integration.py`
+
+- `test_cli_suggest_scenarios_returns_json()`
+- `test_suggest_scenarios_cli_flag_recognized()`
+- `test_scenario_export_to_json()`
+
+### Documentation updates:
+
+- README.md: "Scenario Evolution" section
+- ROADMAP.md: mark P2.2 DONE (after merge)
+- Example: mock daily usage of --suggest-scenarios
+
+---
+
+## Success Criteria
+
+- ✅ Clustering algorithm implemented
+- ✅ Accuracy > 80% on test data
+- ✅ Detects 3+ real scenarios
+- ✅ CLI flag working
+- ✅ 15+ tests passing
+- ✅ JSON export working
+- ✅ Documentation complete
+
+---
+
+## Timeline
+
+| Day | Phase | Tasks |
+|-----|-------|-------|
+| 1-2 | Phase 1 | ScenarioClusterer class + 6 unit tests |
+| 2-3 | Phase 2 | CLI integration + 3 integration tests |
+| 3 | Phase 3 | Tests, docs, PR → master |
+
+**Total**: 1-2 days (ambitious)
+
+---
+
+## Next Steps to Resume
+
+1. **Read this file** (you're here)
+2. **Create `rgen/scenario_clusterer.py`** with `ScenarioClusterer` class
+3. **Write unit tests** in `tests/test_scenario_clusterer.py`
+4. **Implement CLI flag** in `rgen/cli.py`
+5. **Write integration tests**
+6. **Update docs** (README, ROADMAP)
+7. **Create PR #9** → merge to master
+8. **Tag v0.5.0**
+
+---
+
+## How to Resume Later
+
+Just read this file from `.github/plans/p2-2-scenario-evolution.plan` and continue from **Phase 1** or wherever you left off.
+
+All context is here. No external docs needed.
+
+---
+
+## Related Plans & Docs
+
+- **ROADMAP**: [`.github/ROADMAP.md`](../ROADMAP.md) — Overall timeline + dependencies
+- **Versioning**: [`.github/versioning-strategy.md`](../versioning-strategy.md) — p2.2 = v0.5.0
+- **Previous Plans**:
+  - [p1-3-graph-routing.plan](./p1-3-graph-routing.plan)
+  - [p2-1-multi-language.plan](./p2-1-multi-language.plan)
+- **Memory**: [Memory file](../../memory/MEMORY.md) — Session notes & decisions

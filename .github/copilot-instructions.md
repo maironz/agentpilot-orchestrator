@@ -68,7 +68,36 @@ python .github/router.py --audit
 
 **routing-generator** | Stack: python, fastapi, flask, postgresql, postgres, redis, docker, pytest, sqlalchemy, alembic, pydantic, nginx
 
+## Tracciatura discussioni
+
+Ogni sessione operativa deve lasciare traccia in `.discussioni/` (cartella locale, esclusa da git).
+
+### Regole obbligatorie
+1. Crea un file per ogni sessione con nome formato `YYYY-MM-DD-<tema>.md`
+2. Ogni file deve contenere:
+   - **Data** e **tema** della sessione
+   - **Decisioni** prese
+   - **File modificati** con motivazione
+   - **Task aperti** o follow-up
+3. Se una risposta non è verificabile direttamente nel codice, marcala come *ipotesi*
+4. Aggiorna il file durante la sessione, non solo alla fine
+
+### Formato minimo
+```markdown
+# Sessione YYYY-MM-DD — <tema>
+
+## Decisioni
+- ...
+
+## File modificati
+- `path/file.py` — motivo
+
+## Task aperti
+- [ ] ...
+```
+
 ## Postflight
 - Verifica che l'agente scelto sia coerente con la richiesta
 - Esegui i test rilevanti prima di chiudere il task
 - Mantieni documentazione e artefatti di routing allineati
+- Aggiorna (o crea) il file di sessione in `.discussioni/`

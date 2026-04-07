@@ -109,14 +109,16 @@ class Adapter:
 
     Args:
         knowledge_base_dir: Path to the ``knowledge_base/`` directory.
+        language: Optional target language code passed by CLI.
     """
 
     # Files allowed in scenario files[] after adaptation (relative .github/ paths)
     _CORE_FILE_STEMS = frozenset({"router.py", "router_audit.py", "router_planner.py",
                                    "interventions.py", "mcp_server.py"})
 
-    def __init__(self, knowledge_base_dir: Path) -> None:
+    def __init__(self, knowledge_base_dir: Path, language: str = "en") -> None:
         self._loader = PatternLoader(knowledge_base_dir)
+        self._language = language
 
     def adapt(self, profile: ProjectProfile) -> dict[str, str]:
         """Returns ``{relative_path: content}`` for all files to generate.

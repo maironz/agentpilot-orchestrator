@@ -45,3 +45,6 @@ desktop.ini
 
 # Claude Code memory (locale, non condiviso)
 .claude/
+
+# Tracciatura discussioni (locale, non condiviso)
+.discussioni/
