@@ -73,3 +73,23 @@ def test_cli_suggest_scenarios_honors_min_cluster_size(tmp_path: Path, capsys) -
     out = capsys.readouterr().out
     data = json.loads(out)
     assert data == []
+
+
+def test_cli_suggest_scenarios_writes_output_file(tmp_path: Path, capsys) -> None:
+    _seed_interventions_db(tmp_path)
+    output_file = tmp_path / "artifacts" / "scenario-suggestions.json"
+    ret = main([
+        "--suggest-scenarios",
+        "--target", str(tmp_path),
+        "--suggest-output", str(output_file),
+    ])
+    assert ret == 0
+
+    # stdout still returns the same JSON payload
+    out = capsys.readouterr().out
+    stdout_payload = json.loads(out)
+
+    assert output_file.exists()
+    file_payload = json.loads(output_file.read_text(encoding="utf-8"))
+    assert file_payload == stdout_payload
+    assert len(file_payload) >= 1

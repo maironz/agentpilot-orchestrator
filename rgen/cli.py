@@ -115,7 +115,13 @@ def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
     finally:
         store.close()
 
-    print(json.dumps(suggestions, indent=2, ensure_ascii=False))
+    payload = json.dumps(suggestions, indent=2, ensure_ascii=False)
+    if args.suggest_output:
+        output_path = Path(args.suggest_output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(payload + "\n", encoding="utf-8")
+
+    print(payload)
     return 0
 
 
@@ -343,6 +349,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--domains", help="Domini (virgola-separati) per --direct senza pattern")
     parser.add_argument("--min-cluster-size", type=int, default=3, help="Per --suggest-scenarios: dimensione minima cluster (default: 3)")
     parser.add_argument("--similarity-threshold", type=float, default=0.35, help="Per --suggest-scenarios: soglia similarita 0..1 (default: 0.35)")
+    parser.add_argument("--suggest-output", help="Per --suggest-scenarios: salva JSON anche su file")
     parser.add_argument("--kb", help=f"Directory knowledge_base (default: {_DEFAULT_KB})")
     parser.add_argument("--core", help=f"Directory core files (default: {_DEFAULT_CORE})")
     return parser
