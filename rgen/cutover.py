@@ -113,6 +113,7 @@ def export_cutover_snapshot(
     output_dir: Path,
     include_internal: bool = False,
     clean_output: bool = False,
+    write_manifest: bool = False,
 ) -> dict[str, object]:
     manifest = build_cutover_manifest(root, include_internal=include_internal)
 
@@ -126,8 +127,9 @@ def export_cutover_snapshot(
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(src, dst)
 
-    manifest_path = output_dir / "cutover-manifest.json"
-    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    if write_manifest:
+        manifest_path = output_dir / "cutover-manifest.json"
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     return manifest
 
 
@@ -141,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", help="Optional JSON output path")
     parser.add_argument("--export-dir", help="Optional directory where the public snapshot should be materialized")
     parser.add_argument("--clean-output", action="store_true", help="Delete export directory before materializing the snapshot")
+    parser.add_argument("--write-export-manifest", action="store_true", help="Write cutover-manifest.json inside the export directory")
     args = parser.parse_args(argv)
 
     root = Path(args.root).resolve()
@@ -150,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
             Path(args.export_dir).resolve(),
             include_internal=args.include_internal,
             clean_output=args.clean_output,
+            write_manifest=args.write_export_manifest,
         )
     else:
         manifest = build_cutover_manifest(root, include_internal=args.include_internal)
