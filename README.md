@@ -37,6 +37,8 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 
 > Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
 
+Current release: `v0.4.0`. See `.github/RELEASE_NOTES.md` for release history and migration context.
+
 **From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
 ## At a Glance
@@ -47,6 +49,17 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 | Less prompt sprawl | Targeted context loading instead of generic mega-prompts |
 | Traceable assistant behavior | Auditable routing decisions and intervention history |
 | Assistant ecosystem integration | MCP tools for routing, memory, and coverage checks |
+
+## What It Does
+
+AgentPilot Orchestrator gives engineering teams a routing layer for AI workflows.
+
+- It classifies each request into a scenario.
+- It selects the most appropriate specialist context.
+- It exposes routing and memory through MCP tools.
+- It records interventions so routing can be improved over time.
+
+In short: it reduces noisy prompting and turns assistant usage into a repeatable operational system.
 
 ## Project Origin
 
@@ -73,6 +86,38 @@ What began as an internal orchestration system for structured engineering suppor
 - Intervention memory with searchable history
 - MCP server tools for native assistant integration
 - Scenario suggestion workflow from historical interventions
+
+## Skills vs Agents
+
+Both are first-class building blocks, but they solve different problems.
+
+| Component | Primary role | Scope | Typical trigger |
+|---|---|---|---|
+| Skills | Reusable operating playbooks | Task-level behavior | "How should this task be executed?" |
+| Agents | Specialized decision and response profiles | Domain-level ownership | "Who should handle this request?" |
+
+In practice:
+
+- Use **Agents** to route requests to the right domain context (backend, devops, docs, orchestration).
+- Use **Skills** to standardize *how* the selected agent executes the task (checks, workflows, quality gates).
+- Combine both for reliable outcomes: **Agent = who**, **Skill = how**.
+
+> Tip: if routing is correct but output quality is inconsistent, improve the Skill. If quality is good but the wrong domain is selected, tune the Agent routing map.
+
+## How It Works
+
+1. Input request arrives through CLI or MCP tool call.
+2. Router evaluates scenarios using keyword sets, priorities, and confidence scoring.
+3. Selected agent context and relevant files are attached to the task.
+4. Response is produced and the intervention can be logged for future calibration.
+
+Operational loop:
+
+- route
+- execute
+- validate
+- log
+- tune
 
 ## Quick Start
 
@@ -123,12 +168,21 @@ python .github/router.py --audit
 rgen --suggest-scenarios --target ./my-app --suggest-format text
 ```
 
+### 5) Inspect generation history and rollback safely
+
+```bash
+rgen --history --target ./my-app
+rgen --history --show-diffs --target ./my-app
+rgen --rollback --to 20260411_103000 --target ./my-app
+```
+
 ## Practical Tips
 
 - Start with `python .github/router.py --stats` before changing routing rules.
 - Use `--direct` queries as smoke tests whenever you edit scenarios or keywords.
 - Keep `knowledge_base` generic in public snapshots and move operational playbooks to private space.
 - Run `rgen --suggest-scenarios` only after collecting enough intervention history, otherwise the signal is weak.
+- Use `rgen --history --show-diffs` before a rollback when you need to verify which files are still unchanged since generation.
 - Install MCP extras only when you need the server runtime; the generator itself stays lightweight.
 
 ## Example Flow
@@ -148,11 +202,21 @@ python .github/router.py --direct "investigate flaky pytest failure in CI"
 
 AgentPilot Orchestrator includes an MCP server to expose routing and memory as native tools.
 
+For standard VS Code users, this repository includes a ready-to-use workspace configuration in `.vscode/mcp.json`.
+Open the repo in VS Code, install the workspace package with MCP extras, trust the MCP server when prompted, and use chat tools without manual JSON copy/paste.
+
+You can also toggle the workspace MCP configuration without editing JSON manually:
+
+```bash
+python .github/mcp_configure.py enable
+python .github/mcp_configure.py disable
+```
+
 > Tip: use the MCP server when you want assistants to call routing and memory as tools; use the CLI when you are iterating locally on patterns and scenarios.
 
 ```bash
-pip install "mcp[cli]>=1.0.0"
-python .github/mcp_server.py
+pip install -e ".[mcp]"
+agentpilot-mcp
 ```
 
 Current MCP tools:
@@ -162,6 +226,117 @@ Current MCP tools:
 - `log_intervention`
 - `get_stats`
 - `audit_coverage`
+- `get_update_status` (update check, optional refresh)
+- `manual_update` (manual-only update, requires confirmation)
+
+Update policy:
+
+- no automatic self-update
+- update checks are exposed via MCP status
+- manual update is optional and explicit
+
+## MCP Does Not Replace Instructions
+
+MCP tools and workspace instructions solve different problems.
+
+- Instructions define behavior: workflow, formatting, constraints, checks, and team rules.
+- MCP provides capabilities: callable tools for routing, memory, health checks, and update status.
+
+In practice:
+
+- use instructions to tell the assistant how it should work
+- use MCP to give the assistant real operational tools
+
+Best results come from using both together.
+
+- Without instructions, the assistant may have tools but follow the wrong workflow.
+- Without MCP, the assistant may follow the workflow but lack real routing and operational capabilities.
+
+## Why Install This MCP Server
+
+If the server works in the background, it can feel "invisible". The practical value is that your assistant stops being generic and starts behaving like an orchestrated engineering operator.
+
+Without this MCP server, chat replies rely mostly on raw model priors and broad workspace context. With this MCP server, each request can be:
+
+- routed to a scenario with explicit `agent`, `priority`, and `confidence`
+- backed by intervention memory from similar historical tasks
+- validated with health and coverage checks before you trust changes
+
+In short: less prompt guesswork, more repeatable operations.
+
+## 5-Minute VS Code Demo (Visible Value)
+
+Use this flow to make the value observable to end users.
+
+### Step 1: Configure MCP in workspace
+
+The repository already includes a workspace MCP configuration. The standard path is:
+
+```bash
+pip install -e ".[mcp]"
+python .github/mcp_configure.py enable
+```
+
+If you need to create `.vscode/mcp.json` manually, use:
+
+```json
+{
+    "servers": {
+        "agentpilot-orchestrator": {
+            "type": "stdio",
+            "command": "${workspaceFolder}/.venv/Scripts/agentpilot-mcp.exe",
+            "cwd": "${workspaceFolder}"
+        }
+    }
+}
+```
+
+Then confirm trust and start the server from VS Code MCP controls.
+
+### Step 2: Run three prompts in chat
+
+Prompt A (routing):
+
+```text
+Route this task: optimize slow Postgres queries in our API.
+```
+
+What users should see:
+
+- a routed scenario payload with `agent`, `scenario`, and `priority`
+
+Prompt B (memory):
+
+```text
+Search intervention history for: flaky pytest timeout in CI.
+```
+
+What users should see:
+
+- prior interventions or memory stats, instead of a generic answer
+
+Prompt C (health):
+
+```text
+Get router health stats and summarize risks.
+```
+
+What users should see:
+
+- measurable router health fields (status, overlap, map size, thresholds)
+
+### Step 3: Verify it is actually working
+
+In VS Code, open MCP server output logs and confirm tool calls are executed.
+
+If users only see plain chat text with no tool activity, MCP is not connected.
+
+## What Changes for the User
+
+- before: "ask and hope" workflow
+- after: route, validate, execute, and log workflow
+
+This turns AI support into an operational loop instead of a one-off prompt.
 
 ## Typical Use Cases
 

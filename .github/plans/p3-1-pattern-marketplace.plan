@@ -1,0 +1,116 @@
+# P3.1 — Pattern Marketplace
+**Phase**: p3.1 | **Semantic**: v0.7.0 | **Status**: 🟡 PLANNING
+
+---
+
+## Overview
+
+Goal: permettere la condivisione e il consumo di pattern `rgen` da registry GitHub o repository remoti verificati.
+
+Primary exit:
+- `rgen --download owner/pattern:version`
+
+---
+
+## Objectives
+
+- definire formato distribuibile per pattern pack
+- scaricare, validare e installare pattern remoti in modo sicuro
+- consentire ricerca/catalogazione minima dei pattern disponibili
+- prevedere checksum o digest per validazione del contenuto
+
+---
+
+## Technical Evaluation
+
+### Fattibilita tecnica
+
+- Fattibilita complessiva: media
+- Il repo ha gia una CLI centrale e una struttura pattern ben definita, quindi download e installazione locale sono coerenti con l'architettura esistente
+- La parte piu semplice e' un MVP basato su download da release URL o repository GitHub noto, con manifest e checksum locali
+- La parte piu costosa in termini di complessita non e' il download ma la ricerca catalogata (`--search-patterns`) e la validazione robusta di sorgenti remote
+
+### Vincolo costo zero
+
+- Fattibile a costo zero solo per un MVP senza servizi esterni dedicati
+- Approccio consigliato: usare repository GitHub pubblici, release asset o raw file, evitando backend proprietari o storage esterno
+- Rischio principale a costo zero: rate limit API GitHub e affidabilita della discovery se si vuole una vera ricerca globale
+- Per restare davvero a costo zero conviene limitare la ricerca a un registry statico versionato nel repo o in un repo indice pubblico
+
+### Stima tempi
+
+- MVP download + install + manifest validation: 3-4 giorni
+- Aggiunta checksum, error handling e test integrazione: +1-2 giorni
+- Search command credibile e stabile: +2-3 giorni
+
+### Valutazione finale
+
+- Consigliato solo come roadmap medio termine
+- Non e' il miglior prossimo task se l'obiettivo e' rapporto valore/tempo immediato
+- Priorita reale: media-bassa finche' non esiste un bisogno concreto di condividere pattern tra repo/team
+
+---
+
+## Scope
+
+### In Scope
+- manifest del pattern pack
+- download da GitHub release/repository
+- validazione schema e checksum
+- installazione in cartella locale pattern
+- test download/install con fixture locali o mock HTTP
+
+### Out of Scope
+- autenticazione enterprise complessa
+- rating/commenti nel prodotto core
+- interfaccia web dedicata
+
+---
+
+## Proposed Design
+
+### Package layout
+
+```
+pattern-pack/
+├── manifest.json
+├── knowledge_base/
+├── core/
+└── checksums.txt
+```
+
+### Commands
+
+- `rgen --download owner/pattern:version`
+- `rgen --download owner/pattern:latest --install-dir ./patterns`
+- `rgen --search-patterns <query>`
+
+---
+
+## File Candidates
+
+- `rgen/cli.py` — nuovi flag di marketplace
+- `rgen/adapter.py` o nuovo `rgen/pattern_registry.py` — logica download/install
+- `rgen/models.py` — manifest model
+- `tests/test_cli.py` — parser marketplace
+- `tests/test_adapter.py` o nuovi test registry — installazione pattern
+
+---
+
+## Acceptance
+
+- [ ] Pattern search command
+- [ ] Download e install flow validato
+- [ ] Checksum/schema validation
+- [ ] Test coverage del path installazione
+- [ ] Documentazione README con esempio d'uso
+
+---
+
+## Suggested Phases
+
+1. Definire manifest e checksum strategy
+2. Implementare download/install locale
+3. Aggiungere validazione e reporting errori
+4. Coprire con test e fixture
+5. Documentare registry workflow

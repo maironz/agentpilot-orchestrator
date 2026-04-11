@@ -274,7 +274,10 @@
       "tag",
       "release",
       "semver",
-      "changelog"
+      "changelog",
+      "version",
+      "versioning",
+      "update"
     ],
     "files": [
       ".github/esperti/esperto_documentazione.md"
@@ -294,6 +297,11 @@
       "package",
       "dependency",
       "upgrade",
+      "update",
+      "aggiornamento",
+      "versione",
+      "manual update",
+      "auto update",
       "pin",
       "lock",
       "uv"

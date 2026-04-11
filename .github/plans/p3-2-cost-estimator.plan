@@ -1,0 +1,120 @@
+# P3.2 — Cost Estimator
+**Phase**: p3.2 | **Semantic**: v0.7.1 | **Status**: 🟡 PLANNING
+
+---
+
+## Overview
+
+Goal: stimare il costo operativo dei vari scenari in funzione del volume d'uso e della dimensione media del contesto, con output leggibile e machine-friendly.
+
+Primary exit:
+- `rgen --cost-report --target ./my-app`
+
+---
+
+## Objectives
+
+- mantenere un database semplice dei prezzi per modello/provider
+- stimare token e costo per scenario sulla base della history disponibile
+- identificare scenari costosi o ridondanti e suggerire consolidamento
+- esportare report JSON per automazioni
+
+---
+
+## Technical Evaluation
+
+### Fattibilita tecnica
+
+- Fattibilita complessiva: medio-alta
+- Il repo dispone gia di interventions history, router stats e output strutturati sufficienti per un estimatore euristico
+- L'MVP non richiede integrazione live con provider: basta una tabella prezzi locale e una stima token conservativa
+- Il punto piu delicato e' il requisito di accuratezza `+/- 10%`, che senza telemetria reale va trattato come obiettivo best-effort e non come garanzia forte
+
+### Vincolo costo zero
+
+- Fattibile a costo zero per un report statico/euristico
+- Nessun servizio esterno necessario se il pricing registry e' mantenuto come file versionato nel repo
+- Per restare a costo zero bisogna evitare API commerciali di billing o token counting hosted
+
+### Stima tempi
+
+- MVP con pricing table locale + output JSON: 2-3 giorni
+- Aggiunta suggerimenti di consolidamento e test robusti: +1-2 giorni
+- Rifinitura accuracy su fixture e documentazione caveat: +1 giorno
+
+### Valutazione finale
+
+- Buon candidato dopo Audit Trail se si vuole una feature utile ma ancora a bassa dipendenza
+- Valore alto per governance interna, complessita moderata
+- A costo zero e' realistico, ma con accuratezza dichiarata come stima e non misurazione reale
+
+---
+
+## Scope
+
+### In Scope
+- pricing registry versionato
+- estimator basato su euristiche/tokens medi
+- report per scenario e totale
+- suggerimenti di consolidamento semplici
+
+### Out of Scope
+- billing live dai provider
+- previsioni econometriche avanzate
+- dashboard web dedicata
+
+---
+
+## Proposed Design
+
+### Output example
+
+```json
+{
+  "total_estimated_monthly_cost": 12.4,
+  "scenarios": [
+    {
+      "name": "database",
+      "estimated_tokens": 120000,
+      "estimated_cost": 3.1,
+      "optimization_hint": "consider consolidating with performance"
+    }
+  ]
+}
+```
+
+### Inputs
+
+- interventions history
+- routing stats
+- provider pricing table
+- average context size heuristics
+
+---
+
+## File Candidates
+
+- nuovo `rgen/cost_estimator.py`
+- `rgen/cli.py` — flag `--cost-report`
+- `rgen/models.py` — modello pricing/report
+- `tests/` — unit + integration for estimator output
+
+---
+
+## Acceptance
+
+- [ ] Model pricing DB aggiornabile
+- [ ] Estimation accuracy +/- 10% su dataset noto
+- [ ] Consolidation suggestion algorithm
+- [ ] JSON output stabile
+- [ ] README con esempi e caveat
+
+---
+
+## Suggested Phases
+
+1. Definire schema pricing e input metrics
+2. Implementare estimator base
+3. Aggiungere report JSON e suggerimenti
+4. Validare accuracy con fixture note
+5. Aggiornare documentazione

@@ -1,0 +1,240 @@
+# P2.2 — Scenario Evolution Generator
+**Phase**: p2.2 | **Semantic**: v0.5.0 | **Status**: ✅ COMPLETE
+
+**See also**: [`.github/ROADMAP.md`](../ROADMAP.md#-p22--scenario-evolution-generator) for project timeline and dependencies
+
+---
+
+## Overview
+
+**Goal**: Auto-detect pattern simili in intervention history → suggerisci nuovi scenario automaticamente
+
+**Example workflow**:
+```
+User query: "optimize database query performance"
+User query: "improve postgres performance"
+User query: "speed up database operations"
+...
+[3 more similar queries]
+
+System detects: "7 unmatched queries cluster around 'database_performance'"
+Suggestion: "Create scenario: query_performance_optimization"
+             Keywords: [optimize, performance, speed, database, query, postgres]
+             Confidence: 0.87
+```
+
+**Delivered**:
+- semantic clustering on intervention history
+- configurable `--min-cluster-size` and `--similarity-threshold`
+- `--min-confidence` filtering
+- `--history-limit` windowing
+- `--include-matched` full-history mode
+- `--suggest-output` JSON file export
+- `--suggest-format text` human-readable terminal preview
+- dedicated unit and integration coverage merged to `master`
+
+---
+
+## Delivery Summary
+
+Merged increments:
+- PR #10: base clustering + CLI JSON output
+- PR #11: JSON file export
+- PR #12: minimum confidence filter
+- PR #13: include matched queries + docs expansion
+- PR #14: configurable history limit
+- PR #15: terminal text preview + test/dev-environment alignment
+
+Current entrypoint:
+
+```bash
+rgen --suggest-scenarios --target ./my-app
+rgen --suggest-scenarios --target ./my-app --suggest-format text
+```
+
+---
+
+## Architecture
+
+```
+Phase 1: ScenarioClusterer (implemented)
+├─ Load intervention history
+├─ Normalize and tokenize queries
+├─ Cluster similar patterns with Jaccard-style similarity
+└─ Identify unmatched clusters
+
+Phase 2: CLI Integration (implemented)
+├─ rgen --suggest-scenarios
+├─ JSON output
+├─ text preview output
+└─ file export
+
+Phase 3: Tests + Docs (implemented)
+├─ Unit tests
+├─ Integration tests
+└─ README examples
+```
+
+---
+
+## Phase 1: ScenarioClusterer
+
+### File: `rgen/scenario_clusterer.py`
+
+```python
+class ScenarioClusterer:
+    """
+    Detect similar queries in intervention history.
+
+    Suggests new scenarios based on unmatched query patterns.
+    """
+
+    def __init__(self, store: InterventionStore, min_cluster_size: int = 3):
+        """Initialize clusterer with intervention store."""
+        self.store = store
+        self.min_cluster_size = min_cluster_size
+
+    def load_interventions(self, limit: int = 100) -> list[dict]:
+        """Load recent interventions from DB."""
+
+    def _tokenize(self, query: str) -> list[str]:
+        """Normalize and tokenize user queries."""
+
+    def cluster_queries(self, queries: list[str]) -> dict[int, list[str]]:
+        """Cluster similar queries using token overlap similarity."""
+
+    def suggest_scenarios(self) -> list[dict]:
+        """
+        Returns candidate scenarios:
+        [
+          {
+            "cluster_id": 0,
+            "queries": ["optimize query", "improve performance"],
+            "keywords": ["optimize", "performance"],
+            "suggested_scenario": "query_optimization",
+            "confidence": 0.87,
+            "size": 7
+          },
+          ...
+        ]
+        """
+```
+
+### Tests delivered
+
+- `tests/test_scenario_clusterer.py`
+- `tests/test_scenario_clusterer_integration.py`
+- parser coverage for all current flags
+- integration coverage for JSON output, file export, confidence filter, include matched, history limit, text preview
+
+---
+
+## Phase 2: CLI Integration
+
+### File: `rgen/cli.py` modification
+
+```python
+def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
+    """Suggest new scenarios from intervention history."""
+    from rgen.scenario_clusterer import ScenarioClusterer
+    from rgen.interventions import InterventionStore
+
+    store = InterventionStore()
+    clusterer = ScenarioClusterer(store, min_cluster_size=3)
+    suggestions = clusterer.suggest_scenarios()
+
+    if not suggestions:
+        print("No new scenario suggestions at this time.")
+        return 0
+
+    print(f"\n🎯 Suggested Scenarios ({len(suggestions)} candidates):\n")
+    for idx, sugg in enumerate(suggestions, 1):
+        print(f"{idx}. {sugg['suggested_scenario']}")
+        print(f"   Confidence: {sugg['confidence']:.0%}")
+        print(f"   Size: {sugg['size']} queries")
+        print(f"   Keywords: {', '.join(sugg['keywords'][:5])}")
+        print()
+
+    store.close()
+    return 0
+```
+
+### Parser modification:
+
+```python
+mode.add_argument("--suggest-scenarios", dest="suggest_scenarios", action="store_true",
+                  help="Suggest new scenarios from intervention history")
+```
+
+### Usage:
+
+```bash
+rgen --suggest-scenarios --target ./my-app
+rgen --suggest-scenarios --target ./my-app --min-confidence 0.7
+rgen --suggest-scenarios --target ./my-app --suggest-output artifacts/scenarios.json
+rgen --suggest-scenarios --target ./my-app --suggest-format text
+```
+
+---
+
+## Phase 3: Tests + Docs
+
+### Tests: `tests/test_scenario_clusterer_integration.py`
+
+- `test_cli_suggest_scenarios_returns_json()`
+- `test_suggest_scenarios_cli_flag_recognized()`
+- `test_scenario_export_to_json()`
+
+### Documentation updates:
+
+- README.md: sezione aggiornata con opzioni reali fino a P2.7
+- ROADMAP.md: stato P2.2 aggiornato a completato
+- esempi CLI allineati all'implementazione in `master`
+
+---
+
+## Success Criteria
+
+- ✅ Clustering algorithm implemented
+- ✅ CLI flag working
+- ✅ JSON export working
+- ✅ Text preview working
+- ✅ Configurable filters delivered
+- ✅ Documentation complete
+
+---
+
+## Final Outcome
+
+The feature has been merged into `master` incrementally through PR #10 to #15.
+
+Current repository state:
+- `master` contains all scenario evolution increments
+- full suite green (`223` tests)
+- README and CLI help aligned with implementation
+
+---
+
+## Next Steps
+
+1. Start the next plan item after Scenario Evolution
+2. Prefer `Historical Audit Trail + Rollback` as the next Phase 2 candidate
+3. Create a dedicated plan file for the next increment before coding
+
+---
+
+## How to Resume Later
+
+This file is now historical documentation of what was delivered for P2.2-P2.7.
+For new work, branch from `master` and create or update the next dedicated plan.
+
+---
+
+## Related Plans & Docs
+
+- **ROADMAP**: [`.github/ROADMAP.md`](../ROADMAP.md) — Overall timeline + dependencies
+- **Versioning**: [`.github/versioning-strategy.md`](../versioning-strategy.md) — p2.2 = v0.5.0
+- **Previous Plans**:
+  - [p1-3-graph-routing.plan](./p1-3-graph-routing.plan)
+  - [p2-1-multi-language.plan](./p2-1-multi-language.plan)
+- **Memory**: [Memory file](../../memory/MEMORY.md) — Session notes & decisions

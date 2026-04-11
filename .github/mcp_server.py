@@ -11,6 +11,8 @@ Tools:
   3. log_intervention — Record a completed intervention
   4. get_stats      — Health metrics for the routing system
   5. audit_coverage — Scan codebase for routing map gaps
+    6. get_update_status — Check if repository updates are available
+    7. manual_update  — Run optional manual repository update
 
 Run:
   python .github/mcp_server.py          (stdio transport — for VS Code)
@@ -42,6 +44,8 @@ route_follow_up_fn = router_mod.route_follow_up
 route_subagent_fn = router_mod.route_subagent
 
 from interventions import InterventionStore
+from update_manager import get_update_status as get_update_status_fn
+from update_manager import manual_update as manual_update_fn
 
 # ─── Server Setup ───
 
@@ -56,6 +60,7 @@ mcp = FastMCP(
 def route_query(
     query: str,
     mode: str = "direct",
+    refresh_update_status: bool = False,
 ) -> str:
     """
     Route a user query to the appropriate PSM Stack agent.
@@ -63,6 +68,7 @@ def route_query(
     Args:
         query: The user's question or task description
         mode: Routing mode - "direct" (default), "follow_up" (same session), or "subagent" (for runSubagent)
+        refresh_update_status: If true, refreshes remote update info before returning status
 
     Returns:
         JSON with agent, files, context, priority, scenario, capability,
@@ -74,6 +80,9 @@ def route_query(
         result = route_subagent_fn(query)
     else:
         result = route_query_fn(query)
+
+    if isinstance(result, dict):
+        result["update_status"] = get_update_status_fn(refresh=refresh_update_status)
 
     return json.dumps(result, indent=2, ensure_ascii=False)
 
@@ -184,6 +193,40 @@ def audit_coverage() -> str:
     # Exclude internal _covered_details from MCP output
     output = {k: v for k, v in result.items() if not k.startswith("_")}
     return json.dumps(output, indent=2, ensure_ascii=False)
+
+
+# ─── Tool 6: Get Update Status ───
+
+@mcp.tool()
+def get_update_status(refresh: bool = False) -> str:
+    """
+    Check whether repository updates are available.
+
+    Args:
+        refresh: If true, performs a lightweight fetch before comparison.
+
+    Returns:
+        JSON with update policy, branch state, and update availability.
+    """
+    status = get_update_status_fn(refresh=refresh)
+    return json.dumps(status, indent=2, ensure_ascii=False)
+
+
+# ─── Tool 7: Manual Update ───
+
+@mcp.tool()
+def manual_update(confirm: bool = False) -> str:
+    """
+    Run an optional manual repository update (never automatic).
+
+    Args:
+        confirm: Must be true to execute the update action.
+
+    Returns:
+        JSON result with update outcome and details.
+    """
+    result = manual_update_fn(confirm=confirm)
+    return json.dumps(result, indent=2, ensure_ascii=False)
 
 
 # ─── Entry Point ───

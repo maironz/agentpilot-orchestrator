@@ -1,0 +1,44 @@
+# P2.6 — Scenario Suggestion History Limit
+**Phase**: p2.6 | **Semantic**: v0.5.4 | **Status**: ✅ COMPLETE
+
+**Related merge**: PR #14 | Commit on master: `9f92de1`
+**Depends on**: [p2-5-include-matched.plan](./p2-5-include-matched.plan)
+
+---
+
+## Overview
+
+Goal: rendere controllabile la finestra temporale analizzata dal motore di suggerimento, limitando il numero di interventi recenti da processare.
+
+---
+
+## Delivered
+
+- opzione CLI `--history-limit <N>`
+- propagazione del limite al caricamento degli interventi
+- miglior controllo su prestazioni e rumore dei suggerimenti
+- test su history ridotta e dimensione del cluster risultante
+
+---
+
+## Usage
+
+```bash
+rgen --suggest-scenarios --target ./my-app --history-limit 50
+```
+
+---
+
+## Files
+
+- `rgen/cli.py` — parser del flag e pass-through
+- `rgen/scenario_clusterer.py` — limitazione history letta dallo store
+- `tests/test_scenario_clusterer_integration.py` — coverage history limit
+- `README.md` — esempio aggiunto
+
+---
+
+## Validation
+
+- merged on `master` via PR #14
+- suite completa mantenuta verde

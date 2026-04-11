@@ -22,7 +22,11 @@ Input:
 Output:
 - JSON string containing routing payload with fields such as:
   - `agent`, `files`, `context`, `priority`, `scenario`
-  - optional: `confidence`, `routing_debug`, `repo_exploration`, `capability`, `capability_instructions`
+  - optional: `confidence`, `routing_debug`, `repo_exploration`, `capability`, `capability_instructions`, `update_status`
+
+Notes:
+- `route_query` includes `update_status` in output.
+- `refresh_update_status` (optional boolean input) forces remote refresh before status check.
 
 ### 2) search_history
 
@@ -64,6 +68,25 @@ Input:
 
 Output:
 - JSON coverage object without internal keys prefixed by `_`
+
+### 6) get_update_status
+
+Input:
+- `refresh: bool` (optional, default `false`)
+
+Output:
+- JSON object with update policy and git-based update availability:
+  - `status`, `update_available`, `branch`, `ahead_commits`, `behind_commits`
+  - `auto_update_enabled` is always `false` (manual-only policy)
+
+### 7) manual_update
+
+Input:
+- `confirm: bool` (optional, default `false`)
+
+Output:
+- JSON object with update action result.
+- If `confirm=false`, action is not executed and response requires explicit confirmation.
 
 ## Error Contract
 
