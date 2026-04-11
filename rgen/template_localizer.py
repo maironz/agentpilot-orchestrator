@@ -1,5 +1,5 @@
 """
-Template localizer for routing-generator projects.
+Template localizer for AgentPilot Orchestrator projects.
 
 Loads and localizes agent templates in target language with fallback to English.
 """

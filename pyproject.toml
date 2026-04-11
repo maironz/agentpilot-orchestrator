@@ -3,7 +3,7 @@ requires = ["setuptools>=42"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "routing-generator"
+name = "agentpilot-orchestrator"
 version = "0.2.0"
 description = "Auto-generates AI assistant routing systems from project patterns"
 requires-python = ">=3.10"
@@ -16,13 +16,18 @@ dev = [
     "pytest>=9.0",
     "pytest-cov>=7.0",
 ]
+mcp = [
+    "mcp[cli]>=1.0.0",
+]
 
 [project.scripts]
 rgen = "rgen.cli:main"
+agentpilot = "rgen.cli:main"
+agentpilot-mcp = "core.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["rgen*"]
+include = ["rgen*", "core*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -32,7 +37,7 @@ python_functions = ["test_*"]
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["rgen"]
+source = ["rgen", "core"]
 omit = ["tests/*"]
 
 [tool.coverage.report]

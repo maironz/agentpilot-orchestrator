@@ -1,4 +1,4 @@
-# Standard Pack - routing-generator
+# Standard Pack - AgentPilot Orchestrator
 
 ## Scopo
 Definisce stile di programmazione, convenzioni e template base per il progetto.

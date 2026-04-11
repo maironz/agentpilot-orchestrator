@@ -12,6 +12,8 @@ import json
 from pathlib import Path
 
 PLANNER_OUTPUT = Path(__file__).parent / "planner-output.json"
+PLANS_LOCAL_DIR = Path(__file__).parent / "plans-local"
+PLANS_SHARED_DIR = Path(__file__).parent / "plans"
 
 
 def handle_plan_approved() -> dict:
@@ -55,9 +57,15 @@ def handle_new_query(query: str) -> dict:
         "phase": "PLANNING",
         "action": f"Run: python .github/planner.py \"{query}\"",
         "status": "Next: Run planner to generate plan",
+        "plan_paths": [
+            str(PLANS_LOCAL_DIR).replace("\\", "/"),
+            str(PLANS_SHARED_DIR).replace("\\", "/"),
+        ],
+        "plan_lookup_policy": "local-first",
         "next_steps": [
             f"1. python .github/planner.py \"{query}\"",
             "2. (Planner generates plan in planner-output.json)",
+            "2b. If needed, keep personal drafts in .github/plans-local/ and sync approved decisions to .github/plans/",
             "3. UMANO LEGGE E DECIDE:",
             "   - Approva: python .github/router.py 'PLAN_APPROVED'",
             "   - Rifiuta: python .github/router.py 'PLAN_REJECTED: motivo'",

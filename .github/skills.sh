@@ -1,5 +1,5 @@
 #!/bin/bash
-# Master skill dispatcher — routing-generator automation
+# Master skill dispatcher — AgentPilot Orchestrator automation
 # Source this: source .github/skills.sh
 
 set -euo pipefail
@@ -230,7 +230,7 @@ backup-github() {
 
 skill-help() {
     cat <<EOF
-🛠️  routing-generator Skills
+🛠️  AgentPilot Orchestrator Skills
 
 BRANCH MANAGEMENT:
   gen-branch <name>              Create + checkout feature branch

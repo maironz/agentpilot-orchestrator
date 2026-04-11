@@ -1,5 +1,5 @@
 """
-routing-generator (rgen)
+AgentPilot Orchestrator (rgen)
 Automatically generates AI assistant routing systems from project patterns.
 """
 

@@ -46,5 +46,12 @@ desktop.ini
 # Claude Code memory (locale, non condiviso)
 .claude/
 
+# Continue / local agent state (locale, non condiviso)
+.continue/
+.continuerules
+
 # Tracciatura discussioni (locale, non condiviso)
 .discussioni/
+
+# Piani locali personali (non condivisi)
+.github/plans-local/

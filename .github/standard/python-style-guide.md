@@ -1,4 +1,4 @@
-# Python Style Guide - routing-generator
+# Python Style Guide - AgentPilot Orchestrator
 
 - Type hints su funzioni pubbliche e return types espliciti.
 - Docstring per moduli, classi e funzioni pubbliche.

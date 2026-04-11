@@ -29,6 +29,8 @@ from interventions import InterventionStore
 ROUTING_MAP = Path(__file__).parent / "routing-map.json"
 SUBAGENT_BRIEF = Path(__file__).parent / "subagent-brief.md"
 CONFIDENCE_GATE = 0.55
+PLANS_LOCAL_DIR = Path(__file__).parent / "plans-local"
+PLANS_SHARED_DIR = Path(__file__).parent / "plans"
 
 # Agent → expert file mapping (single source of truth)
 AGENT_EXPERT_MAP = {
@@ -506,7 +508,7 @@ def main():
 
     args = sys.argv[1:]
 
-    if not args:
+    if not args or args[0] in ("-h", "--help", "help"):
         print("""
 ╔════════════════════════════════════════════════════════════════╗
 ║       PSM Stack Router + Planner + Subagent Optimization      ║
@@ -530,6 +532,10 @@ MEMORY:
 PLANNER:
   python .github/router.py PLAN_APPROVED
   python .github/router.py "PLAN_REJECTED: motivo"
+
+PLANS (local-first):
+    .github/plans-local/   → personal plans (gitignored)
+    .github/plans/         → shared/public plans
 
 EXAMPLES:
   python .github/router.py --direct "fix login API"
@@ -665,6 +671,13 @@ EXAMPLES:
     else:
         # Default: planner workflow
         result = handle_new_query(query)
+
+    # Expose plan lookup paths for planner-aware workflows (local-first).
+    if isinstance(result, dict) and "plan_paths" not in result:
+        result["plan_paths"] = [
+            ".github/plans-local",
+            ".github/plans",
+        ]
 
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

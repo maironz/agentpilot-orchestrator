@@ -1,4 +1,4 @@
-# SQL Style Guide - routing-generator
+# SQL Style Guide - AgentPilot Orchestrator
 
 - Usa nomi tabelle e colonne coerenti e descrittivi.
 - Evita SELECT * in query applicative.

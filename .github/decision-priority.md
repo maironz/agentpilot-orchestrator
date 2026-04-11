@@ -1,4 +1,4 @@
-# Decision Priority — routing-generator
+# Decision Priority — AgentPilot Orchestrator
 
 1. **Implementazione** → developer propone
 2. **Test** → tester valida (verde = approvato)

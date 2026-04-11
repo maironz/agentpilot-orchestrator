@@ -1,5 +1,5 @@
 """
-Language detector for routing-generator projects.
+Language detector for AgentPilot Orchestrator projects.
 
 Auto-detects project documentation language from README, package metadata,
 or defaults to English.

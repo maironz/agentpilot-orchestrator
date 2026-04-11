@@ -1,4 +1,4 @@
-# General Coding Style - routing-generator
+# General Coding Style - AgentPilot Orchestrator
 
 ## Principi
 - Preferisci chiarezza, testabilita e cambi minimali.

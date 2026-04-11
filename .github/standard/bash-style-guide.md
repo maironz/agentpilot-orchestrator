@@ -1,4 +1,4 @@
-# Bash Style Guide - routing-generator
+# Bash Style Guide - AgentPilot Orchestrator
 
 - Usa set -euo pipefail negli script non banali.
 - Quota sempre path e variabili shell potenzialmente ambigue.

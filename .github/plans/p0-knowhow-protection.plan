@@ -1,0 +1,55 @@
+# P0 — Know-How Protection Priority Plan
+**Track**: security-governance | **Status**: 🟡 PLANNING
+
+---
+
+## Objective
+
+Ridurre il rischio di esposizione di know-how operativo, dettagli infrastrutturali e convenzioni interne durante la transizione verso open-core.
+
+---
+
+## Priority Backlog
+
+### P0 — Immediate (oggi)
+
+- [x] Classificare i file in 3 classi: `public`, `internal`, `private`
+- [x] Bloccare commit accidentali di artefatti locali (agent state, discussioni, memorie operative)
+- [x] Definire branch hygiene policy per `origin` (naming, retention, prune, delete criteria)
+- [x] Aggiungere gate CI per secret scanning pattern base
+
+### P1 — Short term (1 settimana)
+
+- [ ] Spostare runbook infrastrutturali dettagliati in area privata o versionare varianti redatte
+- [ ] Estrarre `OPEN_CORE_BOUNDARY.md` con tabella asset (open vs private)
+- [ ] Introdurre checklist pre-release per review know-how exposure
+- [ ] Definire policy "safe examples" (placeholder obbligatori per host, credenziali, topologia)
+
+### P2 — Medium term (2-3 settimane)
+
+- [ ] Automatizzare classificazione rischio file (heuristic scanner + allowlist)
+- [ ] Contratti MCP versionati con output minimizzato (no dettagli non necessari)
+- [ ] Audit periodico branch/release con report JSON archiviato
+
+---
+
+## Security Controls
+
+- Source controls:
+  - gitignore rafforzato per file locali non condivisibili
+  - branch pruning periodico e inventario branch stale
+- Content controls:
+  - placeholder mandatory (`<SERVER_IP>`, `<PASSWORD>`, `<DOMAIN>`)
+  - no runbook operativi sensibili nel core pubblico
+- Process controls:
+  - PR template con sezione "know-how exposure check"
+  - release checklist con approvazione owner
+
+---
+
+## Definition of Done
+
+- [ ] Inventario file classificato e tracciato
+- [x] policy branch origin documentata e applicata
+- [ ] evidenza scansioni (secret + know-how) allegata alla release
+- [ ] boundary open-core approvato

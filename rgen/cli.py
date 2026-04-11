@@ -1,4 +1,4 @@
-"""CLI entry point for routing-generator."""
+"""CLI entry point for AgentPilot Orchestrator."""
 
 from __future__ import annotations
 
@@ -348,7 +348,7 @@ def _run_generation(profile, core: Path, kb: Path = _DEFAULT_KB, dry_run: bool =
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="rgen",
-        description="routing-generator -- genera sistemi di routing AI per qualsiasi progetto",
+        description="AgentPilot Orchestrator -- genera sistemi di routing AI per qualsiasi progetto",
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     mode = parser.add_mutually_exclusive_group()

@@ -1,4 +1,4 @@
-# ROADMAP — routing-generator
+# ROADMAP — AgentPilot Orchestrator
 
 **Brainstorm session 2026-04-06** | Last update: 2026-04-07 | **Phase 1 + P2.1 COMPLETE** ✅ | **P2.2-P2.7 COMPLETE** ✅
 
@@ -8,11 +8,11 @@
 
 | Phase | Feature | Status | PR |
 |-------|---------|--------|-----|
-| **Phase 1 (Week 1-2)** | Live Metrics Dashboard | ✅ Done | [#1](https://github.com/maironz/routing-generator/commits) |
-| **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | [#5](https://github.com/maironz/routing-generator/commits) |
-| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | ✅ Done | [#7](https://github.com/maironz/routing-generator/commits) |
-| **P2.1 (Week 6)** | Multi-Language Agent Templates | ✅ Done | [#8](https://github.com/maironz/routing-generator/commits) |
-| **P2.2-P2.7 (Week 7+)** | Scenario Evolution Generator increments | ✅ Done | [#10](https://github.com/maironz/routing-generator/commits) to [#15](https://github.com/maironz/routing-generator/commits) |
+| **Phase 1 (Week 1-2)** | Live Metrics Dashboard | ✅ Done | [#1](https://github.com/maironz/agentpilot-orchestrator/commits) |
+| **P1.2 (Week 3-4)** | ML Feedback Loop + Router Integration | ✅ Done | [#5](https://github.com/maironz/agentpilot-orchestrator/commits) |
+| **P1.3 (Week 5)** | Cross-Agent Context Bridge (Graph Routing) | ✅ Done | [#7](https://github.com/maironz/agentpilot-orchestrator/commits) |
+| **P2.1 (Week 6)** | Multi-Language Agent Templates | ✅ Done | [#8](https://github.com/maironz/agentpilot-orchestrator/commits) |
+| **P2.2-P2.7 (Week 7+)** | Scenario Evolution Generator increments | ✅ Done | [#10](https://github.com/maironz/agentpilot-orchestrator/commits) to [#15](https://github.com/maironz/agentpilot-orchestrator/commits) |
 | Phase 2+ (next) | Audit Trail, Marketplace, Cost Estimator | 🟡 In progress | - |
 
 **Metrics**:

@@ -1,4 +1,4 @@
-# Release Notes — routing-generator
+# Release Notes — AgentPilot Orchestrator
 
 ---
 

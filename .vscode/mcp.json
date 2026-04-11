@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "agentpilot-orchestrator": {
+      "type": "stdio",
+      "command": "${workspaceFolder}/.venv/Scripts/agentpilot-mcp.exe",
+      "cwd": "${workspaceFolder}"
+    }
+  }
+}

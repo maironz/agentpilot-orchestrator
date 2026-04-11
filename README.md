@@ -1,586 +1,376 @@
-<div>
+﻿<div>
 <div align="Left">
 
 ```
- ____   ___  _   _ _____ ___ _   _  ____
-|  _ \ / _ \| | | |_   _|_ _| \ | |/ ___|
-| |_) | | | | | | | | |  | ||  \| | |  _
-|  _ <| |_| | |_| | | |  | || |\  | |_| |
-|_| \_\\___/ \___/  |_| |___|_| \_|\____|
-        ____ _____  _   _ _____ ____      _  _____ ___  ____
-       / ___| ____|| \ | | ____|  _ \    / \|_   _/ _ \|  _ \
-      | |  _|  _|  |  \| |  _| | |_) |  / _ \ | || | | | |_) |
-      | |_| | |___ | |\  | |___|  _ <  / ___ \| || |_| |  _ <
-       \____|_____||_| \_|_____|_| \_\/_/   \_\_| \___/|_| \_\
+    _                    _   ____  _ _       _
+   / \   __ _  ___ _ __ | |_|  _ \(_) | ___ | |_ 
+  / _ \ / _` |/ _ \ '_ \| __| |_) | | |/ _ \| __|
+ / ___ \ (_| |  __/ | | | |_|  __/| | | (_) | |_ 
+/_/   \_\__, |\___|_| |_|\__|_|   |_|_|\___/ \__|
+        |___/
+
+        ___  ____   ____ _   _ _____ ____ _____ ____      _  _____ ___  ____
+       / _ \|  _ \ / ___| | | | ____/ ___|_   _|  _ \    / \|_   _/ _ \|  _ \
+      | | | | |_) | |   | |_| |  _| \___ \ | | | |_) |  / _ \ | || | | | |_) |
+      | |_| |  _ <| |___|  _  | |___ ___) || | |  _ <  / ___ \| || |_| |  _ <
+       \___/|_| \_\\____|_| |_|_____|____/ |_| |_| \_\/_/   \_\_| \___/|_| \_\
 ```
 </div>
 <div align="Center">
-**Genera automaticamente un sistema di routing AI semantico per qualsiasi progetto.**
+**Automatically generate a semantic AI routing system for any project.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-223%2F223-brightgreen?logo=pytest&logoColor=white)](tests/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Tests](https://img.shields.io/badge/tests-227%2F227-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
 </div>
 </div>
 
-Test inventory verificato al 2026-04-07:
-- `223/223` test passano nella suite completa
-- raccolta completa `pytest --collect-only -q` ripristinata correttamente
-- nessun warning residuo nella suite completa dopo fix dipendenza `rich` e decoding UTF-8 nei test dashboard
-
 ---
 
-## Cos'e'
+# AgentPilot Orchestrator
 
-`rgen` e' uno **strumento CLI** che genera in secondi l'infrastruttura completa di routing AI per il tuo progetto: scenari, agenti specializzati, system prompt e motore di routing — tutto calibrato sulla tua architettura.
+Production-ready AI routing and orchestration for multi-agent workflows.
 
-```
-Il tuo progetto              Routing system generato
-───────────────              ───────────────────────
+AgentPilot Orchestrator helps teams route each request to the right specialist context, reduce token waste, and keep AI outputs consistent across engineering domains.
 
-  "Ho un'app FastAPI        .github/
-   con PostgreSQL           ├── router.py                <- motore semantico
-   e Redis cache..."        ├── routing-map.json         <- 20+ scenari custom
-                            ├── copilot-instructions.md  <- system prompt
-        rgen                ├── AGENT_REGISTRY.md
-        ────►               ├── subagent-brief.md
-                            ├── standard/
-                            │   ├── general-style.md
-                            │   ├── python-style-guide.md
-                            │   └── template.py
-                            └── esperti/
-                                ├── esperto_backend.md
-                                ├── esperto_database.md
-                                └── esperto_devops.md
-```
+> Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
 
-### Cosa ottieni
+**From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
-- **Riduzione token** — ogni richiesta viene instradata solo all'agente competente
-- **Zero allucinazioni di contesto** — ogni agente conosce solo il suo dominio
-- **Auto self-check** — 8 controlli di integrità post-generazione
-- **Backup automatico** — ogni sovrascrittura viene salvata con timestamp
-- **Pattern riutilizzabili** — costruisci una knowledge base di pattern per team
-- **Standard pack linguistico** — style guide e template base generati in `.github/standard/`
+## At a Glance
 
----
+| You need | AgentPilot Orchestrator gives you |
+|---|---|
+| Better request-to-expert matching | Scenario-based routing with confidence and priority |
+| Less prompt sprawl | Targeted context loading instead of generic mega-prompts |
+| Traceable assistant behavior | Auditable routing decisions and intervention history |
+| Assistant ecosystem integration | MCP tools for routing, memory, and coverage checks |
 
-## Flusso di lavoro
+## What It Does
 
-```
-                    ┌─────────────────────────────────────────┐
-                    │              rgen --direct              │
-                    │    --pattern psm_stack --name my-app    │
-                    └──────────────────┬──────────────────────┘
-                                       │
-                    ┌──────────────────▼──────────────────────┐
-                    │           PatternLoader                 │
-                    │   knowledge_base/<pattern>/             │
-                    │   metadata.json + routing-map.json      │
-                    └──────────────────┬──────────────────────┘
-                                       │
-                    ┌──────────────────▼──────────────────────┐
-                    │              Adapter                    │
-                    │   Sostituisce {{VAR}} nei template      │
-                    │   Rinomina agenti al tuo stack          │
-                    └──────────────────┬──────────────────────┘
-                                       │
-                    ┌──────────────────▼──────────────────────┐
-                    │     Writer  +  BackupEngine             │
-                    │   Backup automatico se .github/ esiste  │
-                    │   Copia core files + genera output      │
-                    └──────────────────┬──────────────────────┘
-                                       │
-                    ┌──────────────────▼──────────────────────┐
-                    │            SelfChecker                  │
-                    │   8 controlli: files, routing-map,      │
-                    │   agenti, template_vars, stats...       │
-                    └─────────────────────────────────────────┘
-```
+AgentPilot Orchestrator gives engineering teams a routing layer for AI workflows.
 
----
+- It classifies each request into a scenario.
+- It selects the most appropriate specialist context.
+- It exposes routing and memory through MCP tools.
+- It records interventions so routing can be improved over time.
 
-## Installazione
+In short: it reduces noisy prompting and turns assistant usage into a repeatable operational system.
 
-```bash
-git clone https://github.com/<your-username>/routing-generator
-cd routing-generator
+## Project Origin
 
-python -m venv .venv
-.venv\Scripts\activate          # Windows
-# source .venv/bin/activate     # macOS/Linux
+AgentPilot Orchestrator started as a practical response to a familiar problem: once multiple assistants, prompt styles, and specialist contexts enter the same engineering workflow, quality becomes inconsistent fast.
 
-pip install -e .
-pip install -r requirements-dev.txt   # dipendenze di test + supporto dashboard Rich
-```
+The project was originally shaped to solve that operational gap with something more rigorous than a folder of prompts and more lightweight than a fully custom platform: a routing layer that can decide which context should answer, explain why, and improve over time.
 
----
+What began as an internal orchestration system for structured engineering support evolved into a reusable open-core toolkit for teams that want assistant workflows to feel deliberate, inspectable, and production-aware.
+
+## Why AgentPilot Orchestrator
+
+- Route each request to the right agent context
+- Reduce irrelevant context and token usage
+- Keep routing decisions explainable (`scenario`, `confidence`, `priority`)
+- Add MCP-native integration for assistant ecosystems
+- Track interventions and improve routing over time
+- Turn ad-hoc prompting into a repeatable engineering capability
+
+## Core Capabilities
+
+- Semantic scenario routing (`direct`, `follow-up`, `subagent`)
+- Confidence scoring and ambiguity handling
+- Agent-specific context loading
+- Intervention memory with searchable history
+- MCP server tools for native assistant integration
+- Scenario suggestion workflow from historical interventions
+
+## Skills vs Agents
+
+Both are first-class building blocks, but they solve different problems.
+
+| Component | Primary role | Scope | Typical trigger |
+|---|---|---|---|
+| Skills | Reusable operating playbooks | Task-level behavior | "How should this task be executed?" |
+| Agents | Specialized decision and response profiles | Domain-level ownership | "Who should handle this request?" |
+
+In practice:
+
+- Use **Agents** to route requests to the right domain context (backend, devops, docs, orchestration).
+- Use **Skills** to standardize *how* the selected agent executes the task (checks, workflows, quality gates).
+- Combine both for reliable outcomes: **Agent = who**, **Skill = how**.
+
+> Tip: if routing is correct but output quality is inconsistent, improve the Skill. If quality is good but the wrong domain is selected, tune the Agent routing map.
+
+## How It Works
+
+1. Input request arrives through CLI or MCP tool call.
+2. Router evaluates scenarios using keyword sets, priorities, and confidence scoring.
+3. Selected agent context and relevant files are attached to the task.
+4. Response is produced and the intervention can be logged for future calibration.
+
+Operational loop:
+
+- route
+- execute
+- validate
+- log
+- tune
 
 ## Quick Start
 
-### 1. Vedi i pattern disponibili
+> Tip: if you only want to see the router in action, install dependencies, run `python .github/router.py --stats`, then try a single `--direct` query before generating anything.
+
+### 1) Clone and install
 
 ```bash
-rgen --list-patterns
+git clone https://github.com/maironz/agentpilot-orchestrator.git
+cd agentpilot-orchestrator
+
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+# source .venv/bin/activate
+
+pip install -e .
+pip install -r requirements-dev.txt
+
+# Optional: MCP runtime dependencies
+pip install -e ".[mcp]"
 ```
 
-```
-Pattern disponibili (3):
-  psm_stack   — PHP 8.3 + Docker + MariaDB + Traefik + Proxmox
-  python_api  — FastAPI/Flask + PostgreSQL + Redis + Docker
-  node_ts     — Node.js TypeScript + Express + React/Vue + Docker
-```
-
-### 2. Genera il routing per il tuo progetto
+### Fast path
 
 ```bash
-# Non-interattivo (CI/CD friendly)
-rgen --direct --pattern psm_stack --name my-app --target ./my-app
-
-# Anteprima senza scrivere nulla su disco
-rgen --dry-run --pattern psm_stack --name my-app --target ./my-app
-
-# Interattivo guidato (consigliato per la prima volta)
-rgen
+python .github/router.py --stats
+python .github/router.py --direct "debug Python API timeout"
 ```
 
-### 3. Output della generazione
-
-```
-[rgen] Backup: 0 file (destinazione vuota)
-[rgen] Scritti: 18 file in ./my-app/.github/
-
-Self-Check Report
-=================
-[PASS] required_files    - router.py, routing-map.json, ... (8/8)
-[PASS] routing_map       - 21 scenari, 162 keywords, JSON valido
-[PASS] expert_files      - 3 agenti dichiarati, 3 file trovati
-[PASS] agent_registry    - AGENT_REGISTRY.md coerente con routing-map
-[PASS] copilot_instr     - sezioni DISPATCHER e Router presenti
-[PASS] template_vars     - nessun {{VAR}} rimasto non sostituito
-[PASS] core_files        - router.py, interventions.py copiati
-[PASS] router_stats      - exit 0, overall: ok
-
-Overall: OK (8/8 checks passed)
-```
-
-### 4. Attiva il routing nel tuo AI tool
-
-| Tool | Come attivare |
-|---|---|
-| **GitHub Copilot** | `.github/copilot-instructions.md` caricato automaticamente da VS Code |
-| **Claude Code** | Incolla `copilot-instructions.md` come system prompt o CLAUDE.md |
-| **Cursor** | Rinomina in `.cursorrules` o usa il system prompt |
-| **Aider** | `aider --system-prompt .github/copilot-instructions.md` |
-| **Qualsiasi LLM** | Copia manualmente il contenuto di `copilot-instructions.md` |
-
----
-
-### 5. Scenario Evolution (P2.2-P2.7 complete)
-
-Puoi ottenere candidati scenario dai log storici in `.github/interventions.db`:
+### 2) Generate routing assets
 
 ```bash
-# Analisi standard: usa prima i fallback / unmatched
-rgen --suggest-scenarios --target ./my-app
+rgen --direct --pattern python_api --name my-app --target ./my-app
+```
 
-# Salva anche il payload JSON su file
-rgen --suggest-scenarios --target ./my-app --suggest-output ./artifacts/scenario-suggestions.json
+### 3) Run router checks
 
-# Filtra cluster deboli o troppo piccoli
-rgen --suggest-scenarios --target ./my-app --min-cluster-size 4 --min-confidence 0.65
+```bash
+python .github/router.py --stats
+python .github/router.py --audit
+```
 
-# Limita l'analisi agli ultimi 50 interventi
-rgen --suggest-scenarios --target ./my-app --history-limit 50
+### 4) Suggest new scenarios from history
 
-# Preview leggibile per terminale
+```bash
 rgen --suggest-scenarios --target ./my-app --suggest-format text
-
-# Analizza tutta la history, non solo gli unmatched
-rgen --suggest-scenarios --target ./my-app --include-matched
 ```
 
-Output: JSON con cluster di query simili, keywords estratte, scenario suggerito e confidence.
+## Practical Tips
 
-Opzioni principali:
+- Start with `python .github/router.py --stats` before changing routing rules.
+- Use `--direct` queries as smoke tests whenever you edit scenarios or keywords.
+- Keep `knowledge_base` generic in public snapshots and move operational playbooks to private space.
+- Run `rgen --suggest-scenarios` only after collecting enough intervention history, otherwise the signal is weak.
+- Install MCP extras only when you need the server runtime; the generator itself stays lightweight.
 
-- `--min-cluster-size` per ignorare gruppi troppo piccoli
-- `--similarity-threshold` per rendere il clustering piu' o meno aggressivo
-- `--min-confidence` per escludere suggerimenti poco affidabili
-- `--history-limit` per controllare quanti interventi recenti vengono analizzati
-- `--suggest-format text` per una preview leggibile a terminale
-- `--suggest-output` per esportare il JSON su file oltre a stamparlo su stdout
-- `--include-matched` per includere anche interventi gia' categorizzati
-
-Esempio (estratto):
-
-```json
-[
-  {
-    "cluster_id": 0,
-    "suggested_scenario": "database_query_performance",
-    "confidence": 0.81,
-    "size": 7,
-    "keywords": ["database", "query", "performance"]
-  }
-]
-```
-
----
-
-## Standard di programmazione generati
-
-Ogni progetto generato include una cartella `.github/standard/` con:
-
-- `general-style.md` per le regole trasversali
-- style guide per i linguaggi rilevati dallo stack
-- template base come `template.py`, `template.ts`, `template.php`, `template.sql`, `template.sh`, `template.ps1`
-
-La selezione è guidata dal tech stack dichiarato:
-
-- `python`, `fastapi`, `django` -> standard Python
-- `javascript`, `node`, `react` -> standard JavaScript
-- `typescript`, `nestjs`, `angular` -> standard TypeScript
-- `php`, `laravel`, `symfony` -> standard PHP
-- `postgres`, `mysql`, `mariadb`, `sqlite` -> standard SQL
-- `docker`, `linux`, `bash` -> standard Bash
-- `powershell`, `windows` -> standard PowerShell
-
-Questo evita che lo stile resti implicito nei singoli agenti e fornisce una base concreta per nuovi file e refactor.
-
----
-
-## Come funziona il router
-
-Il **router semantico** assegna ogni richiesta all'agente piu' competente tramite keyword scoring:
+## Example Flow
 
 ```bash
-# Nella directory del tuo progetto
+# 1. Generate assets for a target repository
+rgen --direct --pattern python_api --name payments-api --target ./payments-api
+
+# 2. Inspect routing health
 python .github/router.py --stats
-python .github/router.py --direct "ottimizza query postgres per report mensile"
+
+# 3. Probe one realistic task
+python .github/router.py --direct "investigate flaky pytest failure in CI"
 ```
+
+## MCP Integration
+
+AgentPilot Orchestrator includes an MCP server to expose routing and memory as native tools.
+
+For standard VS Code users, this repository includes a ready-to-use workspace configuration in `.vscode/mcp.json`.
+Open the repo in VS Code, install the workspace package with MCP extras, trust the MCP server when prompted, and use chat tools without manual JSON copy/paste.
+
+You can also toggle the workspace MCP configuration without editing JSON manually:
+
+```bash
+python .github/mcp_configure.py enable
+python .github/mcp_configure.py disable
+```
+
+> Tip: use the MCP server when you want assistants to call routing and memory as tools; use the CLI when you are iterating locally on patterns and scenarios.
+
+```bash
+pip install -e ".[mcp]"
+agentpilot-mcp
+```
+
+Current MCP tools:
+
+- `route_query`
+- `search_history`
+- `log_intervention`
+- `get_stats`
+- `audit_coverage`
+- `get_update_status` (update check, optional refresh)
+- `manual_update` (manual-only update, requires confirmation)
+
+Update policy:
+
+- no automatic self-update
+- update checks are exposed via MCP status
+- manual update is optional and explicit
+
+## MCP Does Not Replace Instructions
+
+MCP tools and workspace instructions solve different problems.
+
+- Instructions define behavior: workflow, formatting, constraints, checks, and team rules.
+- MCP provides capabilities: callable tools for routing, memory, health checks, and update status.
+
+In practice:
+
+- use instructions to tell the assistant how it should work
+- use MCP to give the assistant real operational tools
+
+Best results come from using both together.
+
+- Without instructions, the assistant may have tools but follow the wrong workflow.
+- Without MCP, the assistant may follow the workflow but lack real routing and operational capabilities.
+
+## Why Install This MCP Server
+
+If the server works in the background, it can feel "invisible". The practical value is that your assistant stops being generic and starts behaving like an orchestrated engineering operator.
+
+Without this MCP server, chat replies rely mostly on raw model priors and broad workspace context. With this MCP server, each request can be:
+
+- routed to a scenario with explicit `agent`, `priority`, and `confidence`
+- backed by intervention memory from similar historical tasks
+- validated with health and coverage checks before you trust changes
+
+In short: less prompt guesswork, more repeatable operations.
+
+## 5-Minute VS Code Demo (Visible Value)
+
+Use this flow to make the value observable to end users.
+
+### Step 1: Configure MCP in workspace
+
+The repository already includes a workspace MCP configuration. The standard path is:
+
+```bash
+pip install -e ".[mcp]"
+python .github/mcp_configure.py enable
+```
+
+If you need to create `.vscode/mcp.json` manually, use:
 
 ```json
 {
-  "agent": "esperto_database",
-  "scenario": "query_optimization",
-  "confidence": 0.87,
-  "files": [".github/esperti/esperto_database.md"],
-  "context": "Query optimization - EXPLAIN, indexes, transactions"
-}
-```
-
-L'AI riceve **solo** il file `esperto_database.md` — non tutto il contesto del progetto.
-
-### Bootstrap sessione AI (obbligatorio)
-
-Per evitare risposte non allineate allo stato del router, all'inizio di ogni sessione operativa esegui:
-
-```bash
-python .github/router.py --stats
-```
-
-Poi pubblica sempre un header iniziale con:
-
-```text
-🤖 GPT-5.3-Codex | Agente: <agent> | Priorita': <priority> | Routing: <stats + stato>
-```
-
-Esempio reale di stato router:
-
-```text
-Routing: 15scn/184kw | overlap:2.7% | router:574L | map:7.4KB | [OK] OK
-```
-
-Per ogni nuova richiesta, instrada prima il task:
-
-```bash
-python .github/router.py --direct "<query>"
-# oppure
-python .github/router.py --follow-up "<query>"
-```
-
-### Policy di esplorazione repo
-
-Il routing via MCP e router CLI non e' una sandbox blindata: e' un filtro operativo iniziale.
-
-Regola consigliata:
-
-1. Parti sempre dai file instradati dal router
-2. Mantieni scope ridotto se la confidence e' sopra soglia
-3. Allarga all'intero repo solo come fallback controllato
-
-Il router espone ora una policy `repo_exploration` con confidence gate esplicito:
-
-- `allowed: false` quando il match e' sufficientemente affidabile
-- `allowed: true` quando non c'e' match, il routing e' ambiguo, oppure la confidence e' sotto soglia
-
-Trigger ammessi per passare alla ricerca repo-wide:
-
-- nessuno scenario matchato
-- routing ambiguo
-- confidence sotto soglia
-- file instradati insufficienti o incoerenti con il repo reale
-
----
-
-## Advanced Router Features
-
-### 🎯 Live Metrics Dashboard (P1.1 — DONE)
-
-Monitor routing health in real-time:
-
-```bash
-python .github/router.py --dashboard
-```
-
-**Output**: Interactive TUI with:
-- Confidence trend (average recent queries)
-- Scenario usage heatmap
-- Agent overlap detection
-- Dead zones (unmatched queries)
-- Controls: `[r]efresh | [e]xport | [q]uit`
-
----
-
-### 🧠 ML-Calibrated Weights (P1.2 — DONE)
-
-Auto-calibrate routing weights from intervention history:
-
-```bash
-# Show calibrated weights with success rates
-python .github/router.py --calibrate-weights
-
-# Preview weights without persisting
-python .github/router.py --calibrate-weights --dry-run
-
-# Use calibration in routing query
-python .github/router.py --direct "query" --use-calibration
-```
-
-**Report output**:
-```
-SUCCESS RATES PER SCENARIO:
-  query_optimization        → 87.5%
-  config_validation         → 92.1%
-  error_handling            → 61.3%
-
-KEYWORD BOOSTS (top 15):
-  1. optimize               → +50% (boost: 1.5x)
-  2. performance            → +25% (boost: 1.25x)
-  3. index                  → +40% (boost: 1.4x)
-```
-
-**Features**:
-- Decay algorithm: recent interventions weighted higher
-- Dry-run mode to preview changes
-- Exports to `calibrated_weights.json`
-- Configurable minimum sample threshold
-
----
-
-### 🔗 Graph Routing — Multi-Agent Cascade (P1.3 — DONE)
-
-Route queries through agent dependency graphs for multi-domain tasks:
-
-```bash
-python .github/router.py --graph-mode "fix auth bug AND deploy to production"
-```
-
-**Features**:
-- Primary + secondary agents per scenario
-- Automatic cascade execution with context forwarding
-- Cycle detection (prevents circular routing)
-- Graceful fallback on failures
-
-**Example routing-map.json with dependencies:**
-```json
-{
-  "deployment": {
-    "agent": "backend",
-    "keywords": ["deploy", "release", "production"],
-    "dependencies": ["devops"],
-    "files": [".github/esperti/esperto_backend.md"],
-    "context": "Full deployment workflow"
-  }
-}
-```
-
-**Output**: Multi-agent result with execution chain:
-```json
-{
-  "mode": "graph",
-  "primary": {
-    "agent": "backend",
-    "scenario": "deployment",
-    "confidence": 0.87,
-    "files": [".github/esperti/esperto_backend.md"],
-    "context": "Full deployment workflow"
-  },
-  "secondary": [
-    {
-      "agent": "devops",
-      "scenario": "infrastructure",
-      "confidence": 0.75,
-      "files": [".github/esperti/esperto_devops.md"],
-      "context": "Infrastructure management"
+    "servers": {
+        "agentpilot-orchestrator": {
+            "type": "stdio",
+            "command": "${workspaceFolder}/.venv/Scripts/agentpilot-mcp.exe",
+            "cwd": "${workspaceFolder}"
+        }
     }
-  ],
-  "execution_plan": ["backend", "devops"],
-  "context_forwarding": {
-    "prior_agent": "backend",
-    "prior_confidence": 0.87,
-    "prior_context": "Full deployment workflow"
-  },
-  "cascade_success": true
 }
 ```
 
-**Workflow**:
-1. User query → routes to primary agent (backend)
-2. Backend identifies secondary need (devops)
-3. System checks dependency graph
-4. Devops agent invoked with forwarded context
-5. Unified response chain
+Then confirm trust and start the server from VS Code MCP controls.
 
----
+### Step 2: Run three prompts in chat
 
-## Backup e ripristino
+Prompt A (routing):
 
-Prima di ogni scrittura, `rgen` crea automaticamente un backup in `.github/.rgen-backups/<timestamp>/`.
-
-```bash
-# Lista backup disponibili
-rgen --restore --target ./my-app
-
-# Ripristina un backup specifico
-rgen --restore --target ./my-app --timestamp 20260314_143022
+```text
+Route this task: optimize slow Postgres queries in our API.
 ```
 
----
+What users should see:
 
-## Validazione post-generazione
+- a routed scenario payload with `agent`, `scenario`, and `priority`
 
-```bash
-# Verifica un .github/ esistente senza rigenerare nulla
-rgen --check --target ./my-app
+Prompt B (memory):
+
+```text
+Search intervention history for: flaky pytest timeout in CI.
 ```
 
-Utile dopo modifiche manuali o aggiornamenti di pattern.
+What users should see:
 
----
+- prior interventions or memory stats, instead of a generic answer
 
-## Aggiungere un pattern alla knowledge base
+Prompt C (health):
 
-```
-knowledge_base/
-└── my_pattern/
-    ├── metadata.json          <- id, versione, tags, stack
-    ├── routing-map.json       <- scenari e keywords
-    ├── agents.json            <- definizione agenti
-    └── esperti/
-        └── esperto_<role>.template.md   <- usa {{VAR}} per variabili
+```text
+Get router health stats and summarize risks.
 ```
 
-Variabili disponibili nei template:
+What users should see:
 
-| Variabile | Contenuto |
-|---|---|
-| `{{PROJECT_NAME}}` | Nome del progetto |
-| `{{PROJECT_DESCRIPTION}}` | Descrizione breve |
-| `{{TECH_STACK_TABLE}}` | Tabella Markdown dello stack |
-| `{{DOMAIN_KEYWORDS}}` | Keywords di dominio |
-| `{{CONSTRAINTS_LIST}}` | Vincoli critici |
-| `{{AGENT_RESPONSE_PREFIX}}` | Prefisso risposta agente |
-| `{{GITHUB_SUBDIR}}` | Cartella di output (default: `.github`) |
+- measurable router health fields (status, overlap, map size, thresholds)
 
-Puoi anche rinominare gli agenti via `RENAME_<AGENT>` nei `template_vars`.
+### Step 3: Verify it is actually working
 
----
+In VS Code, open MCP server output logs and confirm tool calls are executed.
 
-## Sviluppo e test
+If users only see plain chat text with no tool activity, MCP is not connected.
 
-```bash
-pytest                                         # tutti i test (223/223)
-pytest --cov=rgen --cov-report=term-missing   # con coverage
-pytest tests/test_cli.py -v                   # test mirati sulla CLI
-```
+## What Changes for the User
 
-### Struttura del progetto
+- before: "ask and hope" workflow
+- after: route, validate, execute, and log workflow
 
-```
-routing-generator/
-├── rgen/
-│   ├── cli.py              <- entry point (6 modalita')
-│   ├── questionnaire.py    <- intervista interattiva
-│   ├── adapter.py          <- PatternLoader + template substitution
-│   ├── writer.py           <- scrittura + backup su disco
-│   ├── backup.py           <- BackupEngine con timestamp
-│   ├── self_checker.py     <- 8 controlli post-generazione
-│   └── models.py           <- ProjectProfile, GenerationResult, CheckReport
-├── knowledge_base/
-│   ├── psm_stack/          <- PHP + Docker + MariaDB + Traefik
-│   ├── python_api/         <- FastAPI/Flask + PostgreSQL + Redis + Docker
-│   └── node_ts/            <- Node.js TypeScript + Express + React/Vue
-├── core/                   <- file invarianti copiati in ogni progetto
-│   ├── router.py           <- motore semantico (574 righe)
-│   ├── router_audit.py     <- audit copertura
-│   ├── router_planner.py   <- integrazione planner
-│   ├── interventions.py    <- memoria SQLite+FTS5
-│   └── mcp_server.py       <- MCP server 5 tools
-└── tests/                  <- 223 test definiti nel repo
-```
+This turns AI support into an operational loop instead of a one-off prompt.
 
----
+## Typical Use Cases
 
-## MCP Server (opzionale)
+- Route software tasks by domain (backend, devops, docs, orchestrator)
+- Standardize AI behavior in multi-team repositories
+- Reduce prompt sprawl and context noise
+- Build MCP-ready orchestration for coding assistants
 
-Il sistema generato include un **MCP server** che espone il router come tool nativo per AI assistant compatibili:
+## Why It Stands Out
 
-```bash
-# Nel progetto target (non qui)
-pip install mcp[cli]>=1.0.0
-python .github/mcp_server.py
-```
+- It treats routing as product infrastructure, not prompt decoration.
+- It keeps decisions visible enough to debug, tune, and trust.
+- It bridges local CLI workflows and MCP-native tool calling in the same system.
+- It is designed for teams that want sharper assistant behavior without losing control.
 
-5 tools disponibili: `route_query`, `search_history`, `log_intervention`, `get_stats`, `audit_coverage`.
+## Good Fit If
 
-`route_query` restituisce anche la policy `repo_exploration`, utile per decidere se restare nei file instradati o aprire la ricerca all'intero repository.
+- your team uses multiple coding assistants and wants consistent behavior
+- you have recurring task categories that should hit different expert contexts
+- you want routing decisions to stay transparent instead of heuristic black boxes
+- you need a bridge between local CLI workflows and MCP-native assistant tooling
 
----
+## Open-Core Direction
 
-## Futuri sviluppi
+AgentPilot Orchestrator is moving to an open-core model:
 
-Lo stato del backlog e' ora allineato tra `README`, `ROADMAP` e file in `.github/plans/`.
+- Public core: routing engine, MCP baseline, docs, examples
+- Private extensions: advanced governance, premium integrations, proprietary playbooks
 
-### Miglior rapporto valore / tempo / costo zero
+This is the part we want public: the routing engine, the contracts, the operational discipline, and the idea that AI workflows can be engineered instead of improvised.
 
-- **Dry-run file preview** — mostra i file che verrebbero creati o aggiornati prima della scrittura effettiva
-- **Routing-map JSON Schema** — autocomplete e validazione editor con sforzo minimo
-- **CLI color output** — migliora leggibilita' e feedback operativo senza cambiare il core
+## Security and Know-How Protection
 
-Questi tre interventi sono i candidati piu' semplici da implementare senza servizi esterni e con tempi stimati inferiori a 1-2 giorni ciascuno.
+- No hardcoded credentials in public assets
+- Redacted infrastructure examples and placeholders only
+- Release checklist includes know-how exposure review
 
-### Prossime feature core realistiche a costo zero
+## Contributing
 
-- **Historical Audit Trail + Rollback** — timeline delle generazioni, diff e rollback selettivo
-- **Cost Estimator** — stima euristica del costo per scenario usando history locale e pricing table versionata
-- **Stochastic Testing Mode** — harness di robustezza per stressare il router con input sintetici riproducibili
+Contributions are welcome.
 
-Queste feature restano compatibili con un approccio `costo zero` se implementate solo con storage locale, fixture di test e file versionati nel repository.
+Before opening a PR:
 
-### Iniziative da trattare come medio termine
+- run tests
+- keep docs and plans aligned
+- avoid exposing environment-specific operational details
 
-- **Pattern Marketplace** — utile solo se emerge un bisogno reale di condividere pattern tra team o repository
-- **IDE Extension per VS Code** — fattibile, ma introduce un secondo stack e ha un costo-tempo sensibilmente superiore al lavoro sul core CLI
 
-Per il dettaglio tecnico di tempi, fattibilita' e priorita', vedi i plan in `.github/plans/` e la matrice aggiornata in `.github/ROADMAP.md`.
-
----
-
-## Licenza
-
-MIT — libero per uso personale, commerciale e open source.

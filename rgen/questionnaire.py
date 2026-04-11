@@ -52,7 +52,7 @@ class Questionnaire:
 
     def _interview(self) -> ProjectProfile:
         self._print("")
-        self._print("=== routing-generator: nuovo progetto ===")
+        self._print("=== AgentPilot Orchestrator: nuovo progetto ===")
         self._print("")
 
         use_pattern = self._ask(
