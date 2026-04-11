@@ -1,0 +1,96 @@
+{
+  "_base_autoloaded": {
+    "note": "copilot-instructions.md is auto-loaded by VS Code into the system prompt. Do NOT add it to scenario files — it would be a redundant read."
+  },
+  "typescript_code": {
+    "agent": "backend",
+    "keywords": ["typescript", "type", "interface", "generic", "ts", "tsc", "eslint", "decorator", "enum", "union", "intersection", "narrowing", "infer"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "TypeScript development (types, interfaces, patterns)",
+    "priority": "high"
+  },
+  "api_routes": {
+    "agent": "backend",
+    "keywords": ["route", "controller", "middleware", "express", "fastify", "request", "response", "api", "endpoint", "rest", "json", "http", "handler", "validator"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Node.js API routes & controllers",
+    "priority": "high"
+  },
+  "database": {
+    "agent": "backend",
+    "keywords": ["database", "db", "sql", "query", "migration", "schema", "prisma", "typeorm", "sequelize", "mongoose", "model", "orm", "transaction", "index", "relation"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Database layer (ORM, migrations, queries)",
+    "priority": "high"
+  },
+  "auth": {
+    "agent": "backend",
+    "keywords": ["auth", "authentication", "jwt", "token", "oauth", "session", "passport", "bcrypt", "login", "permission", "role", "guard", "middleware", "refresh"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Authentication & authorization",
+    "priority": "high"
+  },
+  "frontend_components": {
+    "agent": "frontend",
+    "keywords": ["component", "react", "vue", "angular", "hook", "state", "props", "jsx", "tsx", "css", "style", "render", "ui", "form", "event", "store", "pinia", "redux"],
+    "files": [".github/esperti/esperto_frontend.md"],
+    "context": "Frontend components & UI",
+    "priority": "high"
+  },
+  "testing": {
+    "agent": "backend",
+    "keywords": ["test", "jest", "vitest", "supertest", "mock", "spy", "fixture", "coverage", "assert", "describe", "it", "expect", "e2e", "playwright", "cypress"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Testing & QA (Jest/Vitest)",
+    "priority": "medium"
+  },
+  "docker_infra": {
+    "agent": "devops",
+    "keywords": ["docker", "compose", "container", "image", "dockerfile", "ci", "cd", "pipeline", "deploy", "kubernetes", "k8s", "github_actions", "health", "registry"],
+    "files": [".github/esperti/esperto_devops.md"],
+    "context": "Container infrastructure & CI/CD",
+    "priority": "medium"
+  },
+  "performance": {
+    "agent": "backend",
+    "keywords": ["performance", "slow", "optimize", "profil", "benchmark", "latency", "bundle", "webpack", "vite", "treeshake", "memory", "leak", "n+1", "cache"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Performance & optimization",
+    "priority": "medium"
+  },
+  "security": {
+    "agent": "backend",
+    "keywords": ["security", "vulnerability", "injection", "xss", "csrf", "cors", "owasp", "sanitize", "helmet", "validate", "encrypt", "secret", "env", "rate_limit"],
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Security audit & hardening",
+    "priority": "high"
+  },
+  "docs": {
+    "agent": "orchestratore",
+    "keywords": ["documenta", "readme", "openapi", "swagger", "jsdoc", "tsdoc", "changelog", "wiki", "guide", "comment", "typedoc"],
+    "files": [".github/esperti/esperto_orchestratore.md"],
+    "context": "Documentation (JSDoc, OpenAPI, README)",
+    "priority": "low"
+  },
+  "troubleshooting": {
+    "agent": "orchestratore",
+    "keywords": ["error", "debug", "fix", "problem", "issue", "crash", "exception", "log", "broken", "bug", "undefined", "null", "TypeError", "timeout"],
+    "files": [".github/esperti/esperto_orchestratore.md"],
+    "context": "Troubleshooting & debugging",
+    "priority": "high"
+  },
+  "git_version_control": {
+    "agent": "orchestratore",
+    "keywords": ["git", "commit", "branch", "merge", "rebase", "pull", "push", "conflict", "tag", "release", "npm", "semver", "version", "publish"],
+    "files": [".github/esperti/esperto_orchestratore.md"],
+    "context": "Git & version control",
+    "priority": "low"
+  },
+  "dependency_management": {
+    "agent": "devops",
+    "keywords": ["npm", "yarn", "pnpm", "package", "dependency", "install", "upgrade", "lockfile", "node_modules", "semver", "peer", "devdependency", "audit"],
+    "files": [".github/esperti/esperto_devops.md"],
+    "context": "Package & dependency management",
+    "priority": "low"
+  }
+}
