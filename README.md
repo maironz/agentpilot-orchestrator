@@ -37,6 +37,8 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 
 > Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
 
+Current release: `v0.4.0`. See `.github/RELEASE_NOTES.md` for release history and migration context.
+
 **From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
 ## At a Glance
@@ -166,12 +168,21 @@ python .github/router.py --audit
 rgen --suggest-scenarios --target ./my-app --suggest-format text
 ```
 
+### 5) Inspect generation history and rollback safely
+
+```bash
+rgen --history --target ./my-app
+rgen --history --show-diffs --target ./my-app
+rgen --rollback --to 20260411_103000 --target ./my-app
+```
+
 ## Practical Tips
 
 - Start with `python .github/router.py --stats` before changing routing rules.
 - Use `--direct` queries as smoke tests whenever you edit scenarios or keywords.
 - Keep `knowledge_base` generic in public snapshots and move operational playbooks to private space.
 - Run `rgen --suggest-scenarios` only after collecting enough intervention history, otherwise the signal is weak.
+- Use `rgen --history --show-diffs` before a rollback when you need to verify which files are still unchanged since generation.
 - Install MCP extras only when you need the server runtime; the generator itself stays lightweight.
 
 ## Example Flow

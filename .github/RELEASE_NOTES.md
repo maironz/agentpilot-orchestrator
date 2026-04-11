@@ -2,6 +2,90 @@
 
 ---
 
+## v0.4.0 (P2.8 — MCP Baseline + Open-Core Assets)
+
+**Release Date**: 2026-04-11
+**Phase**: MCP hardening, activation flow, and public-facing packaging
+**Tag**: `v0.4.0`
+
+### 🎉 What's New
+
+#### MCP Baseline Hardened
+
+The project now ships with a documented and operational MCP baseline for VS Code workflows.
+
+**Highlights**:
+- MCP runtime packaging via `pip install -e ".[mcp]"`
+- installable MCP entrypoint: `agentpilot-mcp`
+- MCP contract documentation in `.github/MCP_CONTRACT.md`
+- explicit update policy with `get_update_status` and `manual_update`
+- response header status model with `Update` and `MCP`
+- runtime MCP status detection aligned with real VS Code logs
+
+#### Standard User Activation Flow
+
+MCP activation is now documented for non-expert users:
+
+- workspace MCP configuration in `.vscode/mcp.json`
+- activation guide in `.github/MCP_ACTIVATION.md`
+- enable/disable helper in `.github/mcp_configure.py`
+- extension recommendations in `.vscode/extensions.json`
+
+#### Documentation and Open-Core Assets
+
+- README expanded with MCP value proposition and onboarding flow
+- README now clarifies that MCP does not replace instructions
+- open-core asset boundaries, cutover docs, and governance artifacts added
+
+---
+
+### 📊 Metrics
+
+| Metric | Value | Change |
+|--------|-------|--------|
+| Test Suite | 233/233 | +46 tests |
+| MCP Tools | 7 | baseline stabilized |
+| MCP Status | Active/Inactive | added runtime reporting |
+| Packaging | `agentpilot-mcp` | new entrypoint |
+
+---
+
+### 🧪 Testing
+
+All 233 tests passing.
+
+Includes coverage for:
+- branding migration
+- cutover snapshot flow
+- MCP startup smoke behavior
+- secret scanning guardrails
+
+Run tests:
+```bash
+pytest tests/ -v
+```
+
+---
+
+### 📚 Documentation Updates
+
+- ✅ README.md — MCP onboarding, value explanation, instructions vs MCP
+- ✅ `.github/MCP_ACTIVATION.md` — user activation and disable flow
+- ✅ `.github/MCP_CONTRACT.md` — MCP tool contract
+- ✅ `.github/RELEASE_NOTES.md` — release history updated
+
+---
+
+### 🔄 Backward Compatibility
+
+✅ Backward compatible for existing routing users.
+
+- CLI generation remains available
+- MCP is additive, not a replacement for instructions
+- update flow remains manual-only
+
+---
+
 ## v0.3.0 (P1.3 — Graph Routing)
 
 **Release Date**: 2026-04-07
