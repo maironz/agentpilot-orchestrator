@@ -35,6 +35,27 @@ Production-ready AI routing and orchestration for multi-agent workflows.
 
 AgentPilot Orchestrator helps teams route each request to the right specialist context, reduce token waste, and keep AI outputs consistent across engineering domains.
 
+> Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
+
+**From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
+
+## At a Glance
+
+| You need | AgentPilot Orchestrator gives you |
+|---|---|
+| Better request-to-expert matching | Scenario-based routing with confidence and priority |
+| Less prompt sprawl | Targeted context loading instead of generic mega-prompts |
+| Traceable assistant behavior | Auditable routing decisions and intervention history |
+| Assistant ecosystem integration | MCP tools for routing, memory, and coverage checks |
+
+## Project Origin
+
+AgentPilot Orchestrator started as a practical response to a familiar problem: once multiple assistants, prompt styles, and specialist contexts enter the same engineering workflow, quality becomes inconsistent fast.
+
+The project was originally shaped to solve that operational gap with something more rigorous than a folder of prompts and more lightweight than a fully custom platform: a routing layer that can decide which context should answer, explain why, and improve over time.
+
+What began as an internal orchestration system for structured engineering support evolved into a reusable open-core toolkit for teams that want assistant workflows to feel deliberate, inspectable, and production-aware.
+
 ## Why AgentPilot Orchestrator
 
 - Route each request to the right agent context
@@ -42,6 +63,7 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 - Keep routing decisions explainable (`scenario`, `confidence`, `priority`)
 - Add MCP-native integration for assistant ecosystems
 - Track interventions and improve routing over time
+- Turn ad-hoc prompting into a repeatable engineering capability
 
 ## Core Capabilities
 
@@ -53,6 +75,8 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 - Scenario suggestion workflow from historical interventions
 
 ## Quick Start
+
+> Tip: if you only want to see the router in action, install dependencies, run `python .github/router.py --stats`, then try a single `--direct` query before generating anything.
 
 ### 1) Clone and install
 
@@ -71,6 +95,13 @@ pip install -r requirements-dev.txt
 
 # Optional: MCP runtime dependencies
 pip install -e ".[mcp]"
+```
+
+### Fast path
+
+```bash
+python .github/router.py --stats
+python .github/router.py --direct "debug Python API timeout"
 ```
 
 ### 2) Generate routing assets
@@ -92,9 +123,32 @@ python .github/router.py --audit
 rgen --suggest-scenarios --target ./my-app --suggest-format text
 ```
 
+## Practical Tips
+
+- Start with `python .github/router.py --stats` before changing routing rules.
+- Use `--direct` queries as smoke tests whenever you edit scenarios or keywords.
+- Keep `knowledge_base` generic in public snapshots and move operational playbooks to private space.
+- Run `rgen --suggest-scenarios` only after collecting enough intervention history, otherwise the signal is weak.
+- Install MCP extras only when you need the server runtime; the generator itself stays lightweight.
+
+## Example Flow
+
+```bash
+# 1. Generate assets for a target repository
+rgen --direct --pattern python_api --name payments-api --target ./payments-api
+
+# 2. Inspect routing health
+python .github/router.py --stats
+
+# 3. Probe one realistic task
+python .github/router.py --direct "investigate flaky pytest failure in CI"
+```
+
 ## MCP Integration
 
 AgentPilot Orchestrator includes an MCP server to expose routing and memory as native tools.
+
+> Tip: use the MCP server when you want assistants to call routing and memory as tools; use the CLI when you are iterating locally on patterns and scenarios.
 
 ```bash
 pip install "mcp[cli]>=1.0.0"
@@ -116,12 +170,28 @@ Current MCP tools:
 - Reduce prompt sprawl and context noise
 - Build MCP-ready orchestration for coding assistants
 
+## Why It Stands Out
+
+- It treats routing as product infrastructure, not prompt decoration.
+- It keeps decisions visible enough to debug, tune, and trust.
+- It bridges local CLI workflows and MCP-native tool calling in the same system.
+- It is designed for teams that want sharper assistant behavior without losing control.
+
+## Good Fit If
+
+- your team uses multiple coding assistants and wants consistent behavior
+- you have recurring task categories that should hit different expert contexts
+- you want routing decisions to stay transparent instead of heuristic black boxes
+- you need a bridge between local CLI workflows and MCP-native assistant tooling
+
 ## Open-Core Direction
 
 AgentPilot Orchestrator is moving to an open-core model:
 
 - Public core: routing engine, MCP baseline, docs, examples
 - Private extensions: advanced governance, premium integrations, proprietary playbooks
+
+This is the part we want public: the routing engine, the contracts, the operational discipline, and the idea that AI workflows can be engineered instead of improvised.
 
 ## Security and Know-How Protection
 

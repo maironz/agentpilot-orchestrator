@@ -8,7 +8,8 @@ from rgen.cutover import build_cutover_manifest, classify_repo_path, export_cuto
 def test_classify_repo_path_returns_expected_scope() -> None:
     assert classify_repo_path("README.md") == "public"
     assert classify_repo_path(".github/ROADMAP.md") == "internal"
-    assert classify_repo_path(".github/esperti/esperto_backend.md") == "internal"
+    assert classify_repo_path(".github/esperti/esperto_backend.md") == "public"
+    assert classify_repo_path("agentpilot-orchestrator.code-workspace") == "public"
     assert classify_repo_path(".github/plans-local/private.plan") == "private"
     assert classify_repo_path("knowledge_base/psm_stack/esperti/esperto_sistemista.md") == "private"
 
@@ -52,5 +53,16 @@ def test_export_cutover_snapshot_materializes_only_included_files(tmp_path: Path
 
     assert (export_dir / "README.md").exists()
     assert not (export_dir / ".github" / "ROADMAP.md").exists()
-    assert (export_dir / "cutover-manifest.json").exists()
+    assert not (export_dir / "cutover-manifest.json").exists()
     assert manifest["included"] == ["README.md"]
+
+
+def test_export_cutover_snapshot_can_write_manifest_when_requested(tmp_path: Path) -> None:
+    root = tmp_path / "repo"
+    root.mkdir()
+    (root / "README.md").write_text("ok", encoding="utf-8")
+    export_dir = tmp_path / "public"
+
+    export_cutover_snapshot(root, export_dir, clean_output=True, write_manifest=True)
+
+    assert (export_dir / "cutover-manifest.json").exists()

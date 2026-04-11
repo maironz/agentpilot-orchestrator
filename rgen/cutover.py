@@ -33,7 +33,6 @@ INTERNAL_PREFIXES = (
     ".github/token-budget-allocation.md",
     ".github/versioning-strategy.md",
     ".github/AGENT_REGISTRY.md",
-    ".github/esperti/",
     ".github/KNOWHOW_EXPOSURE_AUDIT_2026-04-11.md",
     ".github/kpi/",
     ".github/plans/",
@@ -55,7 +54,6 @@ IGNORED_PARTS = {
 IGNORED_SUFFIXES = {
     ".db",
     ".sqlite",
-    ".code-workspace",
 }
 
 
