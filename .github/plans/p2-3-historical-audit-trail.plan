@@ -1,0 +1,105 @@
+# P2.3 — Historical Audit Trail + Rollback
+**Phase**: p2.3 | **Semantic**: v0.6.0 | **Status**: ✅ COMPLETE
+
+**See also**: [`.github/ROADMAP.md`](../ROADMAP.md) for project timeline and dependencies
+
+---
+
+## Overview
+
+Goal: tracciare ogni generazione in modo interrogabile e consentire rollback selettivi senza perdere modifiche manuali rilevanti.
+
+User-facing exits:
+- `rgen --history --target ./my-app`
+- `rgen --history --show-diffs --target ./my-app`
+- `rgen --rollback --to <generation_id> --target ./my-app`
+
+---
+
+## Objectives
+
+- estendere `.rgen-backups/` con metadata strutturati per ogni generazione
+- elencare le generazioni con timestamp, pattern, target, outcome e file coinvolti
+- mostrare differenze tra due generazioni o tra una generazione e il working tree corrente
+- supportare rollback selettivo con strategia sicura su file modificati manualmente
+- documentare workflow operativo e recovery path
+
+---
+
+## Scope
+
+### In Scope
+- metadata JSON per backup e generazioni
+- comando history con elenco e dettaglio
+- comando rollback con conferme esplicite e report finale
+- diff sintetico tra snapshot
+- test su sequenze reali di generazione e rollback
+
+### Out of Scope
+- merge automatico complesso a tre vie
+- UI grafica della timeline
+- sincronizzazione cloud dei backup
+
+---
+
+## Proposed Design
+
+### Storage
+
+Current layout:
+
+```
+.rgen-backups/
+├── index.json
+└── <generation-id>/
+    ├── metadata.json
+    └── .github/... | root files...
+```
+
+Persisted metadata fields:
+- `generation_id`
+- `created_at`
+- `pattern`
+- `target`
+- `command`
+- `language`
+- `written_files`
+- `updated_files`
+- `checksum_map`
+- `outcome`
+
+### Commands
+
+- `rgen --history` → tabella sintetica delle generazioni
+- `rgen --history --show-diffs --history-format json` → diff/state machine-friendly
+- `rgen --rollback --to <generation_id>` → ripristino snapshot selezionato
+
+---
+
+## File Candidates
+
+- `rgen/backup.py` — estensione metadata e API snapshot
+- `rgen/cli.py` — nuovi flag `--history`, `--show-diffs`, `--rollback`, `--to`
+- `rgen/models.py` — eventuali dataclass per metadata generazioni
+- `tests/test_backup.py` — scenari snapshot/restore avanzati
+- `tests/test_cli.py` — parser e comandi history/rollback
+
+---
+
+## Acceptance
+
+- [x] Timestamp in backup metadata
+- [x] Diff annotation in JSON
+- [x] Rollback selettivo con protezione file modificati manualmente
+- [x] Test su sequenza di almeno 5 generazioni
+- [x] Documentazione README aggiornata
+
+---
+
+## Suggested Phases
+
+1. Modellare metadata generazione e indice backup
+2. Implementare `--history` con output leggibile e JSON opzionale
+3. Implementare `--rollback --to <generation_id>` con dry-run di sicurezza
+4. Coprire con test integrazione su progetto temporaneo multi-generazione
+5. Aggiornare README e roadmap

@@ -1,0 +1,100 @@
+# P4.1 — IDE Extensions (VS Code)
+**Phase**: p4.1 | **Semantic**: v0.8.0 | **Status**: 🟡 PLANNING
+
+---
+
+## Overview
+
+Goal: offrire una integrazione VS Code che renda visibile il routing durante l'editing, senza introdurre overhead significativo sul progetto.
+
+Primary outcomes:
+- hover con agente consigliato
+- supporto schema per `routing-map.json`
+- comandi rapidi per stats e routing preview
+
+---
+
+## Objectives
+
+- definire MVP dell'estensione con focus su insight locali
+- riusare il più possibile il motore esistente invece di duplicare logica
+- mantenere latenza bassa su workspaces medi/grandi
+
+---
+
+## Technical Evaluation
+
+### Fattibilita tecnica
+
+- Fattibilita complessiva: media-bassa
+- E' tecnicamente fattibile, ma introduce un secondo stack importante (Node/TypeScript + VS Code API) che oggi il repo non usa
+- La parte piu semplice e' schema association + command palette; hover e diagnostics in tempo reale alzano molto il costo di implementazione
+- Il rischio architetturale principale e' duplicare logica del router invece di orchestrare il codice Python gia esistente
+
+### Vincolo costo zero
+
+- Fattibile a costo zero solo come estensione locale o pacchettizzata senza infrastruttura esterna
+- Nessun costo diretto necessario per svilupparla, ma il costo-tempo e' alto
+- Per restare a costo zero conviene evitare servizi remoti, telemetry pipeline o backend dedicati
+
+### Stima tempi
+
+- MVP minimo con schema + 1-2 comandi: 4-6 giorni
+- Hover preview con caching locale: +2-4 giorni
+- Hardening, packaging e test credibili: +2-3 giorni
+
+### Valutazione finale
+
+- Non e' un buon prossimo task se l'obiettivo e' avanzare rapidamente il core di `rgen`
+- Ha senso solo quando il prodotto CLI/core e' piu stabile e quando serve davvero UX editor-centric
+- Priorita effettiva: bassa rispetto ai task core ancora aperti
+
+---
+
+## Scope
+
+### In Scope
+- command palette entries per routing preview
+- JSON schema association per `routing-map.json`
+- hover/basic diagnostics su file supportati
+
+### Out of Scope
+- marketplace publishing immediato
+- editing visuale completo del grafo di routing
+- telemetria estesa
+
+---
+
+## Proposed Design
+
+- cartella dedicata extension in workspace separato o subtree
+- backend minimo che invoca `router.py --direct` o legge metadata locali
+- schema JSON distribuito con l'estensione
+- caching aggressivo dei risultati brevi
+
+---
+
+## File Candidates
+
+- `extension/` o workspace dedicato VS Code extension
+- `package.json`, `src/extension.ts`, `syntaxes/`, `schemas/`
+- eventuale bridge Python/Node per interrogare il router
+
+---
+
+## Acceptance
+
+- [ ] Extension published o impacchettabile localmente
+- [ ] Query time < 100ms per casi cache-hit
+- [ ] Test su progetto di dimensione media
+- [ ] Schema association funzionante
+
+---
+
+## Suggested Phases
+
+1. Definire MVP e contribution points
+2. Implementare schema + commands base
+3. Aggiungere hover preview con caching
+4. Testare su repo campione
+5. Preparare packaging/publishing

@@ -1,0 +1,97 @@
+# P4.2 — Stochastic Testing Mode
+**Phase**: p4.2 | **Semantic**: v0.8.1 | **Status**: 🟡 PLANNING
+
+---
+
+## Overview
+
+Goal: stressare il motore di routing con variazioni sistematiche e fuzz input riproducibili per trovare edge case, regressioni e fragilita di scoring.
+
+Primary exit:
+- `pytest tests/test_stochastic_routing.py`
+
+---
+
+## Objectives
+
+- generare query sintetiche con seed riproducibile
+- variare keyword weights, threshold, query length e rumore lessicale
+- misurare robustezza, stabilita e failure modes del router
+- produrre report sintetico per regressioni
+
+---
+
+## Technical Evaluation
+
+### Fattibilita tecnica
+
+- Fattibilita complessiva: alta
+- Il repo ha gia una suite pytest ampia e un router deterministico abbastanza maturo da poter essere stressato con harness sintetici
+- Un MVP puo' essere costruito solo con `random`, fixture controllate e marker pytest dedicati, senza introdurre dipendenze pesanti
+- Il rischio principale e' produrre test rumorosi o fragili se le asserzioni sono troppo strette
+
+### Vincolo costo zero
+
+- Pienamente fattibile a costo zero
+- Non richiede servizi esterni, modelli hosted o tool a pagamento
+- Va mantenuto opzionale nel workflow CI per non pagare in tempo di esecuzione su ogni run normale
+
+### Stima tempi
+
+- MVP con 100-200 iterazioni e seed riproducibile: 1-2 giorni
+- Espansione a 1000+ iterazioni e report piu' utile: +1-2 giorni
+- Hardening del set di invarianti: +1 giorno
+
+### Valutazione finale
+
+- Ottimo task di qualita, ma non genera valore utente diretto
+- Conviene farlo dopo una o due feature core in piu', quando il comportamento da stressare e' piu stabile
+- Rapporto costo/beneficio buono come investimento tecnico, non come milestone di prodotto
+
+---
+
+## Scope
+
+### In Scope
+- harness fuzz riproducibile
+- seed configurabile
+- assertions su crash, confidence bounds e scenario stability
+
+### Out of Scope
+- property-based testing esterno se introduce dipendenze pesanti
+- benchmarking micro-performance dettagliato
+
+---
+
+## Proposed Design
+
+- nuovo modulo helper per generazione query casuali controllate
+- suite `tests/test_stochastic_routing.py`
+- marker pytest dedicato per test lunghi
+- report finale con numero iterazioni, seed e anomalie
+
+---
+
+## File Candidates
+
+- nuovo `tests/test_stochastic_routing.py`
+- eventuale `tests/helpers/stochastic.py`
+- `pyproject.toml` o config pytest per marker dedicato
+
+---
+
+## Acceptance
+
+- [ ] 1000+ fuzz iterations
+- [ ] Seed riproducibile
+- [ ] Coverage report o summary anomalies
+- [ ] Nessun crash non gestito
+
+---
+
+## Suggested Phases
+
+1. Definire generatori di query e seed strategy
+2. Implementare smoke fuzz suite
+3. Aggiungere casi edge e metriche minime
+4. Integrare nel workflow test come suite opzionale

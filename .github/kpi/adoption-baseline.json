@@ -1,0 +1,34 @@
+{
+  "project": "AgentPilot Orchestrator",
+  "version": "v0.6.1",
+  "period": {
+    "start": "2026-04-11",
+    "end": "2026-04-18"
+  },
+  "metrics": {
+    "activation": {
+      "definition": "successful MCP startup and at least one route_query call",
+      "target": 0.7,
+      "value": null
+    },
+    "retention_7d": {
+      "definition": "users that return within 7 days after first successful activation",
+      "target": 0.3,
+      "value": null
+    },
+    "tool_success_rate": {
+      "definition": "successful MCP tool calls / total MCP tool calls",
+      "target": 0.98,
+      "value": null
+    },
+    "integration_time_minutes": {
+      "definition": "time from clone to first successful MCP command",
+      "target": 5,
+      "value": null
+    }
+  },
+  "notes": [
+    "Populate value fields after first external onboarding cohort.",
+    "Keep this file as baseline snapshot for release decision logs."
+  ]
+}

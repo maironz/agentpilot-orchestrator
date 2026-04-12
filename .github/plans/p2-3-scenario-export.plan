@@ -1,0 +1,44 @@
+# P2.3 — Scenario Suggestion JSON Export
+**Phase**: p2.3 | **Semantic**: v0.5.1 | **Status**: ✅ COMPLETE
+
+**Related merge**: PR #11 | Commit on master: `494f498`
+**Depends on**: [p2-2-scenario-evolution.plan](./p2-2-scenario-evolution.plan)
+
+---
+
+## Overview
+
+Goal: permettere a `rgen --suggest-scenarios` di esportare il payload JSON anche su file, mantenendo stdout compatibile con automazioni e pipeline.
+
+---
+
+## Delivered
+
+- opzione CLI `--suggest-output <path>`
+- creazione automatica delle directory padre del file di output
+- scrittura JSON UTF-8 con newline finale
+- mantenimento del payload JSON su stdout
+- test di integrazione su export file e coerenza del contenuto
+
+---
+
+## Usage
+
+```bash
+rgen --suggest-scenarios --target ./my-app --suggest-output artifacts/scenario-suggestions.json
+```
+
+---
+
+## Files
+
+- `rgen/cli.py` — gestione argomento `--suggest-output`
+- `tests/test_scenario_clusterer_integration.py` — coverage export JSON su file
+- `README.md` — documentazione opzione export
+
+---
+
+## Validation
+
+- merged on `master` via PR #11
+- regression coverage mantenuta nella suite corrente

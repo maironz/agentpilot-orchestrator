@@ -1,0 +1,31 @@
+# Quick Win — CLI Color Output
+**Track**: quick-win | **Status**: 🟡 PLANNING
+
+---
+
+## Goal
+
+Aggiungere output CLI colorato con comportamento prevedibile su terminali compatibili.
+
+Primary exit:
+- `rgen --direct ... --color auto|always|never`
+
+---
+
+## Deliverables
+
+- flag `--color auto|always|never`
+- helper centrale per styling stdout/stderr
+- fallback sicuro su terminal non-TTY e ambienti Windows
+- test sul comportamento dei tre mode
+
+---
+
+## Technical Evaluation
+
+- Fattibilita complessiva: alta
+- Il repo usa gia `rich` nell'area dashboard, quindi un riuso controllato e' realistico senza introdurre nuove dipendenze
+- A costo zero e' totalmente fattibile
+- Tempo stimato MVP: 0.5-1 giorno
+- Rischio principale: output inconsistenti tra terminal interattivi, redirect e test capture
+- Priorita pratica: alta tra i quick win, ma da tenere separata dalle feature core

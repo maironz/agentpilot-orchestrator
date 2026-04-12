@@ -1,0 +1,44 @@
+# P2.5 — Scenario Suggestion Full-History Mode
+**Phase**: p2.5 | **Semantic**: v0.5.3 | **Status**: ✅ COMPLETE
+
+**Related merge**: PR #13 | Commit on master: `d0cf4be`
+**Depends on**: [p2-4-confidence-filter.plan](./p2-4-confidence-filter.plan)
+
+---
+
+## Overview
+
+Goal: consentire l'analisi non solo delle query unmatched ma anche degli interventi gia categorizzati, per vedere pattern ricorrenti su tutta la history.
+
+---
+
+## Delivered
+
+- opzione CLI `--include-matched`
+- supporto clusterer per modalita unmatched-only oppure full-history
+- documentazione aggiornata degli esempi Scenario Evolution
+- test su parser e comportamento con dati matched inclusi
+
+---
+
+## Usage
+
+```bash
+rgen --suggest-scenarios --target ./my-app --include-matched
+```
+
+---
+
+## Files
+
+- `rgen/scenario_clusterer.py` — supporto full-history mode
+- `rgen/cli.py` — parser del flag
+- `tests/test_scenario_clusterer_integration.py` — coverage include matched
+- `README.md` — esempi e opzioni aggiornate
+
+---
+
+## Validation
+
+- merged on `master` via PR #13
+- suite completa mantenuta verde

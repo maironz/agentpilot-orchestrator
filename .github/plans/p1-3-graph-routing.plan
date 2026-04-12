@@ -1,0 +1,338 @@
+# P1.3 — Cross-Agent Context Bridge (Graph Routing)
+**Phase**: p1.3 | **Semantic**: v0.3.0 | **Status**: ✅ COMPLETE
+
+Historical note: implemented and merged via PR #7. Keep this file as delivered-plan documentation.
+
+---
+
+## Overview
+
+**Goal**: Routing non-lineare (non 1:1 mapping). Agenti possono invocare altri agenti in **cascade** quando il task è multi-dominio.
+
+**Example workflow**:
+```
+User query: "Fix auth bug AND deploy to production"
+    ↓
+Stage 1: route_query() → backend agent (auth bug match score: 0.92)
+    ↓
+Stage 2: backend agent → "needs DevOps expertise"
+    ↓
+Stage 3: graph router → invoke devops agent in cascade
+    ↓
+Stage 4: context forwarding → devops agent sees backend context
+    ↓
+Output: Unified response from both domains
+```
+
+**Acceptance**:
+- Primary + secondary agents per scenario (declared in routing-map.json)
+- Cascade routing with context forwarding
+- Cycle detection (prevent A→B→A loops)
+- Fallback logic (if primary fails, retry with secondary)
+
+---
+
+## Architecture
+
+```
+routing-map.json (UPDATED):
+{
+  "scenario_name": {
+    "agent": "primary_agent",
+    "keywords": [...],
+    "dependencies": ["secondary_agent1", "secondary_agent2"],  ← NEW
+    "files": [...],
+    "context": "..."
+  }
+}
+```
+
+**New module**: `rgen/graph_router.py`
+```python
+class GraphRouter:
+    """
+    Route queries through agent dependency graph.
+
+    - Detects multi-domain needs
+    - Builds execution plan (DAG)
+    - Forwards context between agents
+    - Validates cycles
+    """
+
+    def __init__(self, routes: dict):
+        self.routes = routes
+        self.graph = self._build_dependency_graph()
+
+    def _build_dependency_graph(self) -> dict:
+        """Create agent → [dependent_agents] mapping."""
+
+    def _detect_cycles(self) -> list[list[str]]:
+        """Find cycles in dependency graph."""
+
+    def _execute_plan(self, primary_agent, secondary_agents):
+        """Execute routing plan with context forwarding."""
+
+    def route_with_graph(self, query: str) -> dict:
+        """Cascade routing with dependencies."""
+```
+
+---
+
+## Implementation Phases
+
+### Phase 1: Dependency Graph Builder (Day 1-2)
+
+**Files**: `rgen/graph_router.py` (100-150 lines)
+
+```python
+class GraphRouter:
+    def _build_dependency_graph(self):
+        """Parse routing-map.json dependencies → adjacency list."""
+        graph = {}
+        for scenario, data in self.routes.items():
+            deps = data.get("dependencies", [])
+            graph[scenario] = deps
+        return graph
+
+    def _detect_cycles(self):
+        """DFS to find circular dependencies."""
+        visited, rec_stack = set(), set()
+        cycles = []
+
+        def dfs(node, path):
+            visited.add(node)
+            rec_stack.add(node)
+            path.append(node)
+
+            for neighbor in self.graph.get(node, []):
+                if neighbor not in visited:
+                    dfs(neighbor, path[:])
+                elif neighbor in rec_stack:
+                    cycles.append(path + [neighbor])
+
+            rec_stack.remove(node)
+```
+
+**Tests**:
+- `test_build_dependency_graph_valid()`
+- `test_detect_cycles_finds_circular_deps()`
+- `test_detect_cycles_returns_empty_for_dag()`
+
+### Phase 2: Context Forwarding (Day 2-3)
+
+**Files**: Modify `core/router.py` + `rgen/graph_router.py`
+
+```python
+def route_with_graph(self, query: str, context: dict | None = None) -> dict:
+    """
+    Execute cascade routing.
+
+    Args:
+        query: user query
+        context: optional prior context from previous stage
+
+    Returns:
+        {
+            "primary": {agent, files, confidence, ...},
+            "secondary": [{agent, files, ...}, ...],
+            "execution_plan": ["agent_a", "agent_b"],
+            "context_forwarding": {...}
+        }
+    """
+    # Stage 1: Get primary agent
+    primary = route_query(query)
+    primary_agent = primary["agent"]
+
+    # Stage 2: Look up dependencies
+    scenario = primary["scenario"]
+    deps = self.routes[scenario].get("dependencies", [])
+    if not deps:
+        return primary  # No secondary agents
+
+    # Stage 3: Validate execution plan (DAG)
+    plan = self._build_execution_plan(primary_agent, deps)
+
+    # Stage 4: Forward context
+    secondary_results = []
+    forwarded_context = {
+        "prior_agent": primary_agent,
+        "prior_confidence": primary["confidence"],
+        "prior_context": primary["context"],
+    }
+
+    for secondary_agent in plan:
+        secondary = route_query(query, context=forwarded_context)
+        secondary_results.append(secondary)
+
+    return {
+        "primary": primary,
+        "secondary": secondary_results,
+        "execution_plan": plan,
+        "context": forwarded_context,
+    }
+```
+
+**Tests**:
+- `test_route_with_graph_returns_primary_and_secondary()`
+- `test_context_forwarding_includes_prior_agent()`
+- `test_secondary_agents_empty_when_no_deps()`
+
+### Phase 3: Integration & CLI (Day 3-4)
+
+**Files**: `core/router.py` + CLI modification
+
+```bash
+# New CLI flag:
+python .github/router.py --direct "query" --graph-mode
+
+# Output:
+{
+  "mode": "graph",
+  "primary": {...},
+  "secondary": [{...}, {...}],
+  "execution_plan": ["backend", "devops"],
+  "cascade_success": true
+}
+```
+
+**Tests**:
+- `test_router_cli_graph_mode_flag()`
+- `test_cascade_routing_success()`
+
+### Phase 4: Tests & Docs (Day 4-5)
+
+**Tests**:
+- Full cascade scenario test (e.g., "Fix auth + deploy")
+- Error handling (missing agent, invalid dependency)
+- Coverage > 85%
+
+**Docs**:
+- README.md: "Graph Routing" section (with example)
+- ROADMAP.md: P1.3 → DONE
+- Update `.github/versioning-strategy.md` if needed
+
+---
+
+## Routing Map Update Example
+
+```json
+{
+  "auth_fix": {
+    "agent": "backend",
+    "keywords": ["auth", "login", "security"],
+    "dependencies": [],  ← No secondary agents
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Authentication issues"
+  },
+  "full_deployment": {
+    "agent": "backend",
+    "keywords": ["deploy", "fix", "production"],
+    "dependencies": ["devops"],  ← ← ← NEW: cascade to devops
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Full stack deployment"
+  },
+  "database_migration": {
+    "agent": "backend",
+    "keywords": ["migrate", "schema", "alter"],
+    "dependencies": ["devops", "db_admin"],  ← Multiple secondary
+    "files": [".github/esperti/esperto_backend.md"],
+    "context": "Database schema changes"
+  }
+}
+```
+
+---
+
+## Edge Cases & Validation
+
+### 1. Cycle Detection
+```python
+# Bad: A → B → A
+# Should error: "Circular dependency detected: A→B→A"
+
+# Good: A → B, A → C (DAG, no cycles)
+```
+
+### 2. Missing Agent
+```python
+# Bad: dependencies: ["nonexistent_agent"]
+# Should error: "Secondary agent 'nonexistent_agent' not found in routes"
+
+# Good: dependencies: ["backend", "devops"] (both exist)
+```
+
+### 3. Context Size Limits
+```python
+# Context forwarding may hit token limits
+# Solution: Truncate context with priority weighting
+forwarded_context = {
+    "prior_agent": "backend",
+    "prior_confidence": 0.87,
+    # "prior_context": "..." ← Truncate if > 2KB
+}
+```
+
+### 4. Fallback Logic
+```python
+# If primary agent fails
+try:
+    primary = route_query(query)
+except:
+    # Fall back to secondary if available
+    if has_secondary_agents:
+        primary = route_secondary_cascade(query)
+```
+
+---
+
+## Success Criteria
+
+- ✅ GraphRouter class integrated
+- ✅ Cycle detection working
+- ✅ Context forwarding tested
+- ✅ CLI flag `--graph-mode` functional
+- ✅ ROADMAP.md: P1.3 DONE
+- ✅ Test coverage > 85%
+- ✅ 156 → 170+ tests passing
+
+---
+
+## File Checklist
+
+- [x] `rgen/graph_router.py` — new module
+- [x] `core/router.py` — integrate GraphRouter, add `--graph-mode` flag
+- [x] `tests/test_graph_router.py` — unit tests
+- [x] `tests/test_graph_router_integration.py` — integration tests
+- [x] `.github/routing-map.json` — add optional `dependencies` field
+- [x] `README.md` — Graph Routing section + example
+- [x] `ROADMAP.md` — P1.3 marked DONE, P2 features discussed
+
+---
+
+## Timeline
+
+```
+Week 5:
+├─ Days 1-2: GraphRouter + cycle detection
+├─ Days 2-3: Context forwarding
+├─ Days 3-4: Integration + CLI
+└─ Days 4-5: Tests + docs
+
+Expected delivery: EOW (5 days)
+```
+
+---
+
+## Dependencies
+
+- ✅ P1.1 (Live Metrics) — optional, context useful
+- ✅ P1.2 (ML Feedback) — optional, weights can influence cascade
+- ❌ Nothing blocking
+
+---
+
+## Next After P1.3
+
+1. **P2.1** — Multi-Language Agent Templates (mid-priority)
+2. **P2.2** — Scenario Evolution Generator (mid-priority)
+3. **Quick Wins** — Colored CLI, tab completion

@@ -1,0 +1,44 @@
+# P2.4 — Scenario Suggestion Confidence Filter
+**Phase**: p2.4 | **Semantic**: v0.5.2 | **Status**: ✅ COMPLETE
+
+**Related merge**: PR #12 | Commit on master: `f71df37`
+**Depends on**: [p2-3-scenario-export.plan](./p2-3-scenario-export.plan)
+
+---
+
+## Overview
+
+Goal: ridurre il rumore nei suggerimenti scenario introducendo una soglia minima di confidence configurabile.
+
+---
+
+## Delivered
+
+- opzione CLI `--min-confidence <0..1>`
+- filtro applicato a livello clusterer prima del rendering del payload
+- supporto a valori di confidence reali nel report JSON
+- test di parser e comportamento con soglie diverse
+
+---
+
+## Usage
+
+```bash
+rgen --suggest-scenarios --target ./my-app --min-confidence 0.70
+```
+
+---
+
+## Files
+
+- `rgen/scenario_clusterer.py` — filtro confidence sui cluster suggeriti
+- `rgen/cli.py` — parser e pass-through del flag
+- `tests/test_scenario_clusterer_integration.py` — test su confidence minima
+- `README.md` — documentazione filtro
+
+---
+
+## Validation
+
+- merged on `master` via PR #12
+- comportamento coperto da test dedicati e suite completa

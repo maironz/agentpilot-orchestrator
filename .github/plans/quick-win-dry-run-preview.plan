@@ -1,0 +1,30 @@
+# Quick Win — Dry-run File Preview
+**Track**: quick-win | **Status**: 🟡 PLANNING
+
+---
+
+## Goal
+
+Mostrare esplicitamente quali file verrebbero creati o aggiornati durante un dry-run.
+
+Primary exit:
+- `rgen --dry-run ... --show-files`
+
+---
+
+## Deliverables
+
+- flag `--show-files`
+- preview `+` create / `~` update
+- copertura test su output preview
+
+---
+
+## Technical Evaluation
+
+- Fattibilita complessiva: alta
+- Il flusso di generazione ha gia abbastanza informazione in `writer`/`cli` per mostrare i file target senza scriverli
+- A costo zero e' pienamente fattibile
+- Tempo stimato MVP: 0.5-1 giorno
+- Rischio principale: mantenere la preview coerente con il comportamento reale di scrittura/update
+- Priorita pratica: molto alta tra i quick win, perche' migliora subito UX e sicurezza operativa

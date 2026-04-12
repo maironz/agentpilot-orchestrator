@@ -1,0 +1,146 @@
+# P2.8 — MCP Baseline + Open-Core Asset Planning
+**Phase**: p2.8 | **Semantic**: v0.6.1 | **Status**: 🟠 IN PROGRESS
+
+---
+
+## Overview
+
+Goal: consolidare il progetto come prodotto integrabile via MCP e preparare una transizione open-core con confine chiaro tra asset pubblici e privati.
+
+Primary exits:
+- `python .github/mcp_server.py` avviabile in ambiente pulito
+- entrypoint package-level per MCP (`rgen-mcp` o equivalente)
+- inventario asset open-core vs private-core documentato
+- baseline KPI di adozione e affidabilita
+
+---
+
+## Objectives
+
+- rendere MCP un'interfaccia stabile e testabile (contract-first)
+- ridurre coupling da path `.github/` dove non necessario
+- definire il perimetro open-core con criteri tecnici/commerciali espliciti
+- preparare asset minimi per diffusione (quickstart, examples, integration snippets)
+
+---
+
+## Scope
+
+### In Scope
+- dipendenze MCP nel packaging principale o extra dedicato
+- entrypoint CLI dedicato per MCP server
+- smoke tests MCP (startup + tool basic calls)
+- documento `OPEN_CORE_BOUNDARY.md` con tabella asset
+- KPI sheet iniziale (activation, retention, tool success rate)
+
+### Out of Scope
+- auth enterprise avanzata
+- marketplace/plugin ecosystem completo
+- cloud control plane o multi-tenant management
+
+---
+
+## Proposed Work Packages
+
+### WP1 — MCP Runtime Hardening (alta priorita)
+
+Deliverables:
+- dependency strategy (`mcp[cli]`) formalizzata
+- startup path stabile senza dipendere da invocation fragile
+- errore diagnostico chiaro se dipendenze mancanti
+
+Acceptance:
+- [x] Avvio MCP riuscito in ambiente venv pulito
+- [x] Messaggi errore action-oriented per dipendenze mancanti
+- [x] Documentazione quickstart aggiornata
+
+### WP2 — MCP Product Surface (alta priorita)
+
+Deliverables:
+- tool contract review: input/output JSON consistenti
+- version tag del contract (es. `mcp_contract_version`)
+- smoke/contract tests per `route_query`, `search_history`, `get_stats`
+
+Acceptance:
+- [x] Contratti tool documentati
+- [x] Test contract verdi in CI locale
+- [x] Backward compatibility policy definita
+
+### WP3 — Open-Core Boundary (alta priorita)
+
+Deliverables:
+- documento confine asset pubblici/privati
+- licensing notes e governance minima contribution
+- policy su cosa resta open vs cosa evolve in private
+
+Acceptance:
+- [ ] Matrice asset open/private approvata
+- [ ] Motivazione tecnica/commerciale per ogni asset core
+- [ ] Decision log aggiornato
+
+### WP4 — Adoption Assets (media priorita)
+
+Deliverables:
+- sample integration per 2 client MCP
+- quickstart 5 minuti con expected output
+- benchmark minimo vs baseline non-MCP
+- ricostruzione README in inglese nel nuovo repo (messaggio prodotto orientato adozione)
+
+Acceptance:
+- [ ] Demo ripetibile end-to-end
+- [ ] Tempo di integrazione documentato
+- [ ] KPI iniziali raccolti
+- [ ] README EN completo pubblicato nel nuovo repo prima del primo post social
+
+### WP5 — New Repository Migration (alta priorita)
+
+Deliverables:
+- creazione nuovo repository pubblico con naming `AgentPilot Orchestrator`
+- migrazione selettiva degli asset `public` (open-core boundary compliant)
+- configurazione remote e branch strategy per separare vecchio repo (private) e nuovo repo (public)
+- checklist di cutover (README, release notes, first post links, archive/redirect policy)
+- checklist operativa: `.github/plans/repo-cutover-checklist.md`
+
+Acceptance:
+- [x] Nuovo repo creato e inizializzato
+- [x] Asset pubblici migrati e verificati
+- [ ] Vecchio repo impostato secondo strategia (private/archived)
+- [ ] Cutover checklist completata prima del primo annuncio
+
+Prepared assets:
+- [x] Cutover checklist documented
+- [x] Dry-run manifest utility available for public snapshot filtering
+
+---
+
+## Suggested Sequence (2 settimane)
+
+1. WP1 MCP Runtime Hardening
+2. WP2 MCP Product Surface
+3. WP3 Open-Core Boundary
+4. WP5 New Repository Migration
+5. WP4 Adoption Assets
+
+---
+
+## Risks & Mitigation
+
+- rischio: MCP introdotto senza test di contratto
+  - mitigazione: contract tests obbligatori prima del release tag
+
+- rischio: open-core definito in modo ambiguo
+  - mitigazione: boundary matrix con ownership e rationale
+
+- rischio: adozione bassa per scarso packaging
+  - mitigazione: quickstart + examples con metriche misurabili
+
+---
+
+## Immediate Next Actions
+
+- [x] allineare `pyproject.toml` e requirements MCP
+- [x] introdurre smoke test MCP dedicato
+- [x] produrre bozza `OPEN_CORE_BOUNDARY.md`
+- [x] definire dashboard KPI adozione minima (CSV/JSON)
+- [x] preparare piano cutover verso nuovo repository (remote, branch, visibilità)
+- [x] preparare README EN del nuovo repo come gate di pre-lancio (prima del primo post)
