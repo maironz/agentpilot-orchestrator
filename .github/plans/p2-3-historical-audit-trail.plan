@@ -1,5 +1,5 @@
 # P2.3 — Historical Audit Trail + Rollback
-**Phase**: p2.3 | **Semantic**: v0.6.0 | **Status**: 🟡 PLANNING
+**Phase**: p2.3 | **Semantic**: v0.6.0 | **Status**: ✅ COMPLETE
 
 **See also**: [`.github/ROADMAP.md`](../ROADMAP.md) for project timeline and dependencies
 
@@ -46,17 +46,17 @@ User-facing exits:
 
 ### Storage
 
+Current layout:
+
 ```
 .rgen-backups/
 ├── index.json
-├── generations/
-│   ├── 2026-04-07T10-15-00Z.json
-│   └── ...
-└── files/
-    └── <generation-id>/...
+└── <generation-id>/
+    ├── metadata.json
+    └── .github/... | root files...
 ```
 
-Suggested metadata fields:
+Persisted metadata fields:
 - `generation_id`
 - `created_at`
 - `pattern`
@@ -66,12 +66,12 @@ Suggested metadata fields:
 - `written_files`
 - `updated_files`
 - `checksum_map`
-- `notes`
+- `outcome`
 
 ### Commands
 
 - `rgen --history` → tabella sintetica delle generazioni
-- `rgen --history --show-diffs` → diff summary per file
+- `rgen --history --show-diffs --history-format json` → diff/state machine-friendly
 - `rgen --rollback --to <generation_id>` → ripristino snapshot selezionato
 
 ---
@@ -88,11 +88,11 @@ Suggested metadata fields:
 
 ## Acceptance
 
-- [ ] Timestamp in backup metadata
-- [ ] Diff annotation in JSON
-- [ ] Rollback selettivo con protezione file modificati manualmente
-- [ ] Test su sequenza di almeno 5 generazioni
-- [ ] Documentazione README aggiornata
+- [x] Timestamp in backup metadata
+- [x] Diff annotation in JSON
+- [x] Rollback selettivo con protezione file modificati manualmente
+- [x] Test su sequenza di almeno 5 generazioni
+- [x] Documentazione README aggiornata
 
 ---
 

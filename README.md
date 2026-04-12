@@ -172,8 +172,17 @@ rgen --suggest-scenarios --target ./my-app --suggest-format text
 
 ```bash
 rgen --history --target ./my-app
-rgen --history --show-diffs --target ./my-app
+rgen --history --show-diffs --history-format json --target ./my-app
 rgen --rollback --to 20260411_103000 --target ./my-app
+```
+
+### 6) Marketplace MVP (local + remote)
+
+```bash
+rgen --search-patterns python
+rgen --download ./pattern-pack --install-dir ./knowledge_base
+rgen --download file:///C:/tmp/pattern-pack.zip --install-dir ./knowledge_base
+rgen --download owner/repo:v1.0.0 --install-dir ./knowledge_base
 ```
 
 ## Practical Tips
@@ -183,6 +192,7 @@ rgen --rollback --to 20260411_103000 --target ./my-app
 - Keep `knowledge_base` generic in public snapshots and move operational playbooks to private space.
 - Run `rgen --suggest-scenarios` only after collecting enough intervention history, otherwise the signal is weak.
 - Use `rgen --history --show-diffs` before a rollback when you need to verify which files are still unchanged since generation.
+- For marketplace downloads, validate pack contents locally first and keep trusted sources in a curated registry.
 - Install MCP extras only when you need the server runtime; the generator itself stays lightweight.
 
 ## Example Flow

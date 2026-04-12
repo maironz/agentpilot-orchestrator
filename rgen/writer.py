@@ -47,7 +47,12 @@ class Writer:
             :class:`~rgen.models.GenerationResult` with aggregated stats.
         """
         target_dir = Path(target_dir)
-        backup_engine = BackupEngine(target_dir / ".github" / self._backup_dir_name)
+        backup_engine = BackupEngine(
+            target_dir / ".github" / self._backup_dir_name,
+            project_root=target_dir,
+            command="generate",
+            target=str(target_dir),
+        )
 
         r1 = self.write_all(files, target_dir, backup_engine)
         r2 = self.copy_core_files(target_dir, backup_engine)
@@ -81,15 +86,22 @@ class Writer:
         """
         target_dir = Path(target_dir)
         if backup_engine is None:
-            backup_engine = BackupEngine(target_dir / ".github" / self._backup_dir_name)
+            backup_engine = BackupEngine(
+                target_dir / ".github" / self._backup_dir_name,
+                project_root=target_dir,
+                command="write_all",
+                target=str(target_dir),
+            )
 
         result = GenerationResult(success=True)
         for rel_path, content in files.items():
             dest = target_dir / rel_path
             try:
+                existed_before = dest.exists()
                 backup_engine.backup_if_exists(dest)
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 dest.write_text(content, encoding="utf-8")
+                backup_engine.record_written_file(dest, existed_before=existed_before)
                 result.files_written.append(dest)
             except Exception as exc:
                 result.errors.append(f"{rel_path}: {exc}")
@@ -115,7 +127,12 @@ class Writer:
         target_dir = Path(target_dir)
         github_dir = target_dir / ".github"
         if backup_engine is None:
-            backup_engine = BackupEngine(github_dir / self._backup_dir_name)
+            backup_engine = BackupEngine(
+                github_dir / self._backup_dir_name,
+                project_root=target_dir,
+                command="copy_core_files",
+                target=str(target_dir),
+            )
 
         result = GenerationResult(success=True)
         for name in self.CORE_FILES:
@@ -125,9 +142,11 @@ class Writer:
                 continue
             dest = github_dir / name
             try:
+                existed_before = dest.exists()
                 backup_engine.backup_if_exists(dest)
                 github_dir.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, dest)
+                backup_engine.record_written_file(dest, existed_before=existed_before)
                 result.files_written.append(dest)
             except Exception as exc:
                 result.errors.append(f"{name}: {exc}")

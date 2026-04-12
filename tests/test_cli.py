@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
@@ -95,6 +96,52 @@ def test_restore_lists_backups_when_no_timestamp(tmp_path: Path, capsys: pytest.
 def test_restore_fails_on_missing_timestamp(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
     ret = main(["--restore", "--target", str(tmp_path), "--timestamp", "99990101_999999"])
     assert ret == 2
+
+
+def test_history_json_with_diffs(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    project = tmp_path / "acme"
+    ret = main([
+        "--direct",
+        "--pattern", "psm_stack",
+        "--name", "acme",
+        "--target", str(project),
+    ])
+    assert ret == 0
+    capsys.readouterr()
+
+    ret = main(["--history", "--target", str(project), "--history-format", "json", "--show-diffs"])
+    assert ret == 0
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert isinstance(payload, list)
+    assert payload
+    assert "diff" in payload[0]
+
+
+def test_rollback_requires_to_argument(tmp_path: Path) -> None:
+    ret = main(["--rollback", "--target", str(tmp_path)])
+    assert ret == 2
+
+
+def test_rollback_skips_manual_changes_by_default(tmp_path: Path, capsys: pytest.CaptureFixture) -> None:
+    project = tmp_path / "app"
+    gh = project / ".github"
+    gh.mkdir(parents=True)
+    (gh / "router.py").write_text("# old content")
+
+    ret = main(["--update", "--target", str(project)])
+    assert ret == 0
+    capsys.readouterr()
+
+    (gh / "router.py").write_text("# manual edit")
+    sessions = json.loads((gh / ".rgen-backups" / "index.json").read_text(encoding="utf-8"))
+    generation_id = sessions[0]["generation_id"]
+
+    ret = main(["--rollback", "--target", str(project), "--to", generation_id])
+    assert ret == 0
+    out = capsys.readouterr().out
+    assert "Saltati:" in out
+    assert (gh / "router.py").read_text() == "# manual edit"
 
 
 # ---------------------------------------------------------------------------
@@ -360,3 +407,62 @@ def test_dry_run_python_api_lists_expected_files(tmp_path: Path, capsys: pytest.
     assert "esperto_backend.md" in out
     assert "esperto_devops.md" in out
     assert not (tmp_path / "api" / ".github").exists()
+
+
+def test_search_patterns_returns_results(capsys: pytest.CaptureFixture) -> None:
+    ret = main(["--search-patterns", "python"])
+    assert ret == 0
+    out = capsys.readouterr().out
+    assert "python_api" in out
+
+
+def test_download_installs_local_pattern_pack(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    kb = pack / "knowledge_base" / "demo_pack"
+    kb.mkdir(parents=True)
+
+    manifest = {
+        "id": "demo_pack",
+        "name": "Demo Pack",
+        "version": "1.0.0",
+    }
+    (pack / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (kb / "metadata.json").write_text(
+        json.dumps({"id": "demo_pack", "name": "Demo Pack", "tech_stack": ["python"]}),
+        encoding="utf-8",
+    )
+    (kb / "routing-map.json").write_text(json.dumps({"a": {"agent": "dev", "keywords": [], "files": [], "context": "", "priority": "low"}}), encoding="utf-8")
+
+    install_dir = tmp_path / "installed"
+    ret = main(["--download", str(pack), "--install-dir", str(install_dir)])
+    assert ret == 0
+    assert (install_dir / "demo_pack" / "metadata.json").exists()
+
+
+def test_download_installs_remote_zip_pack(tmp_path: Path) -> None:
+    pack = tmp_path / "pack"
+    kb = pack / "knowledge_base" / "zip_pack"
+    kb.mkdir(parents=True)
+
+    manifest = {
+        "id": "zip_pack",
+        "name": "Zip Pack",
+        "version": "1.0.0",
+    }
+    (pack / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    (kb / "metadata.json").write_text(
+        json.dumps({"id": "zip_pack", "name": "Zip Pack", "tech_stack": ["python"]}),
+        encoding="utf-8",
+    )
+
+    archive = tmp_path / "zip_pack.zip"
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for file_path in pack.rglob("*"):
+            if file_path.is_file():
+                rel = file_path.relative_to(pack).as_posix()
+                zf.write(file_path, f"zip_pack/{rel}")
+
+    install_dir = tmp_path / "installed"
+    ret = main(["--download", archive.as_uri(), "--install-dir", str(install_dir)])
+    assert ret == 0
+    assert (install_dir / "zip_pack" / "metadata.json").exists()

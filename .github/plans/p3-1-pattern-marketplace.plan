@@ -1,5 +1,5 @@
 # P3.1 — Pattern Marketplace
-**Phase**: p3.1 | **Semantic**: v0.7.0 | **Status**: 🟡 PLANNING
+**Phase**: p3.1 | **Semantic**: v0.7.0 | **Status**: ✅ COMPLETE
 
 ---
 
@@ -7,8 +7,9 @@
 
 Goal: permettere la condivisione e il consumo di pattern `rgen` da registry GitHub o repository remoti verificati.
 
-Primary exit:
-- `rgen --download owner/pattern:version`
+Primary exits:
+- `rgen --download owner/repo[:tag]`
+- `rgen --download <url-zip>`
 
 ---
 
@@ -81,8 +82,10 @@ pattern-pack/
 
 ### Commands
 
-- `rgen --download owner/pattern:version`
-- `rgen --download owner/pattern:latest --install-dir ./patterns`
+- `rgen --download <local-pack-path>`
+- `rgen --download <url-zip>`
+- `rgen --download owner/repo[:tag]`
+- `rgen --download <registry-id> --install-dir ./patterns`
 - `rgen --search-patterns <query>`
 
 ---
@@ -99,11 +102,11 @@ pattern-pack/
 
 ## Acceptance
 
-- [ ] Pattern search command
-- [ ] Download e install flow validato
-- [ ] Checksum/schema validation
-- [ ] Test coverage del path installazione
-- [ ] Documentazione README con esempio d'uso
+- [x] Pattern search command
+- [x] Download e install flow validato (local-pack MVP)
+- [x] Checksum/schema validation
+- [x] Test coverage del path installazione
+- [x] Documentazione README con esempio d'uso
 
 ---
 
