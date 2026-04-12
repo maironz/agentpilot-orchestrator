@@ -20,7 +20,7 @@
 **Automatically generate a semantic AI routing system for any project.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-227%2F227-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-249%2F249-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
