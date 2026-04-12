@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -33,6 +34,14 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_check(args)
         if args.suggest_scenarios:
             return _cmd_suggest_scenarios(args)
+        if args.history:
+            return _cmd_history(args)
+        if args.rollback:
+            return _cmd_rollback(args)
+        if args.search_patterns:
+            return _cmd_search_patterns(args)
+        if args.download:
+            return _cmd_download(args)
         if args.restore:
             return _cmd_restore(args)
         if args.update:
@@ -97,8 +106,6 @@ def _cmd_check(args: argparse.Namespace) -> int:
 
 def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
     """Suggests candidate scenarios from intervention history."""
-    import json
-
     from rgen.interventions import InterventionStore
     from rgen.scenario_clusterer import ScenarioClusterer
 
@@ -146,6 +153,13 @@ def _render_scenario_suggestions_text(suggestions: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def _resolve_backup_root(target: Path) -> Path:
+    github_root = target / ".github" / ".rgen-backups"
+    if github_root.exists() or (target / ".github").exists():
+        return github_root
+    return target / ".rgen-backups"
+
+
 def _cmd_update(args: argparse.Namespace) -> int:
     """Copies updated core files to an existing project without full regeneration.
 
@@ -162,7 +176,12 @@ def _cmd_update(args: argparse.Namespace) -> int:
 
     if flat:
         # Legacy flat layout: core files live directly in target_dir
-        backup_engine = BackupEngine(target / ".rgen-backups")
+        backup_engine = BackupEngine(
+            target / ".rgen-backups",
+            project_root=target,
+            command="update-flat",
+            target=str(target),
+        )
         written, errors = [], []
         for name in Writer.CORE_FILES:
             src = core / name
@@ -171,8 +190,10 @@ def _cmd_update(args: argparse.Namespace) -> int:
                 continue
             dest = target / name
             try:
+                existed_before = dest.exists()
                 backup_engine.backup_if_exists(dest)
                 shutil.copy2(src, dest)
+                backup_engine.record_written_file(dest, existed_before=existed_before)
                 written.append(name)
                 print(f"  [UPDATE] {name}")
             except Exception as exc:
@@ -210,16 +231,124 @@ def _cmd_update(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_history(args: argparse.Namespace) -> int:
+    from rgen.backup import BackupEngine
+
+    target = Path(args.target or ".")
+    backup_root = _resolve_backup_root(target)
+    engine = BackupEngine(backup_root, project_root=target)
+    history = engine.history(limit=args.history_limit if args.history_limit > 0 else None)
+
+    if not history:
+        print(f"Nessuna generazione trovata in: {backup_root}")
+        return 0
+
+    show_diffs = bool(args.show_diffs)
+    if args.history_format == "json":
+        payload: list[dict[str, object]] = []
+        for item in history:
+            entry = dict(item)
+            if show_diffs:
+                entry["diff"] = engine.describe_generation(str(item["generation_id"]))
+            payload.append(entry)
+        text = json.dumps(payload, indent=2, ensure_ascii=False)
+        if args.history_output:
+            output_path = Path(args.history_output)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            output_path.write_text(text + "\n", encoding="utf-8")
+        print(text)
+        return 0
+
+    print(f"Generazioni disponibili in {backup_root}:\n")
+    for item in history:
+        generation_id = str(item["generation_id"])
+        print(
+            f"  {generation_id} | written={item.get('written_count', 0)} | "
+            f"updated={item.get('updated_count', 0)} | command={item.get('command') or '-'}"
+        )
+        if show_diffs:
+            for change in engine.describe_generation(generation_id):
+                print(
+                    f"    - {change['change']}: {change['path']} "
+                    f"[{change['current_state']}]"
+                )
+    if args.history_output:
+        output_path = Path(args.history_output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        serialized = json.dumps(history, indent=2, ensure_ascii=False)
+        output_path.write_text(serialized + "\n", encoding="utf-8")
+    return 0
+
+
+def _cmd_rollback(args: argparse.Namespace) -> int:
+    from rgen.backup import BackupEngine
+
+    if not args.to:
+        print("[ERRORE] --rollback richiede --to <generation_id>", file=sys.stderr)
+        return 2
+
+    target = Path(args.target or ".")
+    backup_root = _resolve_backup_root(target)
+    engine = BackupEngine(backup_root, project_root=target)
+
+    try:
+        report = engine.rollback(args.to, force=args.force)
+    except FileNotFoundError as exc:
+        print(f"[ERRORE] {exc}", file=sys.stderr)
+        return 2
+
+    print(f"Rollback completato per {args.to}")
+    print(f"  Ripristinati: {len(report['restored'])}")
+    print(f"  Rimossi:      {len(report['removed'])}")
+    print(f"  Saltati:      {len(report['skipped_manual'])}")
+    print(f"  Mancanti:     {len(report['missing'])}")
+
+    for rel_path in report["skipped_manual"]:
+        print(f"  [SKIP] {rel_path} (modifica manuale rilevata)")
+    return 0
+
+
+def _cmd_search_patterns(args: argparse.Namespace) -> int:
+    from rgen.pattern_registry import PatternRegistry
+
+    registry = PatternRegistry()
+    results = registry.search(args.search_patterns)
+    if not results:
+        print("Nessun pattern trovato.")
+        return 0
+
+    for item in results:
+        raw_tags = item.get("tags", [])
+        tags = ", ".join(str(tag) for tag in raw_tags) if isinstance(raw_tags, list) else ""
+        print(f"  {item.get('id', '-'):<24} {item.get('name', '-')}")
+        if tags:
+            print(f"  {'':24} Tags: {tags}")
+    return 0
+
+
+def _cmd_download(args: argparse.Namespace) -> int:
+    from rgen.pattern_registry import PatternRegistry
+
+    install_dir = Path(args.install_dir or _DEFAULT_KB)
+    registry = PatternRegistry()
+    result = registry.install(args.download, install_dir=install_dir)
+
+    print(f"Pattern installato: {result['id']}@{result['version']}")
+    print(f"Destinazione: {result['installed_path']}")
+    return 0
+
+
 def _cmd_restore(args: argparse.Namespace) -> int:
     from rgen.backup import BackupEngine
 
     target = Path(args.target or ".")
-    backup_root = target / ".github" / ".rgen-backups"
-    engine = BackupEngine(backup_root)
+    backup_root = _resolve_backup_root(target)
+    restore_target = target / ".github" if backup_root.parent.name == ".github" else target
+    engine = BackupEngine(backup_root, project_root=target)
 
     if args.timestamp:
         try:
-            restored = engine.restore(args.timestamp, target / ".github")
+            restored = engine.restore(args.timestamp, restore_target)
             print(f"Ripristinati {len(restored)} file da '{args.timestamp}'")
         except FileNotFoundError as exc:
             print(f"[ERRORE] {exc}", file=sys.stderr)
@@ -231,7 +360,7 @@ def _cmd_restore(args: argparse.Namespace) -> int:
             return 0
         print(f"Backup disponibili in {backup_root}:\n")
         for b in backups:
-            files = list(b.iterdir())
+            files = [f for f in b.rglob("*") if f.is_file()]
             print(f"  {b.name} ({len(files)} file)")
         print(f"\nUso: rgen --restore --target {target} --timestamp <nome>")
     return 0
@@ -356,6 +485,10 @@ def _build_parser() -> argparse.ArgumentParser:
     mode.add_argument("--dry-run", dest="dry_run", action="store_true", help="Mostra cosa verrebbe generato senza scrivere")
     mode.add_argument("--check", action="store_true", help="Esegui self-check su progetto esistente")
     mode.add_argument("--suggest-scenarios", dest="suggest_scenarios", action="store_true", help="Suggerisci nuovi scenari da interventions.db")
+    mode.add_argument("--history", action="store_true", help="Mostra lo storico delle generazioni")
+    mode.add_argument("--rollback", action="store_true", help="Rollback selettivo di una generazione")
+    mode.add_argument("--search-patterns", help="Cerca pattern nel marketplace locale")
+    mode.add_argument("--download", help="Installa un pattern pack (id registry, path locale, URL zip o owner/repo[:tag])")
     mode.add_argument("--restore", action="store_true", help="Ripristina da backup")
     mode.add_argument("--update", action="store_true", help="Aggiorna i core files in un progetto esistente (senza rigenerare)")
     mode.add_argument("--list-patterns", dest="list_patterns", action="store_true", help="Mostra pattern disponibili")
@@ -366,12 +499,18 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--language", help="Lingua agenti: it|en|es|fr (default: auto-detect)", choices=["it", "en", "es", "fr"])
     parser.add_argument("--flat", action="store_true", help="Per --update: copia i core files nella root del target (layout piatto, es. progetti legacy)")
     parser.add_argument("--timestamp", help="Timestamp backup per --restore")
+    parser.add_argument("--to", help="Generation ID per --rollback")
+    parser.add_argument("--force", action="store_true", help="Per --rollback: forza anche su file modificati manualmente")
+    parser.add_argument("--history-format", choices=["text", "json"], default="text", help="Per --history: formato output")
+    parser.add_argument("--history-output", help="Per --history: salva output JSON su file")
+    parser.add_argument("--show-diffs", action="store_true", help="Per --history: include dettaglio file e stato corrente")
+    parser.add_argument("--install-dir", help="Per --download: directory installazione pattern")
     parser.add_argument("--tech", help="Tecnologie (virgola-separate) per --direct senza pattern")
     parser.add_argument("--domains", help="Domini (virgola-separati) per --direct senza pattern")
     parser.add_argument("--min-cluster-size", type=int, default=3, help="Per --suggest-scenarios: dimensione minima cluster (default: 3)")
     parser.add_argument("--similarity-threshold", type=float, default=0.35, help="Per --suggest-scenarios: soglia similarita 0..1 (default: 0.35)")
     parser.add_argument("--min-confidence", type=float, default=0.0, help="Per --suggest-scenarios: confidence minima del cluster 0..1")
-    parser.add_argument("--history-limit", type=int, default=200, help="Per --suggest-scenarios: numero massimo di interventi da analizzare")
+    parser.add_argument("--history-limit", type=int, default=200, help="Per --suggest-scenarios o --history: numero massimo di elementi")
     parser.add_argument("--include-matched", action="store_true", help="Per --suggest-scenarios: include anche interventi gia categorizzati")
     parser.add_argument("--suggest-format", choices=["json", "text"], default="json", help="Per --suggest-scenarios: formato output stdout")
     parser.add_argument("--suggest-output", help="Per --suggest-scenarios: salva JSON anche su file")

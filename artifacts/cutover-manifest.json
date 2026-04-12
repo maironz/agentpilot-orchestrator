@@ -1,5 +1,5 @@
 {
-  "root": "H:\\Projects\\routing-generator",
+  "root": "H:\\Projects\\agentpilot-orchestrator",
   "include_internal": false,
   "summary": {
     "included": 114,
@@ -148,7 +148,7 @@
     "knowledge_base/psm_stack/esperti/esperto_fullstack.md",
     "knowledge_base/psm_stack/esperti/esperto_orchestratore.md",
     "knowledge_base/psm_stack/esperti/esperto_sistemista.md",
-    "routing-generator.code-workspace"
+    "agentpilot-orchestrator.code-workspace"
   ],
   "excluded_internal": [
     ".github/AGENT_REGISTRY.md",
