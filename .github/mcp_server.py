@@ -231,5 +231,9 @@ def manual_update(confirm: bool = False) -> str:
 
 # ─── Entry Point ───
 
-if __name__ == "__main__":
+def main() -> None:
     mcp.run(transport="stdio")
+
+
+if __name__ == "__main__":
+    main()

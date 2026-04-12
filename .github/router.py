@@ -26,6 +26,15 @@ from router_audit import audit_routing_coverage, get_health_stats
 from router_planner import handle_plan_approved, handle_plan_rejected, handle_new_query
 from interventions import InterventionStore
 
+# ML weight calibration (optional import from rgen)
+try:
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from rgen.weight_calibrator import RouterWeightCalibrator
+    from rgen.graph_router import GraphRouter
+except ImportError:
+    RouterWeightCalibrator = None
+    GraphRouter = None
+
 ROUTING_MAP = Path(__file__).parent / "routing-map.json"
 SUBAGENT_BRIEF = Path(__file__).parent / "subagent-brief.md"
 CONFIDENCE_GATE = 0.55
@@ -139,14 +148,30 @@ def _enrich_with_prior(result: dict, query: str, max_results: int = 3) -> dict:
     return result
 
 
-def _score_scenarios(query: str, routes: dict) -> list[dict]:
-    """Score scenarios with decision traces for explainable routing."""
+def _score_scenarios(query: str, routes: dict, weighted_boosts: dict | None = None) -> list[dict]:
+    """
+    Score scenarios with optional weight calibration.
+
+    Args:
+        query: user query string
+        routes: routing map
+        weighted_boosts: optional calibrated keyword boosts {keyword: boost_factor, ...}
+
+    Returns:
+        List of scored scenarios sorted by score/ratio
+    """
     q = (query or "").lower()
     scored = []
     for key, data in routes.items():
         keywords = data.get("keywords", [])
         matched = [kw for kw in keywords if kw.lower() in q]
         score = len(matched)
+
+        # Apply calibrated weight boost if available
+        if score > 0 and weighted_boosts:
+            boost_factor = weighted_boosts.get(key.lower(), 1.0)
+            score *= boost_factor
+
         if score > 0:
             ratio = round(score / max(len(keywords), 1), 3)
             scored.append({
@@ -287,10 +312,32 @@ def _build_repo_exploration_policy(
     }
 
 
-def route_query(query: str) -> dict:
-    """Direct keyword routing (no planner). Returns full context for first request."""
+def route_query(query: str, use_calibration: bool = False) -> dict:
+    """
+    Direct keyword routing (no planner). Returns full context for first request.
+
+    Args:
+        query: user query
+        use_calibration: if True, apply calibrated weights from intervention history
+
+    Returns:
+        Routing result dict
+    """
     routes = _load_routes()
-    scored = _score_scenarios(query, routes)
+
+    # Load calibrated weights if requested and available
+    weighted_boosts = None
+    if use_calibration and RouterWeightCalibrator:
+        try:
+            store = InterventionStore()
+            calibrator = RouterWeightCalibrator(store)
+            calibration = calibrator.calibrate(routes)
+            weighted_boosts = calibration.get("calibrated_weights", {})
+            store.close()
+        except Exception:
+            pass  # Calibration is optional — never block routing
+
+    scored = _score_scenarios(query, routes, weighted_boosts)
 
     if not scored:
         return {
@@ -519,10 +566,14 @@ MODES:
   python .github/router.py --direct "query"     → Direct routing (skip planner)
   python .github/router.py --follow-up "query"  → Minimal context (same session)
   python .github/router.py --subagent "query"   → Compact brief for subagents
+  python .github/router.py --graph-mode "query" → Graph cascade routing (multi-agent)
 
-HEALTH:
+HEALTH & MONITORING:
   python .github/router.py --stats              → Health metrics (session start)
   python .github/router.py --audit              → Scan codebase for routing gaps
+  python .github/router.py --dashboard          → Live metrics dashboard (TUI)
+  python .github/router.py --calibrate-weights  → Show calibrated keyword boosts
+  python .github/router.py --calibrate-weights --dry-run → Preview without save
 
 MEMORY:
   python .github/router.py --history "query"    → Search intervention memory (FTS5)
@@ -541,12 +592,13 @@ EXAMPLES:
   python .github/router.py --direct "fix login API"
   python .github/router.py --follow-up "aggiungi validazione input"
   python .github/router.py --subagent "cerca tutti i file PHP con query SQL"
+  python .github/router.py --dashboard
         """)
         sys.exit(0)
 
     # Parse mode flag
     mode = None
-    if args[0] in ("--direct", "--follow-up", "--subagent", "--audit", "--stats", "--history", "--log-intervention"):
+    if args[0] in ("--direct", "--follow-up", "--subagent", "--audit", "--stats", "--history", "--log-intervention", "--dashboard", "--calibrate-weights", "--graph-mode"):
         mode = args[0].lstrip("-").replace("-", "_")
         query = " ".join(args[1:]).strip() if len(args) > 1 else ""
     else:
@@ -615,6 +667,85 @@ EXAMPLES:
         print(json.dumps(json_result, indent=2, ensure_ascii=False))
         sys.exit(0)
 
+    # Handle dashboard mode (metrics visualization)
+    if mode == "dashboard":
+        try:
+            from rgen.metrics_collector import RouterMetricsCollector
+            from rgen.dashboard_ui import DashboardUI
+
+            collector = RouterMetricsCollector()
+            ui = DashboardUI(collector)
+            ui.run()
+        except ImportError as e:
+            print(f"Dashboard requires: pip install rich>=13.0", file=sys.stderr)
+            sys.exit(1)
+        except KeyboardInterrupt:
+            sys.exit(0)
+        sys.exit(0)
+
+    # Handle weight calibration mode
+    if mode == "calibrate_weights":
+        if not RouterWeightCalibrator:
+            print("Weight calibration requires RouterWeightCalibrator (should be bundled)", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            routes = _load_routes()
+            store = InterventionStore()
+            calibrator = RouterWeightCalibrator(store)
+
+            # Check for --dry-run flag
+            dry_run = "--dry-run" in query or "--dry-run" in " ".join(args[1:])
+
+            if dry_run:
+                result = calibrator.dry_run(routes)
+            else:
+                result = calibrator.calibrate(routes)
+                # Export weights if not dry-run
+                weights_file = Path(__file__).parent / "calibrated_weights.json"
+                calibrator.export_weights(str(weights_file))
+
+            store.close()
+
+            # Pretty print results
+            print("\n" + "="*60)
+            print("🧠 WEIGHT CALIBRATION REPORT")
+            print("="*60)
+            print(f"Scenarios included: {result['scenarios_included']}")
+            print(f"Total samples: {result['total_samples']}")
+            print(f"Overall confidence: {result['confidence']}")
+            print(f"Data freshness: {result['data_freshness']}")
+
+            if result["success_rate_by_scenario"]:
+                print(f"\n{'─'*60}")
+                print("SUCCESS RATES PER SCENARIO:")
+                print(f"{'─'*60}")
+                for scenario, rate in sorted(result["success_rate_by_scenario"].items(), key=lambda x: x[1], reverse=True):
+                    print(f"  {scenario:40} → {rate:.1%}")
+
+            if result["calibrated_weights"]:
+                print(f"\n{'─'*60}")
+                print("KEYWORD BOOSTS (top 15):")
+                print(f"{'─'*60}")
+                sorted_weights = sorted(result["calibrated_weights"].items(), key=lambda x: x[1], reverse=True)
+                for idx, (keyword, boost) in enumerate(sorted_weights[:15]):
+                    boost_pct = (boost - 1.0) * 100
+                    print(f"  {idx+1:2}. {keyword:30} → +{boost_pct:5.0f}% (boost: {boost:.2f}x)")
+
+            print(f"\n{'='*60}")
+            if not dry_run:
+                print(f"✅ Weights exported to: {weights_file}")
+            else:
+                print("ℹ️  DRY-RUN: weights NOT persisted")
+            print(f"{'='*60}\n")
+
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            sys.exit(0)
+
+        except Exception as e:
+            print(f"Error during calibration: {e}", file=sys.stderr)
+            sys.exit(1)
+
     # Handle intervention memory modes
     if mode == "history":
         store = InterventionStore()
@@ -668,6 +799,25 @@ EXAMPLES:
         result = route_follow_up(query)
     elif mode == "subagent":
         result = route_subagent(query)
+    elif mode == "graph_mode":
+        # Graph cascade routing
+        if not GraphRouter:
+            print("Graph routing requires GraphRouter (bundled with rgen)", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            routes = _load_routes()
+            graph_router = GraphRouter(routes, route_query_fn=route_query)
+            result = graph_router.route_with_graph(query)
+        except Exception as e:
+            result = {
+                "mode": "graph",
+                "error": str(e),
+                "primary": None,
+                "secondary": [],
+                "execution_plan": [],
+                "cascade_success": False,
+            }
     else:
         # Default: planner workflow
         result = handle_new_query(query)
