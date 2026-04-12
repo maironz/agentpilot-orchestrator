@@ -22,14 +22,14 @@ class TestCLILanguageFlag:
     def test_cli_accepts_language_flag(self):
         """Test --language flag is recognized."""
         repo_root = Path(__file__).parent.parent
-        cli_module = repo_root / "rgen" / "cli.py"
 
-        # Run with --help to check if flag is recognized
+        # Run with --help using -m to ensure rgen package is importable
         result = subprocess.run(
-            [sys.executable, str(cli_module), "--help"],
+            [sys.executable, "-m", "rgen.cli", "--help"],
             capture_output=True,
             text=True,
             timeout=5,
+            cwd=str(repo_root),
         )
 
         assert result.returncode == 0
@@ -38,14 +38,14 @@ class TestCLILanguageFlag:
     def test_cli_language_choices(self):
         """Test --language accepts it|en|es|fr."""
         repo_root = Path(__file__).parent.parent
-        cli_module = repo_root / "rgen" / "cli.py"
 
-        # Check help text shows language choices
+        # Run with --help using -m to ensure rgen package is importable
         result = subprocess.run(
-            [sys.executable, str(cli_module), "--help"],
+            [sys.executable, "-m", "rgen.cli", "--help"],
             capture_output=True,
             text=True,
             timeout=5,
+            cwd=str(repo_root),
         )
 
         help_text = result.stdout

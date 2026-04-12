@@ -74,9 +74,9 @@ def test_write_all_backs_up_existing_file(core_dir: Path, target_dir: Path) -> N
 
     assert (target_dir / ".github" / "routing-map.json").read_text() == "new content"
     backup_root = target_dir / ".github" / ".rgen-backups"
-    backups = list(backup_root.iterdir())
+    backups = [p for p in backup_root.iterdir() if p.is_dir()]
     assert len(backups) == 1
-    assert (backups[0] / "routing-map.json").read_text() == "old content"
+    assert (backups[0] / ".github" / "routing-map.json").read_text() == "old content"
 
 
 def test_write_all_returns_error_on_write_failure(core_dir: Path, target_dir: Path) -> None:
@@ -146,9 +146,9 @@ def test_copy_core_files_backs_up_existing(core_dir: Path, target_dir: Path) -> 
 
     assert existing.read_text() == "# router stub"
     backup_root = target_dir / ".github" / ".rgen-backups"
-    sessions = list(backup_root.iterdir())
+    sessions = [p for p in backup_root.iterdir() if p.is_dir()]
     assert len(sessions) == 1
-    assert (sessions[0] / "router.py").read_text() == "# old router"
+    assert (sessions[0] / ".github" / "router.py").read_text() == "# old router"
 
 
 # ---------------------------------------------------------------------------
