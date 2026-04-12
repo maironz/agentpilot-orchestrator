@@ -46,6 +46,8 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_restore(args)
         if args.update:
             return _cmd_update(args)
+        if args.cost_report:
+            return _cmd_cost_report(args)
         if args.direct or args.dry_run:
             return _cmd_direct(args)
         return _cmd_interactive(args)
@@ -470,6 +472,67 @@ def _run_generation(profile, core: Path, kb: Path = _DEFAULT_KB, dry_run: bool =
     return 0 if result.success and report.overall else 1
 
 
+def _cmd_cost_report(args: argparse.Namespace) -> int:
+    """Stima il costo mensile per scenario da intervention history."""
+    from rgen.cost_estimator import CostEstimator
+    from rgen.interventions import InterventionStore
+
+    target = Path(args.target or ".")
+    db_path = target / ".github" / "interventions.db"
+
+    store: InterventionStore | None = None
+    if db_path.exists():
+        store = InterventionStore(db_path=db_path)
+
+    try:
+        estimator = CostEstimator(
+            store=store,
+            model=getattr(args, "cost_model", "gpt-4o-mini"),
+            monthly_queries=getattr(args, "cost_monthly_queries", 1000),
+            pricing_db_path=getattr(args, "pricing_db", None),
+        )
+        report = estimator.estimate()
+    finally:
+        if store is not None:
+            store.close()
+
+    payload = json.dumps(report, indent=2, ensure_ascii=False)
+    cost_output = getattr(args, "cost_output", None)
+    if cost_output:
+        output_path = Path(cost_output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(payload + "\n", encoding="utf-8")
+        print(f"[OK] Report scritto su: {output_path}")
+
+    cost_format = getattr(args, "cost_format", "json")
+    if cost_format == "text":
+        print(_render_cost_report_text(report))
+    else:
+        print(payload)
+    return 0
+
+
+def _render_cost_report_text(report: dict) -> str:
+    """Render leggibile del cost report su stdout."""
+    lines = [
+        f"Cost Report — model: {report['model']} | monthly queries: {report['monthly_queries']}",
+        f"Data source: {report['data_source']}",
+        f"Total estimated monthly cost: ${report['total_estimated_monthly_cost_usd']:.4f} USD",
+        "",
+        "Scenarios (sorted by cost):",
+    ]
+    for s in report["scenarios"]:
+        hint = f"  → {s['optimization_hint']}" if s.get("optimization_hint") else ""
+        lines.append(
+            f"  {s['name']:<30} ${s['estimated_monthly_cost_usd']:.4f} USD"
+            f" | {s['estimated_monthly_queries']}q/mo"
+            f" | avg {s['avg_input_tokens']}in+{s['avg_output_tokens']}out tok{hint}"
+        )
+    lines.append("")
+    lines.append(f"Note: {report['accuracy_note']}")
+    return "\n".join(lines)
+
+
 # ---------------------------------------------------------------------------
 # Argument parser
 # ---------------------------------------------------------------------------
@@ -492,6 +555,7 @@ def _build_parser() -> argparse.ArgumentParser:
     mode.add_argument("--restore", action="store_true", help="Ripristina da backup")
     mode.add_argument("--update", action="store_true", help="Aggiorna i core files in un progetto esistente (senza rigenerare)")
     mode.add_argument("--list-patterns", dest="list_patterns", action="store_true", help="Mostra pattern disponibili")
+    mode.add_argument("--cost-report", dest="cost_report", action="store_true", help="Stima costo mensile per scenario da intervention history")
 
     parser.add_argument("--pattern", help="Pattern ID (es: psm_stack)")
     parser.add_argument("--name", help="Nome del progetto")
@@ -516,6 +580,11 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--suggest-output", help="Per --suggest-scenarios: salva JSON anche su file")
     parser.add_argument("--kb", help=f"Directory knowledge_base (default: {_DEFAULT_KB})")
     parser.add_argument("--core", help=f"Directory core files (default: {_DEFAULT_CORE})")
+    parser.add_argument("--cost-model", dest="cost_model", default="gpt-4o-mini", help="Per --cost-report: modello AI per il pricing (default: gpt-4o-mini)")
+    parser.add_argument("--cost-monthly-queries", dest="cost_monthly_queries", type=int, default=1000, help="Per --cost-report: stima query mensili (default: 1000)")
+    parser.add_argument("--pricing-db", dest="pricing_db", help="Per --cost-report: path a JSON pricing esterno (sovrascrive defaults)")
+    parser.add_argument("--cost-format", dest="cost_format", choices=["json", "text"], default="json", help="Per --cost-report: formato output (default: json)")
+    parser.add_argument("--cost-output", dest="cost_output", help="Per --cost-report: salva JSON su file")
     return parser
 
 

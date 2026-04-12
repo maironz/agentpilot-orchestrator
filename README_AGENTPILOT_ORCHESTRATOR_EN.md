@@ -79,7 +79,30 @@ pip install -r requirements-dev.txt
 
 # Optional: MCP runtime dependencies
 pip install -e ".[mcp]"
+
+# Optional: bootstrap Anthropic skills (only if missing)
+bash .github/skills.sh setup-anthropic-skills
+
+# Optional: force refresh skills
+bash .github/skills.sh setup-anthropic-skills --force
 ```
+
+Bootstrap prerequisites:
+
+- `bash`
+- `npx` (preferred) or `git` (fallback)
+
+Supported variables:
+
+- `ANTHROPIC_SKILLS_SLUG` (default: `anthropics/skills`)
+- `ANTHROPIC_SKILLS_REPO` (default: `https://github.com/anthropics/skills.git`)
+- `ANTHROPIC_SKILLS_REF` (tag/branch for git fallback)
+- `ANTHROPIC_SKILLS_CLI_TIMEOUT` (seconds, default: `90`)
+
+Quick troubleshooting:
+
+- If `npx` does not install skills, the script automatically falls back to git.
+- On unstable networks, reduce timeout: `ANTHROPIC_SKILLS_CLI_TIMEOUT=30`.
 
 ### 2) Generate routing assets
 

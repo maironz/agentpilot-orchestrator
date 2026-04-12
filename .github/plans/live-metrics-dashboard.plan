@@ -233,14 +233,14 @@ def test_dashboard_refresh_loop_stability():
 
 ## Acceptance Checklist
 
-- [ ] `--dashboard` flag implemented and documented
-- [ ] RouterMetricsCollector class with 4 methods
-- [ ] DashboardUI renders without errors
-- [ ] Refresh interval < 500ms
-- [ ] Non-TTY fallback to text output
-- [ ] All tests pass (`pytest tests/test_dashboard*.py`)
-- [ ] Coverage > 85%
-- [ ] README updated with usage
+- [x] `--dashboard` flag implemented and documented
+- [x] RouterMetricsCollector class with 4 methods
+- [x] DashboardUI renders without errors
+- [x] Refresh interval < 500ms
+- [x] Non-TTY fallback to text output
+- [x] All tests pass (`pytest tests/test_dashboard*.py`)
+- [x] Coverage > 85%
+- [x] README updated with usage
 - [ ] Code review passed
 
 ---

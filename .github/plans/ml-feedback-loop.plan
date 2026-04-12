@@ -234,13 +234,13 @@ def test_router_fallback_without_calibrator():
 
 ## Acceptance Checklist
 
-- [ ] RouterWeightCalibrator class with 4 methods
-- [ ] Decay function (exponential)
-- [ ] Integration in router.py _score_scenarios()
-- [ ] Dry-run mode without persistence
-- [ ] All tests pass (coverage > 85%)
-- [ ] Baseline performance: weight computation < 100ms
-- [ ] README updated with examples
+- [x] RouterWeightCalibrator class with 4 methods
+- [x] Decay function (exponential)
+- [x] Integration in router.py _score_scenarios()
+- [x] Dry-run mode without persistence
+- [x] All tests pass (coverage > 85%)
+- [x] Baseline performance: weight computation < 100ms
+- [x] README updated with examples
 - [ ] Code review passed
 
 ---

@@ -442,15 +442,15 @@ def test_end_to_end_italian_generation(tmp_path):
 
 ## File Checklist
 
-- [ ] `rgen/language_detector.py` — Language detection logic
-- [ ] `rgen/template_localizer.py` — Template localization
-- [ ] `tests/test_language_detector.py` — Unit tests
-- [ ] `tests/test_template_localizer.py` — Unit tests
-- [ ] `tests/test_cli_language_integration.py` — Integration tests
-- [ ] `.github/i18n-GUIDE.md` — Guide for adding languages
-- [ ] `knowledge_base/*/i18n/` — Restructure with language dirs
-- [ ] `README.md` — Multi-Language section
-- [ ] `ROADMAP.md` — P2.1 marked DONE
+- [x] `rgen/language_detector.py` — Language detection logic
+- [x] `rgen/template_localizer.py` — Template localization
+- [x] `tests/test_language_detector.py` — Unit tests
+- [x] `tests/test_template_localizer.py` — Unit tests
+- [x] `tests/test_cli_language_integration.py` — Integration tests
+- [x] `.github/i18n-GUIDE.md` — Guide for adding languages
+- [x] `knowledge_base/*/i18n/` — Restructure with language dirs
+- [x] `README.md` — Multi-Language section
+- [x] `ROADMAP.md` — P2.1 marked DONE
 
 ---
 

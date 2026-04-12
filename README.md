@@ -20,7 +20,7 @@
 **Automatically generate a semantic AI routing system for any project.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-259%2F259-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Tests](https://img.shields.io/badge/tests-284%2F284-brightgreen?logo=pytest&logoColor=white)](tests/)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
@@ -87,6 +87,65 @@ What began as an internal orchestration system for structured engineering suppor
 - MCP server tools for native assistant integration
 - Scenario suggestion workflow from historical interventions
 
+## Feature Highlights
+
+### Graph Routing
+
+Use graph cascade routing when a request spans multiple domains.
+
+```bash
+python .github/router.py --graph-mode "investigate production auth + infra incident"
+```
+
+The router selects a primary agent and can cascade to dependent agents with context forwarding.
+
+### Live Metrics Dashboard
+
+Use the terminal dashboard for real-time routing health.
+
+```bash
+python .github/router.py --dashboard
+```
+
+On non-interactive terminals, the command degrades gracefully to text output.
+
+### ML Feedback Calibration
+
+Use historical intervention outcomes to calibrate keyword boosts.
+
+```bash
+python .github/router.py --calibrate-weights
+python .github/router.py --calibrate-weights --dry-run
+```
+
+Dry-run mode previews boosts without persisting updates.
+
+### Multi-Language Support
+
+Generate outputs with an explicit language or let the pipeline auto-detect.
+
+```bash
+rgen --direct --pattern python_api --name my-app --target ./my-app --language it
+rgen --direct --pattern python_api --name my-app --target ./my-app --language en
+```
+
+Language support details and structure are documented in `.github/i18n-GUIDE.md`.
+
+### Cost Estimator
+
+Estimate the monthly token cost per routing scenario from intervention history.
+
+```bash
+rgen --cost-report --target ./my-app
+rgen --cost-report --target ./my-app --cost-model gpt-4o --cost-monthly-queries 5000
+rgen --cost-report --target ./my-app --cost-format text
+rgen --cost-report --target ./my-app --cost-output artifacts/cost.json
+```
+
+Output: JSON report with per-scenario cost, token estimates, and consolidation hints.
+Pricing registry is versionable via `--pricing-db`. Accuracy: +/- 10% on known fixtures.
+Caveat: estimates use a ~1 token/4 chars heuristic; use provider dashboards for billing accuracy.
+
 ## Skills vs Agents
 
 Both are first-class building blocks, but they solve different problems.
@@ -140,7 +199,30 @@ pip install -r requirements-dev.txt
 
 # Optional: MCP runtime dependencies
 pip install -e ".[mcp]"
+
+# Optional: bootstrap Anthropic skills (only if missing)
+bash .github/skills.sh setup-anthropic-skills
+
+# Optional: force refresh skills
+bash .github/skills.sh setup-anthropic-skills --force
 ```
+
+Prerequisiti bootstrap skill:
+
+- `bash`
+- `npx` (path preferito) oppure `git` (fallback)
+
+Variabili supportate:
+
+- `ANTHROPIC_SKILLS_SLUG` (default: `anthropics/skills`)
+- `ANTHROPIC_SKILLS_REPO` (default: `https://github.com/anthropics/skills.git`)
+- `ANTHROPIC_SKILLS_REF` (tag/branch per fallback git)
+- `ANTHROPIC_SKILLS_CLI_TIMEOUT` (secondi, default: `90`)
+
+Troubleshooting rapido:
+
+- Se `npx` non installa nulla, lo script passa automaticamente al fallback git.
+- Se il bootstrap resta lento in rete instabile, riduci timeout: `ANTHROPIC_SKILLS_CLI_TIMEOUT=30`.
 
 ### Fast path
 

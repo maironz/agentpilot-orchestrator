@@ -25,9 +25,9 @@ Move from current repository to the new public repository with open-core boundar
 - [x] Prepare dry-run manifest command for public snapshot filtering
 
 3. Push initial open-core snapshot
-- [x] Add new remote `origin-new`
-- [x] Push migration branch to new repo
-- [x] Open/merge initial PR to `main` (direct bootstrap commit used)
+- [ ] Add new remote `origin-new`
+- [ ] Push migration branch to new repo
+- [ ] Open/merge initial PR to `main` (direct bootstrap commit used)
 
 4. Validate public-facing experience
 - [x] Fresh clone quickstart works

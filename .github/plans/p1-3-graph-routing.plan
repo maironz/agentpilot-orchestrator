@@ -299,13 +299,13 @@ except:
 
 ## File Checklist
 
-- [ ] `rgen/graph_router.py` — new module
-- [ ] `core/router.py` — integrate GraphRouter, add `--graph-mode` flag
-- [ ] `tests/test_graph_router.py` — unit tests
-- [ ] `tests/test_graph_router_integration.py` — integration tests
-- [ ] `.github/routing-map.json` — add optional `dependencies` field
-- [ ] `README.md` — Graph Routing section + example
-- [ ] `ROADMAP.md` — P1.3 marked DONE, P2 features discussed
+- [x] `rgen/graph_router.py` — new module
+- [x] `core/router.py` — integrate GraphRouter, add `--graph-mode` flag
+- [x] `tests/test_graph_router.py` — unit tests
+- [x] `tests/test_graph_router_integration.py` — integration tests
+- [x] `.github/routing-map.json` — add optional `dependencies` field
+- [x] `README.md` — Graph Routing section + example
+- [x] `ROADMAP.md` — P1.3 marked DONE, P2 features discussed
 
 ---
 

@@ -103,11 +103,11 @@ Primary exit:
 
 ## Acceptance
 
-- [ ] Model pricing DB aggiornabile
-- [ ] Estimation accuracy +/- 10% su dataset noto
-- [ ] Consolidation suggestion algorithm
-- [ ] JSON output stabile
-- [ ] README con esempi e caveat
+- [x] Model pricing DB aggiornabile
+- [x] Estimation accuracy +/- 10% su dataset noto
+- [x] Consolidation suggestion algorithm
+- [x] JSON output stabile
+- [x] README con esempi e caveat
 
 ---
 

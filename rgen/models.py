@@ -44,3 +44,28 @@ class CheckReport:
     @property
     def overall(self) -> bool:
         return len(self.errors) == 0
+
+
+@dataclass
+class ScenarioCostEntry:
+    """Cost estimate for a single routing scenario."""
+    name: str
+    history_count: int
+    avg_input_tokens: int
+    avg_output_tokens: int
+    estimated_monthly_queries: int
+    estimated_monthly_input_tokens: int
+    estimated_monthly_output_tokens: int
+    estimated_monthly_cost_usd: float
+    optimization_hint: str | None = None
+
+
+@dataclass
+class CostReport:
+    """Full cost estimation report."""
+    model: str
+    monthly_queries: int
+    total_estimated_monthly_cost_usd: float
+    scenarios: list[ScenarioCostEntry] = field(default_factory=list)
+    data_source: str = "history"
+    accuracy_note: str = ""

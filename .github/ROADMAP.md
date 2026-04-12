@@ -14,6 +14,7 @@
 | **P2.1 (Week 6)** | Multi-Language Agent Templates | ✅ Done | [#8](https://github.com/maironz/agentpilot-orchestrator/commits) |
 | **P2.2-P2.7 (Week 7+)** | Scenario Evolution Generator increments | ✅ Done | [#10](https://github.com/maironz/agentpilot-orchestrator/commits) to [#15](https://github.com/maironz/agentpilot-orchestrator/commits) |
 | Phase 2+ (next) | Audit Trail, Marketplace, Cost Estimator | 🟡 In progress | - |
+| **P3.2** | Cost Estimator (token budget per scenario) | ✅ Done | - |
 
 **Metrics**:
 - **223/223 tests passing** ✅
@@ -37,7 +38,7 @@
 | 4 | Scenario Evolution Generator | 🟠 P2 | 🟢 High | ⭐⭐⭐ | orchestratore | ✅ Done |
 | 6 | Pattern Marketplace / GitHub Discovery | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ❌ Backlog |
 | 7 | Historical Audit Trail + Rollback | 🟡 P2 | 🟠 Mid | ⭐⭐⭐ | developer | ❌ Backlog |
-| 8 | Cost Estimator (token budget per scenario) | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ❌ Backlog |
+| 8 | Cost Estimator (token budget per scenario) | 🟡 P3 | 🟠 Mid | ⭐⭐ | developer | ✅ Done |
 | 9 | IDE Integrations (VS Code extension) | 🔵 P4 | 🔴 Low | ⭐⭐⭐⭐ | external | ❌ Backlog |
 | 10 | Stochastic Testing Mode | 🔵 P4 | 🔴 Low | ⭐⭐⭐ | tester | ❌ Backlog |
 
@@ -276,20 +277,23 @@ rgen --suggest-scenarios --target ./my-app --suggest-output artifacts/scenarios.
 
 ---
 
-### 🟡 P3.2 — Cost Estimator
+### 🟡 P3.2 — Cost Estimator ✅ COMPLETE
 **Owner**: developer | **Effort**: ⭐⭐ | **Impact**: Mid
 **Plan**: [`.github/plans/p3-2-cost-estimator.plan`](./plans/p3-2-cost-estimator.plan)
 
-**Goal**: Stimare token/scenario + alert su inefficienza
-- Model token estimator (GPT-4o pricing, Claude pricing, ...)
-- Cost per scenario = avg_context_size × scenario_popularity
-- Alert: "Questi 3 scenari costano X, considera consolidamento"
-- Exit: `rgen --cost-report` JSON output
+**Completed**:
+- ✅ `CostEstimator` class with pricing registry (6 models, versionable via `--pricing-db`)
+- ✅ Token estimation heuristic (~1 tok/4 chars), accuracy <1% on fixture (target: ±10%)
+- ✅ Consolidation hints for known scenario pairs
+- ✅ CLI: `rgen --cost-report` with `--cost-model`, `--cost-monthly-queries`, `--cost-format`, `--cost-output`, `--pricing-db`
+- ✅ Fallback to heuristic when no history available
+- ✅ 22 tests (unit + integration + accuracy fixture)
+- ✅ README updated with examples and caveats
 
 **Acceptance**:
-- [ ] Model pricing DB (aggiornabile)
-- [ ] Estimation accuracy +/- 10%
-- [ ] Consolidation suggestion algorithm
+- [x] Model pricing DB (aggiornabile)
+- [x] Estimation accuracy +/- 10%
+- [x] Consolidation suggestion algorithm
 
 ---
 
