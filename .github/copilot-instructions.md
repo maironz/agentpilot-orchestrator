@@ -7,12 +7,20 @@ All'inizio di ogni sessione operativa:
 1. Esegui `python .github/router.py --stats`
 2. Pubblica l'header di stato con i dati del router
 
+Opzione rapida consigliata (singola esecuzione):
+```
+python .github/session_header.py --query "<query>"
+```
+Questo comando esegue internamente stats + direct + update_report + mcp_status e stampa header pronto.
+
 ### Per-request protocol (obbligatorio)
 Prima di ogni risposta operativa:
-1. Esegui routing della richiesta:
+1. Esegui il comando unico (default obbligatorio):
    ```
-   python .github/router.py --direct "<query>"
+   python .github/session_header.py --query "<query>"
    ```
+   Questo comando esegue internamente `router --stats`, `router --direct`, `update_report`, `mcp_status` e stampa header finale pronto.
+
 2. Determina il **budget token** dal campo `priority` del routing risultante:
 
    | Priority | Budget stimato | Uso tipico |
@@ -22,19 +30,31 @@ Prima di ogni risposta operativa:
    | `low`    | ~15 000 tok   | Docs, style, configurazione |
    | nessun match | ~10 000 tok | Chiarimento, domanda veloce |
 
-3. Verifica stato aggiornamento (manual-only policy):
+3. Usa il protocollo multi-comando **solo come fallback di debug** (non default):
    ```
-   python -c "import json, sys; from pathlib import Path; sys.path.insert(0, str(Path('.github').resolve())); import update_manager; s=update_manager.get_update_status(refresh=True); update_available=bool(s.get('update_available')); action=(s.get('manual_update_command') or 'manual_update(confirm=true)') if update_available else 'ok'; print(json.dumps({'update': action}, ensure_ascii=False))"
-   ```
-
-4. Verifica stato MCP locale (server attivo/non attivo):
-   ```
+   python .github/router.py --stats
+   python .github/router.py --direct "<query>"
+   python .github/update_report.py --output .github/UPDATE_STATUS.md
    python .github/mcp_status.py
    ```
-
-5. Pubblica header **obbligatorio** in questa forma:
+   Usa il campo JSON `update_value` stampato dallo script per popolare l'header (`ok` oppure link markdown a `.github/UPDATE_STATUS.md`).
+   Opzionale (solo quando richiesto):
    ```
-   🤖 <model> | Agente: <agent> | Scenario: <scenario> | Budget: ~<N>k tok | Routing: <stats> | Update: <ok-or-procedura> | MCP: <Active-or-Inactive>
+   python .github/update_report.py --output .github/UPDATE_STATUS.md --auto
+   ```
+
+4. Pubblica header **obbligatorio** in questa forma:
+   ```
+   🤖 <model> | Agente: <agent> | Scenario: <scenario> | Budget: ~<N>k tok | Routing: <stats> | Update: <ok-or-NeedUpdateLink> | MCP: <Active-or-Inactive>
+   ```
+   Linee aggiuntive consigliate subito sotto header:
+   ```
+   Riepilogo: confidence=<0..1|n/a> | clarify=<yes|no>
+   KPI details: [.github/kpi/KPI_METHODS.md](.github/kpi/KPI_METHODS.md)
+   ```
+   Se `Update` e' `Need Update`, aggiungi subito sotto una riga separata (anche se il link in header non renderizza):
+   ```
+   Update details: [.github/UPDATE_STATUS.md](.github/UPDATE_STATUS.md)
    ```
    Regola MCP:
    - se attivo: `MCP: Active`
@@ -45,14 +65,14 @@ Prima di ogni risposta operativa:
    ```
    Oppure, se non aggiornato:
    ```
-   🤖 GPT-5.3-Codex | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: git pull --ff-only | MCP: Inactive
+   🤖 GPT-5.3-Codex | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: [Need Update](.github/UPDATE_STATUS.md) | MCP: Active
    ```
    Oppure, se MCP non attivo:
    ```
    🤖 GPT-5.3-Codex | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: ok | MCP: Inactive (see .github/MCP_ACTIVATION.md)
    ```
 
-6. Limita la risposta al budget dichiarato. Se prevedi di superarlo, avvisa l'utente e chiedi conferma.
+5. Limita la risposta al budget dichiarato. Se prevedi di superarlo, avvisa l'utente e chiedi conferma.
 
 ### Agents
 | Agent | Domain |
@@ -79,7 +99,8 @@ python .github/router.py --follow-up "<query>"
 python .github/router.py --stats
 python .github/router.py --audit
 python .github/mcp_status.py
-python -c "import json, sys; from pathlib import Path; sys.path.insert(0, str(Path('.github').resolve())); import update_manager; print(json.dumps(update_manager.get_update_status(refresh=True), indent=2, ensure_ascii=False))"
+python .github/update_report.py --output .github/UPDATE_STATUS.md
+python .github/update_report.py --output .github/UPDATE_STATUS.md --auto
 ```
 
 ### Policy esplorazione repo
@@ -122,5 +143,6 @@ Ogni sessione operativa deve lasciare traccia in `.discussioni/` (cartella local
 ## Postflight
 - Verifica che l'agente scelto sia coerente con la richiesta
 - Esegui i test rilevanti prima di chiudere il task
+- Se aggiungi/rimuovi test, aggiorna il conteggio test nel badge del `README.md`
 - Mantieni documentazione e artefatti di routing allineati
 - Aggiorna (o crea) il file di sessione in `.discussioni/`

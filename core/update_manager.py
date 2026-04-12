@@ -40,6 +40,27 @@ def _git(args: list[str], cwd: Path, timeout: int = 20) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
 
+def _parse_ahead_behind(counts: str) -> tuple[int, int]:
+    ahead_str, behind_str = counts.split()
+    return int(ahead_str), int(behind_str)
+
+
+def _remote_default_branch(root: Path) -> str:
+    code, out, _ = _git(["remote", "show", "origin"], root, timeout=30)
+    if code == 0:
+        for line in out.splitlines():
+            stripped = line.strip()
+            if stripped.startswith("HEAD branch:"):
+                branch = stripped.split(":", 1)[1].strip()
+                if branch:
+                    return branch
+
+    code, out, _ = _git(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], root)
+    if code == 0 and out.startswith("origin/") and len(out) > len("origin/"):
+        return out.split("/", 1)[1]
+    return "main"
+
+
 def get_update_status(refresh: bool = False) -> dict:
     """
     Get update status using git metadata. This does not auto-update.
@@ -90,8 +111,10 @@ def get_update_status(refresh: bool = False) -> dict:
         )
         return result
 
+    default_branch = _remote_default_branch(root)
+
     if refresh:
-        _git(["fetch", "--quiet", "origin", branch], root, timeout=30)
+        _git(["fetch", "--quiet", "origin"], root, timeout=30)
 
     upstream = f"origin/{branch}"
     code, counts, err = _git(["rev-list", "--left-right", "--count", f"HEAD...{upstream}"], root)
@@ -108,9 +131,7 @@ def get_update_status(refresh: bool = False) -> dict:
         return result
 
     try:
-        ahead_str, behind_str = counts.split()
-        ahead = int(ahead_str)
-        behind = int(behind_str)
+        ahead, behind = _parse_ahead_behind(counts)
     except Exception:
         result.update(
             {
@@ -123,20 +144,45 @@ def get_update_status(refresh: bool = False) -> dict:
         )
         return result
 
-    update_available = behind > 0
+    default_ahead = 0
+    default_behind = 0
+    default_err = None
+    default_ref = f"origin/{default_branch}"
+    code, default_counts, err = _git(["rev-list", "--left-right", "--count", f"HEAD...{default_ref}"], root)
+    if code == 0:
+        try:
+            default_ahead, default_behind = _parse_ahead_behind(default_counts)
+        except Exception:
+            default_err = f"Unexpected git comparison output for {default_ref}: {default_counts}"
+    else:
+        default_err = err
+
+    update_available = behind > 0 or default_behind > 0
     status = "outdated" if update_available else "up-to-date"
+
+    if behind > 0:
+        manual_update_command = "git pull --ff-only"
+    elif default_behind > 0 and branch != default_branch:
+        manual_update_command = f"git fetch origin ; git merge --ff-only origin/{default_branch}"
+    else:
+        manual_update_command = "git pull --ff-only"
 
     result.update(
         {
             "status": status,
             "branch": branch,
+            "default_branch": default_branch,
             "local_head": head,
             "ahead_commits": ahead,
             "behind_commits": behind,
+            "ahead_default_commits": default_ahead,
+            "behind_default_commits": default_behind,
             "update_available": update_available,
-            "manual_update_command": "git pull --ff-only",
+            "manual_update_command": manual_update_command,
         }
     )
+    if default_err:
+        result["default_branch_compare_error"] = default_err
     return result
 
 
@@ -189,6 +235,17 @@ def manual_update(confirm: bool = False) -> dict:
             "updated": False,
             "status": "up-to-date",
             "message": "No update available.",
+            "details": status,
+        }
+
+    if status.get("behind_commits", 0) == 0 and status.get("behind_default_commits", 0) > 0:
+        return {
+            "updated": False,
+            "status": "needs_default_branch_sync",
+            "message": (
+                "Current branch is up-to-date with its upstream but behind the default branch. "
+                "Sync with origin/default branch manually."
+            ),
             "details": status,
         }
 
