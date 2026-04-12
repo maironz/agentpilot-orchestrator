@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # Master skill dispatcher - AgentPilot Orchestrator automation
 # Source this: source .github/skills.sh
 

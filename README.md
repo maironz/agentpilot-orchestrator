@@ -20,8 +20,8 @@
 **Automatically generate a semantic AI routing system for any project.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-284%2F284-brightgreen?logo=pytest&logoColor=white)](tests/)
-[![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-296%2F296-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![Dependencies](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
 </div>
@@ -88,37 +88,6 @@ What began as an internal orchestration system for structured engineering suppor
 - Scenario suggestion workflow from historical interventions
 
 ## Feature Highlights
-
-### Graph Routing
-
-Use graph cascade routing when a request spans multiple domains.
-
-```bash
-python .github/router.py --graph-mode "investigate production auth + infra incident"
-```
-
-The router selects a primary agent and can cascade to dependent agents with context forwarding.
-
-### Live Metrics Dashboard
-
-Use the terminal dashboard for real-time routing health.
-
-```bash
-python .github/router.py --dashboard
-```
-
-On non-interactive terminals, the command degrades gracefully to text output.
-
-### ML Feedback Calibration
-
-Use historical intervention outcomes to calibrate keyword boosts.
-
-```bash
-python .github/router.py --calibrate-weights
-python .github/router.py --calibrate-weights --dry-run
-```
-
-Dry-run mode previews boosts without persisting updates.
 
 ### Multi-Language Support
 
