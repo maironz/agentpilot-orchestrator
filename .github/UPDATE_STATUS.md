@@ -1,6 +1,6 @@
 # Update Status Report
 
-Generated at: 2026-04-12T10:29:07.137747+00:00
+Generated at: 2026-04-12T10:29:51.441610+00:00
 
 ## Summary
 - Banner label: ok
@@ -22,7 +22,7 @@ Generated at: 2026-04-12T10:29:07.137747+00:00
 ## Raw Status JSON
 ```json
 {
-  "checked_at": "2026-04-12T10:29:07.137747+00:00",
+  "checked_at": "2026-04-12T10:29:51.441610+00:00",
   "source": "active-option",
   "scope": "core->.github",
   "status": "up-to-date",
