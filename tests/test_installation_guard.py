@@ -9,6 +9,7 @@ Previene regressioni negli errori comuni riscontrati durante integrazione:
 """
 
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -21,13 +22,16 @@ class TestVersionSync:
 
     def test_cli_version_matches_pyproject(self):
         """rgen --version deve essere uguale a pyproject.toml version"""
+        import re
         import rgen
-        from tomllib import loads
         
         pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
         pyproject_text = pyproject_path.read_text()
-        pyproject = loads(pyproject_text)
-        expected_version = pyproject["project"]["version"]
+        
+        # Usa regex per estrarre version (compatibile Python 3.10+)
+        match = re.search(r'version\s*=\s*"([^"]+)"', pyproject_text)
+        assert match, "version non trovata in pyproject.toml"
+        expected_version = match.group(1)
         
         assert rgen.__version__ == expected_version, (
             f"CLI version {rgen.__version__} != pyproject {expected_version}"
@@ -35,11 +39,20 @@ class TestVersionSync:
 
     def test_entry_points_versions_consistent(self):
         """Tutte gli entry points devono usare lo stesso modulo versione"""
+        import re
         import rgen
         
         # rgen e agentpilot devono puntare allo stesso module
         # agentpilot-mcp usa core.mcp_server che importa da rgen indirettamente
-        assert rgen.__version__ == "0.4.0", "Version deve essere 0.4.0 post-fix"
+        pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+        pyproject_text = pyproject_path.read_text()
+        match = re.search(r'version\s*=\s*"([^"]+)"', pyproject_text)
+        assert match, "version non trovata in pyproject.toml"
+        expected_version = match.group(1)
+        
+        assert rgen.__version__ == expected_version, (
+            f"rgen.__version__ {rgen.__version__} != pyproject {expected_version}"
+        )
 
 
 class TestDryRunCoherence:
