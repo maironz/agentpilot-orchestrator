@@ -38,6 +38,7 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 > Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
 
 Current release: `v0.4.0`. See `.github/RELEASE_NOTES.md` for release history and migration context.
+Canonical machine-readable version is stored in `VERSION` (synced from `pyproject.toml` on push to `main`).
 
 **From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
@@ -94,8 +95,8 @@ What began as an internal orchestration system for structured engineering suppor
 Generate outputs with an explicit language or let the pipeline auto-detect.
 
 ```bash
-rgen --direct --pattern python_api --name my-app --target ./my-app --language it
-rgen --direct --pattern python_api --name my-app --target ./my-app --language en
+python -m rgen.cli --direct --pattern python_api --name my-app --target ./my-app --language it
+python -m rgen.cli --direct --pattern python_api --name my-app --target ./my-app --language en
 ```
 
 Language support details and structure are documented in `.github/i18n-GUIDE.md`.
@@ -105,10 +106,10 @@ Language support details and structure are documented in `.github/i18n-GUIDE.md`
 Estimate the monthly token cost per routing scenario from intervention history.
 
 ```bash
-rgen --cost-report --target ./my-app
-rgen --cost-report --target ./my-app --cost-model gpt-4o --cost-monthly-queries 5000
-rgen --cost-report --target ./my-app --cost-format text
-rgen --cost-report --target ./my-app --cost-output artifacts/cost.json
+python -m rgen.cli --cost-report --target ./my-app
+python -m rgen.cli --cost-report --target ./my-app --cost-model gpt-4o --cost-monthly-queries 5000
+python -m rgen.cli --cost-report --target ./my-app --cost-format text
+python -m rgen.cli --cost-report --target ./my-app --cost-output artifacts/cost.json
 ```
 
 Output: JSON report with per-scenario cost, token estimates, and consolidation hints.
@@ -124,10 +125,10 @@ Run a fast, repeatable comparison across three modes:
 - paid/premium routing policy
 
 ```bash
-rgen --roi-benchmark
-rgen --roi-benchmark --roi-format text
-rgen --roi-benchmark --roi-scale 3
-rgen --roi-benchmark --roi-output artifacts/roi-benchmark.json
+python -m rgen.cli --roi-benchmark
+python -m rgen.cli --roi-benchmark --roi-format text
+python -m rgen.cli --roi-benchmark --roi-scale 3
+python -m rgen.cli --roi-benchmark --roi-output artifacts/roi-benchmark.json
 ```
 
 Output includes per-strategy LLM cost, operational cost, total cost, and savings deltas.
@@ -218,10 +219,12 @@ python .github/router.py --stats
 python .github/router.py --direct "debug Python API timeout"
 ```
 
+CLI note: prefer `python -m rgen.cli ...` during development to avoid PATH drift between installed entrypoints and local source.
+
 ### 2) Generate routing assets
 
 ```bash
-rgen --direct --pattern python_api --name my-app --target ./my-app
+python -m rgen.cli --direct --pattern python_api --name my-app --target ./my-app
 ```
 
 ### 3) Run router checks
@@ -234,24 +237,24 @@ python .github/router.py --audit
 ### 4) Suggest new scenarios from history
 
 ```bash
-rgen --suggest-scenarios --target ./my-app --suggest-format text
+python -m rgen.cli --suggest-scenarios --target ./my-app --suggest-format text
 ```
 
 ### 5) Inspect generation history and rollback safely
 
 ```bash
-rgen --history --target ./my-app
-rgen --history --show-diffs --history-format json --target ./my-app
-rgen --rollback --to 20260411_103000 --target ./my-app
+python -m rgen.cli --history --target ./my-app
+python -m rgen.cli --history --show-diffs --history-format json --target ./my-app
+python -m rgen.cli --rollback --to 20260411_103000 --target ./my-app
 ```
 
 ### 6) Marketplace MVP (local + remote)
 
 ```bash
-rgen --search-patterns python
-rgen --download ./pattern-pack --install-dir ./knowledge_base
-rgen --download file:///C:/tmp/pattern-pack.zip --install-dir ./knowledge_base
-rgen --download owner/repo:v1.0.0 --install-dir ./knowledge_base
+python -m rgen.cli --search-patterns python
+python -m rgen.cli --download ./pattern-pack --install-dir ./knowledge_base
+python -m rgen.cli --download file:///C:/tmp/pattern-pack.zip --install-dir ./knowledge_base
+python -m rgen.cli --download owner/repo:v1.0.0 --install-dir ./knowledge_base
 ```
 
 ## Practical Tips
@@ -259,8 +262,8 @@ rgen --download owner/repo:v1.0.0 --install-dir ./knowledge_base
 - Start with `python .github/router.py --stats` before changing routing rules.
 - Use `--direct` queries as smoke tests whenever you edit scenarios or keywords.
 - Keep `knowledge_base` generic in public snapshots and move operational playbooks to private space.
-- Run `rgen --suggest-scenarios` only after collecting enough intervention history, otherwise the signal is weak.
-- Use `rgen --history --show-diffs` before a rollback when you need to verify which files are still unchanged since generation.
+- Run `python -m rgen.cli --suggest-scenarios` only after collecting enough intervention history, otherwise the signal is weak.
+- Use `python -m rgen.cli --history --show-diffs` before a rollback when you need to verify which files are still unchanged since generation.
 - For marketplace downloads, validate pack contents locally first and keep trusted sources in a curated registry.
 - Install MCP extras only when you need the server runtime; the generator itself stays lightweight.
 
@@ -268,7 +271,7 @@ rgen --download owner/repo:v1.0.0 --install-dir ./knowledge_base
 
 ```bash
 # 1. Generate assets for a target repository
-rgen --direct --pattern python_api --name payments-api --target ./payments-api
+python -m rgen.cli --direct --pattern python_api --name payments-api --target ./payments-api
 
 # 2. Inspect routing health
 python .github/router.py --stats
