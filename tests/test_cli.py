@@ -52,6 +52,8 @@ def test_check_passes_on_valid_project(tmp_path: Path, capsys: pytest.CaptureFix
     (gh / "router.py").write_text("# stub")
     (gh / "interventions.py").write_text("# stub")
     (gh / "mcp_server.py").write_text("# stub")
+    (gh / "mcp_status.py").write_text("# stub")
+    (gh / "update_manager.py").write_text("# stub")
 
     ret = main(["--check", "--target", str(tmp_path)])
     assert ret == 0

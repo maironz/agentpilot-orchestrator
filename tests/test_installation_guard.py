@@ -37,6 +37,23 @@ class TestVersionSync:
             f"CLI version {rgen.__version__} != pyproject {expected_version}"
         )
 
+    def test_version_file_matches_pyproject(self):
+        """VERSION deve riflettere la versione dichiarata in pyproject.toml."""
+        pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+        version_file_path = Path(__file__).parent.parent / "VERSION"
+
+        pyproject_text = pyproject_path.read_text()
+        match = re.search(r'version\s*=\s*"([^"]+)"', pyproject_text)
+        assert match, "version non trovata in pyproject.toml"
+        expected_version = match.group(1)
+
+        assert version_file_path.exists(), "file VERSION mancante nel repository"
+        version_from_file = version_file_path.read_text(encoding="utf-8").strip()
+
+        assert version_from_file == expected_version, (
+            f"VERSION {version_from_file} != pyproject {expected_version}"
+        )
+
     def test_entry_points_versions_consistent(self):
         """Tutte gli entry points devono usare lo stesso modulo versione"""
         import re
@@ -69,6 +86,8 @@ class TestDryRunCoherence:
             "router_planner.py",
             "interventions.py",
             "mcp_server.py",
+            "mcp_status.py",
+            "update_manager.py",
             "requirements.txt",
         }
         
@@ -131,7 +150,7 @@ class TestRouterHealthThresholds:
 class TestAuditScanAvailability:
     """Verifica che audit gestisce assenza di sorgenti PSM Stack"""
 
-    def test_audit_returns_scan_available_flag(self):
+    def test_audit_returns_scan_available_flag(self, no_network_scan):
         """audit_routing_coverage deve ritornare scan_available flag"""
         import sys
         sys.path.insert(0, str(Path(__file__).parent.parent / ".github"))
@@ -147,7 +166,7 @@ class TestAuditScanAvailability:
             "scan_available deve essere bool"
         )
 
-    def test_audit_handles_missing_psm_stack_gracefully(self):
+    def test_audit_handles_missing_psm_stack_gracefully(self, no_network_scan):
         """Audit su ambienti no-PSM deve ritornare note esplicita, non 0%"""
         import sys
         sys.path.insert(0, str(Path(__file__).parent.parent / ".github"))
@@ -162,7 +181,7 @@ class TestAuditScanAvailability:
                 "Quando scan non disponibile, audit deve spiegare perché"
             )
 
-    def test_audit_coverage_never_silently_zero(self):
+    def test_audit_coverage_never_silently_zero(self, no_network_scan):
         """Audit coverage 0% dev'essere esplicito (not 'unknown')"""
         import sys
         sys.path.insert(0, str(Path(__file__).parent.parent / ".github"))
@@ -209,6 +228,53 @@ class TestMCPInstallation:
         """mcp_status.py deve leggere stato corretto da VS Code logs"""
         status_file = Path(__file__).parent.parent / ".github" / "mcp_status.py"
         assert status_file.exists(), "mcp_status.py deve esistere"
+
+
+class TestExecutionTimeoutGuard:
+    """Verifica che il guard di timeout in cli.main() funzioni correttamente."""
+
+    def test_timeout_constant_is_30(self):
+        """_EXECUTION_TIMEOUT deve essere 30 secondi."""
+        from rgen.cli import _EXECUTION_TIMEOUT
+        assert _EXECUTION_TIMEOUT == 30
+
+    def test_slow_commands_map_non_empty(self):
+        """_SLOW_COMMANDS deve contenere almeno le operazioni di rete/IO note."""
+        from rgen.cli import _SLOW_COMMANDS
+        expected = {"download", "update", "roi_benchmark", "cost_report", "rollback"}
+        assert expected.issubset(set(_SLOW_COMMANDS.keys()))
+
+    def test_report_timeout_slow_command(self, capsys):
+        """_report_timeout su comando lento deve spiegare che il ritardo è atteso."""
+        from rgen.cli import _report_timeout
+        _report_timeout("download", 30)
+        captured = capsys.readouterr()
+        assert "TIMEOUT" in captured.err
+        assert "download" in captured.err
+        assert "atteso" in captured.err.lower() or "normale" in captured.err.lower()
+
+    def test_report_timeout_unknown_command(self, capsys):
+        """_report_timeout su comando ignoto deve suggerire --check."""
+        from rgen.cli import _report_timeout
+        _report_timeout(None, 30)
+        captured = capsys.readouterr()
+        assert "TIMEOUT" in captured.err
+        assert "--check" in captured.err
+
+    def test_main_returns_3_on_timeout(self):
+        """main() deve restituire exit code 3 se il comando supera il timeout."""
+        import time
+        from unittest.mock import patch
+        from rgen.cli import main
+
+        def _slow_dispatch(*_a, **_kw):
+            time.sleep(5)
+            return 0
+
+        with patch("rgen.cli._EXECUTION_TIMEOUT", 1):
+            with patch("rgen.cli._cmd_list_patterns", _slow_dispatch):
+                result = main(["--list-patterns"])
+        assert result == 3
 
 
 if __name__ == "__main__":
