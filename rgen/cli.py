@@ -9,7 +9,6 @@ from dataclasses import asdict
 from pathlib import Path
 
 from rgen import __version__
-from rgen.premium_runtime_loader import load_scenario_clusterer
 
 # ---------------------------------------------------------------------------
 # Project-root relative paths (resolved at import time)
@@ -113,6 +112,18 @@ def _cmd_check(args: argparse.Namespace) -> int:
 def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
     """Suggests candidate scenarios from intervention history."""
     from rgen.interventions import InterventionStore
+
+    try:
+        from rgen.premium_runtime_loader import load_scenario_clusterer
+    except ModuleNotFoundError:
+        load_scenario_clusterer = None
+
+    if load_scenario_clusterer is None:
+        print(
+            "[ERRORE] Scenario clustering non disponibile (modulo premium non installato).",
+            file=sys.stderr,
+        )
+        return 2
 
     ScenarioClusterer = load_scenario_clusterer()
     if ScenarioClusterer is None:

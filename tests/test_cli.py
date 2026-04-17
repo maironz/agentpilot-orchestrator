@@ -259,11 +259,13 @@ def test_update_flat_creates_backup_in_root(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 def test_version_flag_exits_zero(capsys: pytest.CaptureFixture) -> None:
+    from rgen import __version__
+
     with pytest.raises(SystemExit) as exc:
         main(["--version"])
     assert exc.value.code == 0
     out = capsys.readouterr().out
-    assert "0.2.0" in out
+    assert __version__ in out
 
 
 def test_version_flag_includes_prog_name(capsys: pytest.CaptureFixture) -> None:
