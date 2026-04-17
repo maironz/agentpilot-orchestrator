@@ -3,12 +3,25 @@
 from __future__ import annotations
 
 import argparse
+import concurrent.futures
 import json
 import sys
 from dataclasses import asdict
 from pathlib import Path
 
 from rgen import __version__
+
+# ---------------------------------------------------------------------------
+# Execution guard — commands expected to take longer than the default limit
+# ---------------------------------------------------------------------------
+_EXECUTION_TIMEOUT = 30  # seconds
+_SLOW_COMMANDS: dict[str, str] = {
+    "download": "scaricamento remoto pattern pack (dipende dalla rete)",
+    "update": "operazioni git/network (pull, fetch)",
+    "roi_benchmark": "benchmark ROI multi-strategia su dataset esteso",
+    "cost_report": "analisi storico interventi su dataset ampio",
+    "rollback": "ripristino snapshot con diff multi-file",
+}
 
 # ---------------------------------------------------------------------------
 # Project-root relative paths (resolved at import time)
@@ -28,7 +41,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = _build_parser()
     args = parser.parse_args(argv)
 
-    try:
+    # Determine which command is active (used for timeout diagnostics)
+    active_cmd = next(
+        (k for k in _SLOW_COMMANDS if getattr(args, k, False)),
+        None,
+    )
+    timeout = _EXECUTION_TIMEOUT
+
+    def _dispatch() -> int:
         if args.list_patterns:
             return _cmd_list_patterns(args)
         if args.check:
@@ -54,12 +74,52 @@ def main(argv: list[str] | None = None) -> int:
         if args.direct or args.dry_run:
             return _cmd_direct(args)
         return _cmd_interactive(args)
+
+    pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+    future = pool.submit(_dispatch)
+    try:
+        result = future.result(timeout=timeout)
+        pool.shutdown(wait=False)
+        return result
+    except concurrent.futures.TimeoutError:
+        pool.shutdown(wait=False)
+        _report_timeout(active_cmd, timeout)
+        return 3
     except KeyboardInterrupt:
         print("\nInterrotto dall'utente.")
         return 1
     except Exception as exc:
         print(f"[ERRORE] {exc}", file=sys.stderr)
         return 2
+
+
+def _report_timeout(active_cmd: str | None, timeout: int) -> None:
+    """Stampa diagnostica e suggerisce se il rallentamento è atteso."""
+    print(
+        f"\n[TIMEOUT] L'esecuzione ha superato {timeout}s e è stata interrotta.",
+        file=sys.stderr,
+    )
+    if active_cmd and active_cmd in _SLOW_COMMANDS:
+        reason = _SLOW_COMMANDS[active_cmd]
+        print(
+            f"[INFO] Il comando '{active_cmd}' può essere lento per: {reason}",
+            file=sys.stderr,
+        )
+        print(
+            "[INFO] Se il rallentamento è atteso (rete lenta, dataset grande), "
+            "il comportamento è normale. Verifica la connessione o riduci l'input.",
+            file=sys.stderr,
+        )
+    else:
+        print(
+            "[WARN] Il comando in esecuzione non dovrebbe impiegare così tanto. "
+            "Possibili cause: I/O bloccante, loop infinito, risorsa non disponibile.",
+            file=sys.stderr,
+        )
+        print(
+            "[HINT] Esegui con --check per verificare l'integrità del progetto.",
+            file=sys.stderr,
+        )
 
 
 # ---------------------------------------------------------------------------
