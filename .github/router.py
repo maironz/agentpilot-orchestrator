@@ -26,14 +26,31 @@ from router_audit import audit_routing_coverage, get_health_stats
 from router_planner import handle_plan_approved, handle_plan_rejected, handle_new_query
 from interventions import InterventionStore
 
-# ML weight calibration (optional import from rgen)
+# Premium runtime boundary (prefer private implementations when installed)
 try:
     sys.path.insert(0, str(Path(__file__).parent.parent))
-    from rgen.weight_calibrator import RouterWeightCalibrator
-    from rgen.graph_router import GraphRouter
+    from rgen.policy_engine import DefaultPolicyProvider, PolicyInput
+    from rgen.premium_policy_loader import load_policy_provider
+    from rgen.premium_runtime_loader import (
+        load_dashboard_ui,
+        load_graph_router,
+        load_metrics_collector,
+        load_weight_calibrator,
+    )
+
+    RouterWeightCalibrator = load_weight_calibrator()
+    GraphRouter = load_graph_router()
+    RouterMetricsCollector = load_metrics_collector()
+    DashboardUI = load_dashboard_ui()
+    POLICY_PROVIDER = load_policy_provider()
 except ImportError:
     RouterWeightCalibrator = None
     GraphRouter = None
+    RouterMetricsCollector = None
+    DashboardUI = None
+    DefaultPolicyProvider = None
+    PolicyInput = None
+    POLICY_PROVIDER = None
 
 ROUTING_MAP = Path(__file__).parent / "routing-map.json"
 SUBAGENT_BRIEF = Path(__file__).parent / "subagent-brief.md"
@@ -312,6 +329,32 @@ def _build_repo_exploration_policy(
     }
 
 
+def _apply_policy(result: dict, query: str) -> dict:
+    """Attach public policy metadata to routing results."""
+    if not isinstance(result, dict) or PolicyInput is None or DefaultPolicyProvider is None:
+        return result
+
+    provider = POLICY_PROVIDER or DefaultPolicyProvider()
+    policy_input = PolicyInput(
+        query=query,
+        mode=str(result.get("mode", "direct")),
+        scenario=str(result.get("scenario", "_fallback")),
+        priority=str(result.get("priority", "low")),
+        confidence=float(result.get("confidence", 0.0) or 0.0),
+        needs_clarification=bool(result.get("needs_clarification", False)),
+        repo_scope=str(result.get("repo_exploration", {}).get("recommended_scope", "routed-files-only")),
+        routing_debug=list(result.get("routing_debug", [])),
+    )
+
+    try:
+        decision = provider.evaluate(policy_input)
+    except Exception:
+        decision = DefaultPolicyProvider().evaluate(policy_input)
+
+    result["policy"] = decision.as_dict() if hasattr(decision, "as_dict") else decision
+    return result
+
+
 def route_query(query: str, use_calibration: bool = False) -> dict:
     """
     Direct keyword routing (no planner). Returns full context for first request.
@@ -340,7 +383,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
     scored = _score_scenarios(query, routes, weighted_boosts)
 
     if not scored:
-        return {
+        return _apply_policy({
             "agent": "orchestratore",
             "files": [AGENT_EXPERT_MAP["orchestratore"]],
             "context": "Fallback generico — nessuno scenario matchato",
@@ -353,7 +396,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
                 confidence=0.0,
                 fallback=True,
             ),
-        }
+        }, query)
 
     top = scored[0]
     score = top["score"]
@@ -373,7 +416,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
             ambiguous=True,
         )
         amb = _enrich_with_prior(amb, query)
-        return amb
+        return _apply_policy(amb, query)
 
     result = {
         "agent": agent,
@@ -401,7 +444,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
     # Intervention memory: enrich with prior similar interventions
     result = _enrich_with_prior(result, query)
 
-    return result
+    return _apply_policy(result, query)
 
 
 def route_follow_up(query: str) -> dict:
@@ -414,7 +457,7 @@ def route_follow_up(query: str) -> dict:
     scored = _score_scenarios(query, routes)
 
     if not scored:
-        return {
+        return _apply_policy({
             "agent": "orchestratore",
             "files": [AGENT_EXPERT_MAP["orchestratore"]],
             "context": "Follow-up fallback",
@@ -426,7 +469,7 @@ def route_follow_up(query: str) -> dict:
                 confidence=0.0,
                 fallback=True,
             ),
-        }
+        }, query)
 
     top = scored[0]
     scenario_key = top["scenario"]
@@ -445,7 +488,7 @@ def route_follow_up(query: str) -> dict:
             ambiguous=True,
         )
         amb = _enrich_with_prior(amb, query)
-        return amb
+        return _apply_policy(amb, query)
 
     # In follow-up mode: load ONLY the agent expert file
     # Supplementary files were already loaded in the initial request
@@ -478,7 +521,7 @@ def route_follow_up(query: str) -> dict:
     # Intervention memory: enrich with prior similar interventions
     result = _enrich_with_prior(result, query)
 
-    return result
+    return _apply_policy(result, query)
 
 
 def route_subagent(query: str) -> dict:
@@ -512,7 +555,7 @@ def route_subagent(query: str) -> dict:
     brief_path = str(SUBAGENT_BRIEF)
     prompt_prefix = _build_subagent_prompt_prefix(agent, context)
 
-    return {
+    result = {
         "agent": agent,
         "files": [expert_file] if expert_file else [],
         "context": context,
@@ -533,6 +576,8 @@ def route_subagent(query: str) -> dict:
             "For pure code searches or simple edits, the prompt_prefix alone is sufficient."
         )
     }
+
+    return _apply_policy(result, query)
 
 
 def _build_subagent_prompt_prefix(agent: str, context: str) -> str:
@@ -640,25 +685,30 @@ EXAMPLES:
         print(f"🔍 ROUTING MAP AUDIT")
         print(f"{'='*60}")
         print(f"Scenari: {result['total_scenarios']} | Keywords: {result['total_keywords']}")
-        print(f"Concetti trovati: {result['total_concepts']} | Coperti: {result['covered']} | Gap: {result['gaps']}")
-        print(f"Copertura: {result['coverage_pct']}%")
-        if result['gap_details']:
-            print(f"\n{'─'*60}")
-            print("⚠️  CONCETTI NON COPERTI:")
-            print(f"{'─'*60}")
-            for g in result['gap_details']:
-                print(f"  • {g['concept']} ({g['type']})")
-                print(f"    File: {g['source']}")
-                print(f"    Keywords suggerite: {', '.join(g['suggested_keywords'])}")
-        else:
-            print("\n✅ Tutti i concetti sono coperti dalla routing map.")
 
-        if result['_covered_details']:
-            print(f"\n{'─'*60}")
-            print("📋 CONCETTI COPERTI:")
-            print(f"{'─'*60}")
-            for c in result['_covered_details']:
-                print(f"  ✓ {c['concept']} ({c['type']}) → {', '.join(c['matched_by'])}")
+        if not result.get("scan_available", True):
+            print(f"\n⚠️  {result.get('note', 'Sorgenti di scansione non disponibili')}")
+            print("\n✅ Nessun gap rilevabile (sorgenti assenti).")
+        else:
+            print(f"Concetti trovati: {result['total_concepts']} | Coperti: {result['covered']} | Gap: {result['gaps']}")
+            print(f"Copertura: {result['coverage_pct']}%")
+            if result['gap_details']:
+                print(f"\n{'─'*60}")
+                print("⚠️  CONCETTI NON COPERTI:")
+                print(f"{'─'*60}")
+                for g in result['gap_details']:
+                    print(f"  • {g['concept']} ({g['type']})")
+                    print(f"    File: {g['source']}")
+                    print(f"    Keywords suggerite: {', '.join(g['suggested_keywords'])}")
+            else:
+                print("\n✅ Tutti i concetti sono coperti dalla routing map.")
+
+            if result['_covered_details']:
+                print(f"\n{'─'*60}")
+                print("📋 CONCETTI COPERTI:")
+                print(f"{'─'*60}")
+                for c in result['_covered_details']:
+                    print(f"  ✓ {c['concept']} ({c['type']}) → {', '.join(c['matched_by'])}")
 
         print(f"\n{'='*60}")
         # JSON output: exclude internal _covered_details
@@ -670,9 +720,8 @@ EXAMPLES:
     # Handle dashboard mode (metrics visualization)
     if mode == "dashboard":
         try:
-            from rgen.metrics_collector import RouterMetricsCollector
-            from rgen.dashboard_ui import DashboardUI
-
+            if not RouterMetricsCollector or not DashboardUI:
+                raise ImportError("premium/runtime dashboard components unavailable")
             collector = RouterMetricsCollector()
             ui = DashboardUI(collector)
             ui.run()
@@ -693,6 +742,7 @@ EXAMPLES:
             routes = _load_routes()
             store = InterventionStore()
             calibrator = RouterWeightCalibrator(store)
+            weights_file = Path(__file__).parent / "calibrated_weights.json"
 
             # Check for --dry-run flag
             dry_run = "--dry-run" in query or "--dry-run" in " ".join(args[1:])
@@ -702,7 +752,6 @@ EXAMPLES:
             else:
                 result = calibrator.calibrate(routes)
                 # Export weights if not dry-run
-                weights_file = Path(__file__).parent / "calibrated_weights.json"
                 calibrator.export_weights(str(weights_file))
 
             store.close()
@@ -818,6 +867,7 @@ EXAMPLES:
                 "execution_plan": [],
                 "cascade_success": False,
             }
+            result = _apply_policy(result, query)
     else:
         # Default: planner workflow
         result = handle_new_query(query)

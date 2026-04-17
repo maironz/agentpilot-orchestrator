@@ -38,6 +38,7 @@ def test_route_query_fallback_allows_repo_exploration(runtime_router, monkeypatc
     assert result["confidence"] == 0.0
     assert result["repo_exploration"]["allowed"] is True
     assert result["repo_exploration"]["recommended_scope"] == "repo-fallback"
+    assert result["policy"]["fallback_strategy"] == "repo-search"
 
 
 def test_route_query_high_confidence_keeps_scope_restricted(runtime_router, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -63,3 +64,4 @@ def test_route_query_high_confidence_keeps_scope_restricted(runtime_router, monk
     assert result["confidence"] >= runtime_router.CONFIDENCE_GATE
     assert result["repo_exploration"]["allowed"] is False
     assert result["repo_exploration"]["recommended_scope"] == "routed-files-only"
+    assert result["policy"]["governance_mode"] in {"standard", "guarded", "strict"}

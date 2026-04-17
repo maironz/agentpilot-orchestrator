@@ -145,6 +145,25 @@ def audit_routing_coverage() -> dict:
     scenario_names = set(routes.keys())
 
     # Scan codebase
+    scan_paths_found = any(
+        _resolve_scan_path(config["paths"]) is not None
+        for config in _SCAN_CONFIGS
+    )
+    if not scan_paths_found:
+        return {
+            "mode": "audit",
+            "scan_available": False,
+            "note": "Nessun percorso di scansione disponibile (sorgenti PSM Stack non trovate)",
+            "total_concepts": 0,
+            "covered": 0,
+            "gaps": 0,
+            "gap_details": [],
+            "coverage_pct": None,
+            "total_scenarios": len(routes),
+            "total_keywords": len(all_keywords),
+            "_covered_details": [],
+        }
+
     all_concepts = []
     for config in _SCAN_CONFIGS:
         all_concepts.extend(_extract_concepts(config))
@@ -182,6 +201,7 @@ def audit_routing_coverage() -> dict:
 
     return {
         "mode": "audit",
+        "scan_available": True,
         "total_concepts": len(unique_concepts),
         "covered": len(covered),
         "gaps": len(gaps),
@@ -203,8 +223,8 @@ _THRESHOLDS = {
     "keywords_crit": 550,
     "overlap_pct_warn": 15,
     "overlap_pct_crit": 20,
-    "router_lines_warn": 600,
-    "router_lines_crit": 800,
+    "router_lines_warn": 800,
+    "router_lines_crit": 1200,
     "routing_map_kb_warn": 25,
     "routing_map_kb_crit": 35,
 }

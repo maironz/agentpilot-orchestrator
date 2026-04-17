@@ -5,9 +5,11 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
 from rgen import __version__
+from rgen.premium_runtime_loader import load_scenario_clusterer
 
 # ---------------------------------------------------------------------------
 # Project-root relative paths (resolved at import time)
@@ -48,6 +50,8 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_update(args)
         if args.cost_report:
             return _cmd_cost_report(args)
+        if args.roi_benchmark:
+            return _cmd_roi_benchmark(args)
         if args.direct or args.dry_run:
             return _cmd_direct(args)
         return _cmd_interactive(args)
@@ -109,7 +113,11 @@ def _cmd_check(args: argparse.Namespace) -> int:
 def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
     """Suggests candidate scenarios from intervention history."""
     from rgen.interventions import InterventionStore
-    from rgen.scenario_clusterer import ScenarioClusterer
+
+    ScenarioClusterer = load_scenario_clusterer()
+    if ScenarioClusterer is None:
+        print("[ERRORE] Scenario clustering non disponibile.", file=sys.stderr)
+        return 2
 
     target = Path(args.target or ".")
     db_path = target / ".github" / "interventions.db"
@@ -439,11 +447,16 @@ def _run_generation(profile, core: Path, kb: Path = _DEFAULT_KB, dry_run: bool =
     files = adapter.adapt(profile)
 
     if dry_run:
-        print(f"\n[DRY-RUN] Verrebbero scritti {len(files)} file in: {profile.target_path}")
+        from rgen.writer import Writer
+        core_files = [f".github/{name}" for name in Writer.CORE_FILES]
+        total = len(files) + len(core_files)
+        print(f"\n[DRY-RUN] Verrebbero scritti {total} file in: {profile.target_path}")
         print(f"[DRY-RUN] Lingua: {language.upper()}")
         for path in sorted(files):
             size = len(files[path])
             print(f"  {path} ({size} byte)")
+        for cf in core_files:
+            print(f"  {cf} (core)")
         return 0
 
     writer = Writer(core)
@@ -512,6 +525,64 @@ def _cmd_cost_report(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_roi_benchmark(args: argparse.Namespace) -> int:
+    """Run ROI benchmark for live sales/demo comparison."""
+    from rgen.roi_benchmark import compare_roi_strategies
+
+    scale = max(getattr(args, "roi_scale", 1), 1)
+    results = compare_roi_strategies()
+    base = {k: asdict(v) for k, v in results.items()}
+
+    scaled = {}
+    for key, data in base.items():
+        scaled[key] = {
+            "strategy": data["strategy"],
+            "requests": data["requests"] * scale,
+            "llm_cost_usd": round(data["llm_cost_usd"] * scale, 4),
+            "op_cost_usd": round(data["op_cost_usd"] * scale, 4),
+            "total_cost_usd": round(data["total_cost_usd"] * scale, 4),
+        }
+
+    deltas = {
+        "free_vs_no_routing_usd": round(
+            scaled["no_routing"]["total_cost_usd"] - scaled["free_routing"]["total_cost_usd"],
+            4,
+        ),
+        "paid_vs_free_usd": round(
+            scaled["free_routing"]["total_cost_usd"] - scaled["paid_routing"]["total_cost_usd"],
+            4,
+        ),
+        "paid_vs_no_routing_usd": round(
+            scaled["no_routing"]["total_cost_usd"] - scaled["paid_routing"]["total_cost_usd"],
+            4,
+        ),
+    }
+
+    report = {
+        "benchmark_name": "roi_routing_comparison",
+        "scale_batches": scale,
+        "per_batch_requests": 10,
+        "strategies": scaled,
+        "deltas": deltas,
+    }
+
+    payload = json.dumps(report, indent=2, ensure_ascii=False)
+
+    roi_output = getattr(args, "roi_output", None)
+    if roi_output:
+        output_path = Path(roi_output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(payload + "\n", encoding="utf-8")
+        print(f"[OK] ROI report scritto su: {output_path}")
+
+    roi_format = getattr(args, "roi_format", "json")
+    if roi_format == "text":
+        print(_render_roi_benchmark_text(report))
+    else:
+        print(payload)
+    return 0
+
+
 def _render_cost_report_text(report: dict) -> str:
     """Render leggibile del cost report su stdout."""
     lines = [
@@ -530,6 +601,36 @@ def _render_cost_report_text(report: dict) -> str:
         )
     lines.append("")
     lines.append(f"Note: {report['accuracy_note']}")
+    return "\n".join(lines)
+
+
+def _render_roi_benchmark_text(report: dict) -> str:
+    """Render human-friendly ROI benchmark summary."""
+    strategies = report["strategies"]
+    deltas = report["deltas"]
+    lines = [
+        "ROI Benchmark - Routing Comparison",
+        f"Batches: {report['scale_batches']} | Requests per strategy: {report['per_batch_requests'] * report['scale_batches']}",
+        "",
+        "Strategies:",
+    ]
+
+    for key in ("no_routing", "free_routing", "paid_routing"):
+        item = strategies[key]
+        lines.append(
+            f"  {item['strategy']:<14} total=${item['total_cost_usd']:.4f} "
+            f"(llm=${item['llm_cost_usd']:.4f}, ops=${item['op_cost_usd']:.4f})"
+        )
+
+    lines.extend(
+        [
+            "",
+            "Savings:",
+            f"  free vs no routing: ${deltas['free_vs_no_routing_usd']:.4f}",
+            f"  paid vs free:       ${deltas['paid_vs_free_usd']:.4f}",
+            f"  paid vs no routing: ${deltas['paid_vs_no_routing_usd']:.4f}",
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -556,6 +657,7 @@ def _build_parser() -> argparse.ArgumentParser:
     mode.add_argument("--update", action="store_true", help="Aggiorna i core files in un progetto esistente (senza rigenerare)")
     mode.add_argument("--list-patterns", dest="list_patterns", action="store_true", help="Mostra pattern disponibili")
     mode.add_argument("--cost-report", dest="cost_report", action="store_true", help="Stima costo mensile per scenario da intervention history")
+    mode.add_argument("--roi-benchmark", dest="roi_benchmark", action="store_true", help="Confronta ROI tra no-routing, routing free e routing paid")
 
     parser.add_argument("--pattern", help="Pattern ID (es: psm_stack)")
     parser.add_argument("--name", help="Nome del progetto")
@@ -585,6 +687,9 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--pricing-db", dest="pricing_db", help="Per --cost-report: path a JSON pricing esterno (sovrascrive defaults)")
     parser.add_argument("--cost-format", dest="cost_format", choices=["json", "text"], default="json", help="Per --cost-report: formato output (default: json)")
     parser.add_argument("--cost-output", dest="cost_output", help="Per --cost-report: salva JSON su file")
+    parser.add_argument("--roi-format", dest="roi_format", choices=["json", "text"], default="json", help="Per --roi-benchmark: formato output (default: json)")
+    parser.add_argument("--roi-output", dest="roi_output", help="Per --roi-benchmark: salva JSON su file")
+    parser.add_argument("--roi-scale", dest="roi_scale", type=int, default=1, help="Per --roi-benchmark: moltiplicatore batch da 10 richieste (default: 1)")
     return parser
 
 

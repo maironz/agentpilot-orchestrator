@@ -22,7 +22,13 @@ Input:
 Output:
 - JSON string containing routing payload with fields such as:
   - `agent`, `files`, `context`, `priority`, `scenario`
-  - optional: `confidence`, `routing_debug`, `repo_exploration`, `capability`, `capability_instructions`, `update_status`
+  - optional: `confidence`, `routing_debug`, `repo_exploration`, `capability`, `capability_instructions`, `policy`, `update_status`
+
+Policy payload (optional object):
+- `policy_name`, `policy_version`
+- `complexity`, `model_profile`, `cost_tier`
+- `fallback_strategy`, `execution_strategy`, `governance_mode`
+- `rationale`, `tags`
 
 Notes:
 - `route_query` includes `update_status` in output.

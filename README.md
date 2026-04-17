@@ -115,6 +115,24 @@ Output: JSON report with per-scenario cost, token estimates, and consolidation h
 Pricing registry is versionable via `--pricing-db`. Accuracy: +/- 10% on known fixtures.
 Caveat: estimates use a ~1 token/4 chars heuristic; use provider dashboards for billing accuracy.
 
+### ROI Benchmark (Live Demo)
+
+Run a fast, repeatable comparison across three modes:
+
+- no routing baseline
+- free/open-core routing
+- paid/premium routing policy
+
+```bash
+rgen --roi-benchmark
+rgen --roi-benchmark --roi-format text
+rgen --roi-benchmark --roi-scale 3
+rgen --roi-benchmark --roi-output artifacts/roi-benchmark.json
+```
+
+Output includes per-strategy LLM cost, operational cost, total cost, and savings deltas.
+The command is safe for public docs: it demonstrates behavior and ROI deltas without exposing proprietary policy internals.
+
 ## Skills vs Agents
 
 Both are first-class building blocks, but they solve different problems.
@@ -289,6 +307,11 @@ Current MCP tools:
 - `audit_coverage`
 - `get_update_status` (update check, optional refresh)
 - `manual_update` (manual-only update, requires confirmation)
+
+Route output notes:
+
+- `route_query` can include a `policy` object with open-core decision metadata (complexity, fallback strategy, governance mode).
+- When a private policy provider is installed, the same field is preserved and resolved through the policy boundary.
 
 Update policy:
 
