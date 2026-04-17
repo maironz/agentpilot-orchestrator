@@ -331,7 +331,18 @@ def _build_repo_exploration_policy(
 
 def _apply_policy(result: dict, query: str) -> dict:
     """Attach public policy metadata to routing results."""
-    if not isinstance(result, dict) or PolicyInput is None or DefaultPolicyProvider is None:
+    if not isinstance(result, dict):
+        return result
+
+    # OSS fallback: ensure policy contract is always present even without optional modules.
+    if PolicyInput is None or DefaultPolicyProvider is None:
+        confidence = float(result.get("confidence", 0.0) or 0.0)
+        scenario = str(result.get("scenario", "_fallback"))
+        result["policy"] = {
+            "fallback_strategy": "repo-search" if scenario == "_fallback" else "routed-files",
+            "governance_mode": "strict" if confidence >= 0.85 else ("guarded" if confidence >= CONFIDENCE_GATE else "standard"),
+            "source": "oss-fallback",
+        }
         return result
 
     provider = POLICY_PROVIDER or DefaultPolicyProvider()

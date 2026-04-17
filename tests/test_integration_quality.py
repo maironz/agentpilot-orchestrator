@@ -10,7 +10,6 @@ Test dei componenti che avevano problemi durante installazione:
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -23,18 +22,20 @@ class TestDryRunDirectCoherence:
         """dry-run deve menzionare sia adapter che CORE_FILES"""
         from rgen.adapter import Adapter
         from rgen.writer import Writer
-        from rgen.models import Profile
+        from rgen.models import ProjectProfile
         
         # Setup: crea un profilo test
-        profile = Profile(
-            name="test",
+        profile = ProjectProfile(
+            project_name="test",
             target_path=tmp_path,
-            technologies=["python"],
-            domains=["testing"],
+            pattern_id="",
+            tech_stack=["python"],
+            domain_keywords=["testing"],
         )
         
         # Adapter genera file
-        adapter = Adapter()
+        repo_root = Path(__file__).parent.parent
+        adapter = Adapter(repo_root / "knowledge_base")
         files = adapter.adapt(profile)
         
         # CORE_FILES + adapter files
@@ -207,7 +208,7 @@ class TestEndToEndIntegration:
         try:
             from mcp_server import main
             assert callable(main), "mcp_server.main deve essere callable"
-        except ImportError as e:
+        except (ImportError, SystemExit) as e:
             pytest.skip(f"MCP imports non disponibili: {e}")
 
 

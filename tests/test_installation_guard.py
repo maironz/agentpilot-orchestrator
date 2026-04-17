@@ -172,7 +172,8 @@ class TestAuditScanAvailability:
         result = audit_routing_coverage()
         
         # Se coverage < 5%, dev'esserci un nota che spiega
-        if result.get("coverage_pct", 0) < 5 and result.get("coverage_pct") is not None:
+        coverage = result.get("coverage_pct")
+        if coverage is not None and coverage < 5:
             if not result.get("scan_available", True):
                 assert "note" in result, (
                     "Coverage bassa deve avere nota esplicativa"
