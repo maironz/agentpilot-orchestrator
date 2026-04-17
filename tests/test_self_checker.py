@@ -40,6 +40,8 @@ def valid_github_dir(tmp_path: Path) -> Path:
     (gh / "router.py").write_text("# router stub - no real execution needed")
     (gh / "interventions.py").write_text("# interventions stub")
     (gh / "mcp_server.py").write_text("# mcp stub")
+    (gh / "mcp_status.py").write_text("# mcp_status stub")
+    (gh / "update_manager.py").write_text("# update_manager stub")
     return tmp_path
 
 

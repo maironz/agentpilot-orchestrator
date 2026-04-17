@@ -172,7 +172,7 @@ class SelfChecker:
     # ------------------------------------------------------------------
 
     def _check_core_files(self, report: CheckReport) -> None:
-        for name in ("router.py", "interventions.py", "mcp_server.py"):
+        for name in ("router.py", "interventions.py", "mcp_server.py", "mcp_status.py", "update_manager.py"):
             dest = self.github_dir / name
             if not dest.exists():
                 report.errors.append(f"core_files: missing .github/{name}")

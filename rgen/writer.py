@@ -25,6 +25,8 @@ class Writer:
         "router_planner.py",
         "interventions.py",
         "mcp_server.py",
+        "mcp_status.py",
+        "update_manager.py",
         "requirements.txt",
     )
 
