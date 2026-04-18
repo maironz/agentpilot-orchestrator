@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: ["main"]
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -31,3 +34,32 @@ jobs:
 
       - name: Run tests with coverage
         run: pytest tests/ --cov=rgen --cov-report=term-missing --cov-fail-under=70
+
+  sync-version-file:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync VERSION from pyproject
+        run: python .github/sync_version_file.py
+
+      - name: Commit VERSION if changed
+        run: |
+          if git diff --quiet -- VERSION; then
+            echo "VERSION already up to date"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          git commit -m "chore(version): sync VERSION from pyproject"
+          git push
