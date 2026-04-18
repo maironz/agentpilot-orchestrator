@@ -28,7 +28,7 @@ EXCLUDE_DIRS = {
 }
 
 
-EXCLUDE_SUFFIXES = {".pyc", ".pyo", ".pyd", ".db", ".sqlite"}
+EXCLUDE_SUFFIXES = {".pyc", ".pyo", ".pyd", ".db", ".sqlite", ".db-shm", ".db-wal"}
 
 
 def _iter_files() -> list[Path]:
