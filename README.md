@@ -20,7 +20,7 @@
 **Automatically generate a semantic AI routing system for any project.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-318%2F318-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![CI](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
@@ -37,8 +37,8 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 
 > Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
 
-Current release: `v0.4.0`. See `.github/RELEASE_NOTES.md` for release history and migration context.
-Canonical machine-readable version is stored in `VERSION` (synced from `pyproject.toml` on push to `main`).
+Current release is tracked in `VERSION` (synced from `pyproject.toml` on push to `main`).
+See `.github/RELEASE_NOTES.md` for release history and migration context.
 
 **From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
