@@ -271,6 +271,7 @@ def _cmd_update(args: argparse.Namespace) -> int:
     target = Path(args.target or ".")
     core = Path(args.core or _DEFAULT_CORE)
     flat = getattr(args, "flat", False)
+    force = getattr(args, "force", False)
 
     if flat:
         # Legacy flat layout: core files live directly in target_dir
@@ -304,9 +305,51 @@ def _cmd_update(args: argparse.Namespace) -> int:
 
     github_dir = target / ".github"
     if not github_dir.exists():
+        if force:
+            from core import update_manager
+
+            repo_name = update_manager._repo_root().name
+            print(
+                "[WARN] Nessuna directory .github trovata nel target: attivo percorso di self-update locale.",
+                file=sys.stderr,
+            )
+            print(
+                f"[WARN] Questa operazione puo sovrascrivere il repository locale '{repo_name}'.",
+                file=sys.stderr,
+            )
+            confirm = input(
+                f"Confermi update del repository locale '{repo_name}'? [y/N]: "
+            ).strip().lower()
+            if confirm not in ("y", "yes"):
+                print("Operazione annullata.")
+                return 0
+
+            status = update_manager.get_update_status(refresh=True)
+            if status.get("status") in {"unsupported", "error"}:
+                print(
+                    "[ERRORE] Self-update non disponibile su questa installazione.",
+                    file=sys.stderr,
+                )
+                msg = status.get("message")
+                if msg:
+                    print(f"[INFO] {msg}", file=sys.stderr)
+                return 2
+
+            result = update_manager.manual_update(confirm=True)
+            if result.get("updated"):
+                print("[OK] Repository locale aggiornato con successo.")
+                return 0
+
+            print(
+                f"[ERRORE] Self-update non completato: {result.get('message', 'errore sconosciuto')}",
+                file=sys.stderr,
+            )
+            return 1
+
         print(
             f"[ERRORE] Nessuna directory .github trovata in: {target}\n"
-            "Usa 'rgen --direct' per creare un nuovo progetto, o '--flat' per layout root.",
+            "Usa 'rgen --direct' per creare un nuovo progetto, '--flat' per layout root,\n"
+            "oppure '--update --force' per tentare il self-update del repository locale del tool.",
             file=sys.stderr,
         )
         return 2

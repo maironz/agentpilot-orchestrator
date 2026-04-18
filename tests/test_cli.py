@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import shutil
 import zipfile
+import types
 from pathlib import Path
 from unittest.mock import patch
 
@@ -227,6 +228,38 @@ def test_update_fails_when_no_github_dir(
     assert ret == 2
     err = capsys.readouterr().err
     assert ".github" in err
+
+
+def test_update_force_without_github_can_cancel_self_update(
+    tmp_path: Path, capsys: pytest.CaptureFixture
+) -> None:
+    with patch("builtins.input", return_value="n"):
+        ret = main(["--update", "--force", "--target", str(tmp_path)])
+    assert ret == 0
+    out = capsys.readouterr().out
+    assert "annullata" in out.lower()
+
+
+def test_update_force_without_github_runs_self_update_when_confirmed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
+) -> None:
+    fake_manager = types.SimpleNamespace(
+        _repo_root=lambda: tmp_path / "agentpilot-orchestrator",
+        get_update_status=lambda refresh=True: {"status": "outdated", "message": "ok"},
+        manual_update=lambda confirm=True: {"updated": True, "message": "updated"},
+    )
+
+    import sys
+    monkeypatch.setitem(sys.modules, "core.update_manager", fake_manager)
+    import core
+    monkeypatch.setattr(core, "update_manager", fake_manager, raising=False)
+
+    with patch("builtins.input", return_value="y"):
+        ret = main(["--update", "--force", "--target", str(tmp_path)])
+
+    assert ret == 0
+    out = capsys.readouterr().out
+    assert "aggiornato" in out.lower()
 
 
 def test_update_creates_backup(tmp_path: Path) -> None:
