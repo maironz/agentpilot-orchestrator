@@ -43,7 +43,7 @@ MCP activation is now documented for non-expert users:
 
 | Metric | Value | Change |
 |--------|-------|--------|
-| Test Suite | 233/233 | +46 tests |
+| Test Suite | 343/343 | +110 tests |
 | MCP Tools | 7 | baseline stabilized |
 | MCP Status | Active/Inactive | added runtime reporting |
 | Packaging | `agentpilot-mcp` | new entrypoint |
@@ -52,13 +52,16 @@ MCP activation is now documented for non-expert users:
 
 ### 🧪 Testing
 
-All 233 tests passing.
+All 343 tests passing.
 
 Includes coverage for:
 - branding migration
 - cutover snapshot flow
 - MCP startup smoke behavior
 - secret scanning guardrails
+- CORE_FILES expansion (mcp_status.py, update_manager.py)
+- CLI timeout guards and network-scan fixture
+- integration quality checks for core file count
 
 Run tests:
 ```bash
