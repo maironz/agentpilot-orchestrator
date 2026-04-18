@@ -124,7 +124,7 @@ def test_path_b_empty_tech_stack_is_allowed(kb_dir: Path, tmp_path: Path) -> Non
         "target_path": str(tmp_path),
     })
     assert profile.tech_stack == []
-    assert profile.domain_keywords == []
+    assert profile.domain_keywords == ["informatica"]
 
 
 def test_path_b_strips_whitespace_from_lists(kb_dir: Path, tmp_path: Path) -> None:
@@ -138,6 +138,32 @@ def test_path_b_strips_whitespace_from_lists(kb_dir: Path, tmp_path: Path) -> No
     })
     assert profile.tech_stack == ["python", "docker", "redis"]
     assert profile.domain_keywords == ["auth", "users"]
+
+
+def test_path_b_numeric_multi_select_for_tech_and_domains(kb_dir: Path, tmp_path: Path) -> None:
+    q = Questionnaire(kb_dir)
+    profile = q.run_with_defaults({
+        "use_pattern": "n",
+        "project_name": "x",
+        "target_path": str(tmp_path),
+        "tech_stack": "1,6,15,custom-tech",
+        "domain_keywords": "1,2,9,custom-domain",
+    })
+    assert profile.tech_stack == ["python", "typescript", "redis", "custom-tech"]
+    assert profile.domain_keywords == ["informatica", "api", "docker_infra", "custom-domain"]
+
+
+def test_project_selection_timeout_falls_back_to_default(kb_dir: Path) -> None:
+    q = Questionnaire(kb_dir)
+    with patch.object(Questionnaire, "_read_input_with_timeout", return_value=None):
+        value = q._ask(
+            "use_pattern",
+            "Vuoi partire da un pattern esistente?",
+            default="y",
+            choices=("y", "n", "yes", "no"),
+            timeout_seconds=30,
+        )
+    assert value == "y"
 
 
 # ---------------------------------------------------------------------------

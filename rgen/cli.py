@@ -46,7 +46,24 @@ def main(argv: list[str] | None = None) -> int:
         (k for k in _SLOW_COMMANDS if getattr(args, k, False)),
         None,
     )
-    timeout = _EXECUTION_TIMEOUT
+    is_interactive_mode = not any(
+        (
+            args.list_patterns,
+            args.check,
+            args.suggest_scenarios,
+            args.history,
+            args.rollback,
+            bool(args.search_patterns),
+            bool(args.download),
+            args.restore,
+            args.update,
+            args.cost_report,
+            args.roi_benchmark,
+            args.direct,
+            args.dry_run,
+        )
+    )
+    timeout = None if is_interactive_mode else _EXECUTION_TIMEOUT
 
     def _dispatch() -> int:
         if args.list_patterns:
@@ -487,7 +504,7 @@ def _cmd_interactive(args: argparse.Namespace) -> int:
 
     kb = Path(args.kb or _DEFAULT_KB)
     core = Path(args.core or _DEFAULT_CORE)
-    language = args.language or "en"  # Default to English if not specified
+    language = args.language or _ask_output_language(default="en")
 
     q = Questionnaire(kb)
     profile = q.run()
@@ -503,6 +520,18 @@ def _cmd_interactive(args: argparse.Namespace) -> int:
         print("Annullato.")
         return 0
     return _run_generation(profile, core, kb=kb, dry_run=False, language=language)
+
+
+def _ask_output_language(default: str = "en") -> str:
+    """Ask output language interactively with safe defaults."""
+    supported = ("en", "it", "es", "fr")
+    prompt = f"Lingua output agenti [{default}] ({'/'.join(supported)}): "
+    while True:
+        raw = input(prompt).strip().lower()
+        value = raw or default
+        if value in supported:
+            return value
+        print(f"  Valore non valido. Scegli tra: {', '.join(supported)}")
 
 
 # ---------------------------------------------------------------------------

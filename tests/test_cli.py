@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from rgen.cli import main, _build_parser
+from rgen.cli import main, _build_parser, _ask_output_language
 
 
 # ---------------------------------------------------------------------------
@@ -275,6 +275,17 @@ def test_version_flag_includes_prog_name(capsys: pytest.CaptureFixture) -> None:
         main(["--version"])
     out = capsys.readouterr().out
     assert "rgen" in out
+
+
+def test_ask_output_language_accepts_default() -> None:
+    with patch("builtins.input", return_value=""):
+        assert _ask_output_language(default="en") == "en"
+
+
+def test_ask_output_language_accepts_it_after_invalid() -> None:
+    answers = iter(["zz", "it"])
+    with patch("builtins.input", side_effect=answers):
+        assert _ask_output_language(default="en") == "it"
 
 
 # ---------------------------------------------------------------------------

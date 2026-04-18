@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import queue
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +28,48 @@ class Questionnaire:
         self._kb = Path(knowledge_base_dir)
         self._loader = PatternLoader(self._kb)
         self._overrides: dict[str, str] | None = None
+
+    # Timeout only for the first project-selection question.
+    _PROJECT_SELECTION_TIMEOUT_SECONDS = 30
+
+    SUGGESTED_TECH_STACK: tuple[str, ...] = (
+        "python",
+        "fastapi",
+        "flask",
+        "django",
+        "nodejs",
+        "typescript",
+        "react",
+        "vue",
+        "php",
+        "laravel",
+        "postgresql",
+        "mysql",
+        "mariadb",
+        "mongodb",
+        "redis",
+        "docker",
+        "nginx",
+        "traefik",
+        "kubernetes",
+    )
+
+    SUGGESTED_DOMAINS: tuple[str, ...] = (
+        "informatica",
+        "api",
+        "database",
+        "auth",
+        "caching",
+        "testing",
+        "security",
+        "performance",
+        "docker_infra",
+        "frontend_components",
+        "dependency_management",
+        "git_version_control",
+        "docs",
+        "troubleshooting",
+    )
 
     # ------------------------------------------------------------------
     # Public API
@@ -60,6 +104,7 @@ class Questionnaire:
             "Vuoi partire da un pattern esistente?",
             default="y",
             choices=("y", "n", "yes", "no"),
+            timeout_seconds=self._PROJECT_SELECTION_TIMEOUT_SECONDS,
         ).lower().startswith("y")
 
         if use_pattern:
@@ -148,19 +193,27 @@ class Questionnaire:
             "Directory di output (crea .github/ qui dentro)",
             default=str(Path.cwd()),
         ))
+
+        self._print("Tecnologie suggerite:")
+        self._print(self._format_numbered_options(self.SUGGESTED_TECH_STACK))
+        self._print("Inserisci numeri separati da virgola (es: 1,6,11) o testo libero.")
         raw_tech = self._ask(
             "tech_stack",
-            "Tecnologie usate (virgola-separate, es: python,docker,postgres)",
-            default="",
-        )
-        raw_domains = self._ask(
-            "domain_keywords",
-            "Domini principali (virgola-separati, es: auth,billing,reporting)",
+            "Tecnologie usate",
             default="",
         )
 
-        tech_stack = [t.strip() for t in raw_tech.split(",") if t.strip()]
-        domain_keywords = [d.strip() for d in raw_domains.split(",") if d.strip()]
+        self._print("\nDomini suggeriti:")
+        self._print(self._format_numbered_options(self.SUGGESTED_DOMAINS))
+        self._print("Inserisci numeri separati da virgola (es: 1,2,4) o testo libero.")
+        raw_domains = self._ask(
+            "domain_keywords",
+            "Domini principali",
+            default="informatica",
+        )
+
+        tech_stack = self._parse_multi_select(raw_tech, self.SUGGESTED_TECH_STACK)
+        domain_keywords = self._parse_multi_select(raw_domains, self.SUGGESTED_DOMAINS)
 
         return ProjectProfile(
             project_name=project_name,
@@ -181,6 +234,7 @@ class Questionnaire:
         prompt: str,
         default: str = "",
         choices: tuple[str, ...] | None = None,
+        timeout_seconds: int | None = None,
     ) -> str:
         if self._overrides is not None:
             return self._overrides.get(key, default)
@@ -189,12 +243,63 @@ class Questionnaire:
         if choices:
             suffix += f" ({'/'.join(choices)})"
         while True:
-            raw = input(f"{prompt}{suffix}: ").strip()
+            full_prompt = f"{prompt}{suffix}: "
+            raw_value = self._read_input_with_timeout(full_prompt, timeout_seconds)
+            if raw_value is None:
+                self._print(f"  Timeout dopo {timeout_seconds}s: uso default '{default}'.")
+                return default
+
+            raw = raw_value.strip()
             value = raw if raw else default
             if choices and value.lower() not in [c.lower() for c in choices]:
                 print(f"  Risposta non valida. Scegli tra: {', '.join(choices)}")
                 continue
             return value
+
+    @staticmethod
+    def _format_numbered_options(options: tuple[str, ...]) -> str:
+        return "\n".join(f"  {idx}. {item}" for idx, item in enumerate(options, start=1))
+
+    @staticmethod
+    def _parse_multi_select(raw: str, options: tuple[str, ...]) -> list[str]:
+        selected: list[str] = []
+        for token in [part.strip() for part in raw.split(",") if part.strip()]:
+            if token.isdigit():
+                idx = int(token)
+                if 1 <= idx <= len(options):
+                    selected.append(options[idx - 1])
+                continue
+            selected.append(token)
+
+        normalized: list[str] = []
+        seen: set[str] = set()
+        for item in selected:
+            key = item.strip().lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            normalized.append(key)
+        return normalized
+
+    @staticmethod
+    def _read_input_with_timeout(prompt: str, timeout_seconds: int | None) -> str | None:
+        if timeout_seconds is None:
+            return input(prompt)
+
+        q: queue.Queue[str] = queue.Queue(maxsize=1)
+
+        def _reader() -> None:
+            try:
+                q.put(input(prompt))
+            except EOFError:
+                q.put("")
+
+        thread = threading.Thread(target=_reader, daemon=True)
+        thread.start()
+        try:
+            return q.get(timeout=timeout_seconds)
+        except queue.Empty:
+            return None
 
     def _print(self, msg: str) -> None:
         if self._overrides is None:
