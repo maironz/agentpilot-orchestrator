@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from pathlib import Path
 
@@ -39,6 +40,7 @@ def test_route_query_fallback_allows_repo_exploration(runtime_router, monkeypatc
     assert result["repo_exploration"]["allowed"] is True
     assert result["repo_exploration"]["recommended_scope"] == "repo-fallback"
     assert result["policy"]["fallback_strategy"] == "repo-search"
+    assert result["complexity"]["analysis_mode"] == "initial_heuristic"
 
 
 def test_route_query_high_confidence_keeps_scope_restricted(runtime_router, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -65,3 +67,37 @@ def test_route_query_high_confidence_keeps_scope_restricted(runtime_router, monk
     assert result["repo_exploration"]["allowed"] is False
     assert result["repo_exploration"]["recommended_scope"] == "routed-files-only"
     assert result["policy"]["governance_mode"] in {"standard", "guarded", "strict"}
+    assert result["complexity"]["level"] in {"short", "medium", "long"}
+
+
+def test_load_routes_supports_sectioned_routing_map(runtime_router, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    routing_map = {
+        "_base_autoloaded": {"note": "test"},
+        "flat_scenario": {
+            "agent": "orchestratore",
+            "keywords": ["flat"],
+            "files": [".github/esperti/esperto_orchestratore.md"],
+            "context": "Flat",
+            "priority": "low",
+        },
+        "_sections": {
+            "backend": {
+                "database": {
+                    "agent": "backend",
+                    "keywords": ["sql", "migration"],
+                    "files": [".github/esperti/esperto_backend.md"],
+                    "context": "DB",
+                    "priority": "high",
+                }
+            }
+        },
+    }
+    map_path = tmp_path / "routing-map.json"
+    map_path.write_text(json.dumps(routing_map), encoding="utf-8")
+
+    monkeypatch.setattr(runtime_router, "ROUTING_MAP", map_path)
+    routes = runtime_router._load_routes()
+
+    assert "flat_scenario" in routes
+    assert "database" in routes
+    assert routes["database"]["agent"] == "backend"

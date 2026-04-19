@@ -30,6 +30,12 @@ class Writer:
         "requirements.txt",
     )
 
+    # Generated files that should only be created on first install.
+    # If already present, keep local customizations untouched.
+    PRESERVE_IF_EXISTS = {
+        ".github/copilot-instructions.md",
+    }
+
     def __init__(
         self,
         core_dir: Path,
@@ -99,6 +105,11 @@ class Writer:
         for rel_path, content in files.items():
             dest = target_dir / rel_path
             try:
+                normalized_rel = rel_path.replace("\\", "/")
+                if dest.exists() and normalized_rel in self.PRESERVE_IF_EXISTS:
+                    result.files_skipped.append(dest)
+                    continue
+
                 existed_before = dest.exists()
                 backup_engine.backup_if_exists(dest)
                 dest.parent.mkdir(parents=True, exist_ok=True)

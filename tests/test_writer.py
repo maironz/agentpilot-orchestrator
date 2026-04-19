@@ -79,6 +79,21 @@ def test_write_all_backs_up_existing_file(core_dir: Path, target_dir: Path) -> N
     assert (backups[0] / ".github" / "routing-map.json").read_text() == "old content"
 
 
+def test_write_all_preserves_existing_copilot_instructions(core_dir: Path, target_dir: Path) -> None:
+    existing = target_dir / ".github" / "copilot-instructions.md"
+    existing.parent.mkdir(parents=True, exist_ok=True)
+    existing.write_text("# local customization")
+
+    writer = Writer(core_dir)
+    result = writer.write_all({".github/copilot-instructions.md": "# generated"}, target_dir)
+
+    assert result.success
+    assert existing.read_text() == "# local customization"
+    assert existing in result.files_skipped
+    backup_root = target_dir / ".github" / ".rgen-backups"
+    assert not backup_root.exists()
+
+
 def test_write_all_returns_error_on_write_failure(core_dir: Path, target_dir: Path) -> None:
     writer = Writer(core_dir)
     # Write a file and then make the directory read-only to simulate failure

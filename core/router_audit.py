@@ -18,10 +18,22 @@ ROUTER_FILE = Path(__file__).parent / "router.py"
 
 
 def _load_routes() -> dict:
-    """Load routing map, skip metadata entries."""
+    """Load routing map in flat or sectioned format, skipping metadata entries."""
     with open(ROUTING_MAP, "r", encoding="utf-8") as f:
-        routes = json.load(f)
-    return {k: v for k, v in routes.items() if isinstance(v, dict) and "keywords" in v}
+        payload = json.load(f)
+
+    routes = {k: v for k, v in payload.items() if isinstance(v, dict) and "keywords" in v}
+
+    sections = payload.get("_sections") if isinstance(payload, dict) else None
+    if isinstance(sections, dict):
+        for _, section_items in sections.items():
+            if not isinstance(section_items, dict):
+                continue
+            for scenario_id, scenario_data in section_items.items():
+                if isinstance(scenario_data, dict) and "keywords" in scenario_data:
+                    routes[scenario_id] = scenario_data
+
+    return routes
 
 
 # ─── Audit: Routing Coverage Gap Detection ───

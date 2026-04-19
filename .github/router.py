@@ -84,10 +84,30 @@ REPO_EXPLORATION_TRIGGERS = [
 
 
 def _load_routes() -> dict:
-    """Load routing map, skip metadata entries."""
+    """Load routing map in flat or sectioned format, skipping metadata entries."""
     with open(ROUTING_MAP, "r", encoding="utf-8") as f:
-        routes = json.load(f)
-    return {k: v for k, v in routes.items() if isinstance(v, dict) and "keywords" in v}
+        payload = json.load(f)
+
+    routes = {k: v for k, v in payload.items() if isinstance(v, dict) and "keywords" in v}
+
+    # Optional grouped format:
+    # {
+    #   "_sections": {
+    #       "backend": {
+    #           "database": {"keywords": [...], ...}
+    #       }
+    #   }
+    # }
+    sections = payload.get("_sections") if isinstance(payload, dict) else None
+    if isinstance(sections, dict):
+        for _, section_items in sections.items():
+            if not isinstance(section_items, dict):
+                continue
+            for scenario_id, scenario_data in section_items.items():
+                if isinstance(scenario_data, dict) and "keywords" in scenario_data:
+                    routes[scenario_id] = scenario_data
+
+    return routes
 
 
 def extract_capability(content: str, capability: str) -> str:
@@ -329,6 +349,71 @@ def _build_repo_exploration_policy(
     }
 
 
+def _estimate_complexity(
+    query: str,
+    priority: str,
+    repo_exploration: dict,
+    routing_debug: list[dict] | None = None,
+) -> dict:
+    """Return a lightweight complexity hint to guide plan depth and parallelism.
+
+    This is a fast pre-execution heuristic, not a runtime profiler.
+    """
+    q = (query or "").lower()
+    dbg = routing_debug or []
+    reasons: list[str] = []
+    score = 0
+
+    if priority == "high":
+        score += 2
+        reasons.append("scenario ad alta priorita")
+    elif priority == "medium":
+        score += 1
+
+    if repo_exploration.get("allowed"):
+        score += 1
+        reasons.append("possibile esplorazione oltre i file instradati")
+
+    if len(dbg) > 1:
+        score += 1
+        reasons.append("routing con candidati multipli")
+
+    long_markers = (
+        "refactor",
+        "migraz",
+        "migration",
+        "architett",
+        "architecture",
+        "multi",
+        "end-to-end",
+        "e2e",
+        "performance",
+        "benchmark",
+    )
+    if any(m in q for m in long_markers):
+        score += 2
+        reasons.append("query con indicatori di lavoro esteso")
+
+    if len(q.split()) >= 30:
+        score += 1
+        reasons.append("richiesta lunga")
+
+    if score >= 5:
+        level = "long"
+    elif score >= 3:
+        level = "medium"
+    else:
+        level = "short"
+
+    return {
+        "level": level,
+        "requires_plan": level != "short",
+        "suggest_parallel_subagents": level == "long",
+        "analysis_mode": "initial_heuristic",
+        "reasons": reasons or ["segnali di complessita limitati"],
+    }
+
+
 def _apply_policy(result: dict, query: str) -> dict:
     """Attach public policy metadata to routing results."""
     if not isinstance(result, dict):
@@ -394,7 +479,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
     scored = _score_scenarios(query, routes, weighted_boosts)
 
     if not scored:
-        return _apply_policy({
+        fallback_result = {
             "agent": "orchestratore",
             "files": [AGENT_EXPERT_MAP["orchestratore"]],
             "context": "Fallback generico — nessuno scenario matchato",
@@ -407,7 +492,14 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
                 confidence=0.0,
                 fallback=True,
             ),
-        }, query)
+        }
+        fallback_result["complexity"] = _estimate_complexity(
+            query,
+            fallback_result.get("priority", "low"),
+            fallback_result.get("repo_exploration", {}),
+            [],
+        )
+        return _apply_policy(fallback_result, query)
 
     top = scored[0]
     score = top["score"]
@@ -444,6 +536,12 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
             confidence=confidence,
         ),
     }
+    result["complexity"] = _estimate_complexity(
+        query,
+        result.get("priority", "medium"),
+        result.get("repo_exploration", {}),
+        routing_debug,
+    )
 
     # Capability layer: extract if defined
     cap_name, cap_instructions = _resolve_capability(best, agent)
@@ -468,7 +566,7 @@ def route_follow_up(query: str) -> dict:
     scored = _score_scenarios(query, routes)
 
     if not scored:
-        return _apply_policy({
+        fallback_result = {
             "agent": "orchestratore",
             "files": [AGENT_EXPERT_MAP["orchestratore"]],
             "context": "Follow-up fallback",
@@ -480,7 +578,14 @@ def route_follow_up(query: str) -> dict:
                 confidence=0.0,
                 fallback=True,
             ),
-        }, query)
+        }
+        fallback_result["complexity"] = _estimate_complexity(
+            query,
+            fallback_result.get("priority", "low"),
+            fallback_result.get("repo_exploration", {}),
+            [],
+        )
+        return _apply_policy(fallback_result, query)
 
     top = scored[0]
     scenario_key = top["scenario"]
@@ -521,6 +626,12 @@ def route_follow_up(query: str) -> dict:
             confidence=confidence,
         ),
     }
+    result["complexity"] = _estimate_complexity(
+        query,
+        result.get("priority", "medium"),
+        result.get("repo_exploration", {}),
+        routing_debug,
+    )
 
     # Capability layer: maintain from scenario if same session
     cap_name, cap_instructions = _resolve_capability(best, agent)
@@ -587,6 +698,12 @@ def route_subagent(query: str) -> dict:
             "For pure code searches or simple edits, the prompt_prefix alone is sufficient."
         )
     }
+    result["complexity"] = _estimate_complexity(
+        query,
+        result.get("priority", "low"),
+        result.get("repo_exploration", {}),
+        _build_routing_debug(scored) if scored else [],
+    )
 
     return _apply_policy(result, query)
 
