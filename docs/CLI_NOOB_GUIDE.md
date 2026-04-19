@@ -119,4 +119,6 @@ Practical rule:
 
 ## 6) Next step (when you feel ready)
 
-For a complete options/effects reference, use the extended CLI guide (to be added in the docs plan).
+For a complete options/effects reference, see:
+
+- `docs/CLI_OPTIONS_MATRIX.md`

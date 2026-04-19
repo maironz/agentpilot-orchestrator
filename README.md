@@ -184,6 +184,7 @@ Operational loop:
 New to the CLI? Start with the beginner-safe guide:
 
 - `docs/CLI_NOOB_GUIDE.md` (step-by-step, path-safe flow, `python -m` explanation)
+- `docs/CLI_OPTIONS_MATRIX.md` (option -> behavior -> file impact matrix)
 
 ### 1) Clone and install
 
