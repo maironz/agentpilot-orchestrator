@@ -38,7 +38,7 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 > Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
 
 Current release is tracked in `VERSION` (synced from `pyproject.toml` on push to `main`).
-See `.github/RELEASE_NOTES.md` for release history and migration context.
+See `docs/RELEASE_NOTES.md` for release history and migration context.
 
 **From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
@@ -99,7 +99,13 @@ python -m rgen.cli --direct --pattern python_api --name my-app --target ./my-app
 python -m rgen.cli --direct --pattern python_api --name my-app --target ./my-app --language en
 ```
 
-Language support details and structure are documented in `.github/i18n-GUIDE.md`.
+Language support details and per-pattern layout are documented in:
+
+- `knowledge_base/python_api/i18n/README.md`
+- `knowledge_base/node_ts/i18n/README.md`
+- `knowledge_base/psm_stack/i18n/README.md`
+
+See `docs/i18n-GUIDE.md` for migration notes and i18n conventions.
 
 ### Cost Estimator
 
@@ -169,6 +175,10 @@ Operational loop:
 ## Quick Start
 
 > Tip: if you only want to see the router in action, install dependencies, run `python .github/router.py --stats`, then try a single `--direct` query before generating anything.
+
+New to the CLI? Start with the beginner-safe guide:
+
+- `docs/CLI_NOOB_GUIDE.md` (step-by-step, path-safe flow, `python -m` explanation)
 
 ### 1) Clone and install
 
