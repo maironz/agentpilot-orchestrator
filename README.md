@@ -194,7 +194,7 @@ python -m rgen.cli --check --target ./my-app
 Example output:
 
 ```text
-Self-check su: ./my-app
+Self-check on: ./my-app
   [OK] required_files
   [OK] routing_map
   [OK] expert_files
@@ -204,7 +204,7 @@ Self-check su: ./my-app
   [OK] core_files
   [OK] router_stats
 
-Risultato: OK — 8 pass, 0 warn, 0 errori
+Result: OK — 8 pass, 0 warn, 0 errors
 ```
 
 Checks cover: required file presence, routing-map validity, expert file completeness, agent registry alignment, leftover template placeholders, and router health. Exit code is non-zero on failure, suitable for CI integration.
@@ -323,22 +323,22 @@ bash .github/skills.sh setup-anthropic-skills
 bash .github/skills.sh setup-anthropic-skills --force
 ```
 
-Prerequisiti bootstrap skill:
+Bootstrap skill prerequisites:
 
 - `bash`
-- `npx` (path preferito) oppure `git` (fallback)
+- `npx` (preferred) or `git` (fallback)
 
-Variabili supportate:
+Supported variables:
 
 - `ANTHROPIC_SKILLS_SLUG` (default: `anthropics/skills`, GitHub slug not a local path)
 - `ANTHROPIC_SKILLS_REPO` (default: `https://github.com/anthropics/skills.git`)
-- `ANTHROPIC_SKILLS_REF` (tag/branch per fallback git)
-- `ANTHROPIC_SKILLS_CLI_TIMEOUT` (secondi, default: `90`)
+- `ANTHROPIC_SKILLS_REF` (tag/branch for git fallback)
+- `ANTHROPIC_SKILLS_CLI_TIMEOUT` (seconds, default: `90`)
 
-Troubleshooting rapido:
+Quick troubleshooting:
 
-- Se `npx` non installa nulla, lo script passa automaticamente al fallback git.
-- Se il bootstrap resta lento in rete instabile, riduci timeout: `ANTHROPIC_SKILLS_CLI_TIMEOUT=30`.
+- If `npx` fails to install anything, the script automatically falls back to git.
+- If bootstrap is slow on an unstable network, reduce the timeout: `ANTHROPIC_SKILLS_CLI_TIMEOUT=30`.
 
 ### Fast path
 
