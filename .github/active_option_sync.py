@@ -29,12 +29,14 @@ def _candidate_pairs(root: Path) -> list[tuple[Path, Path]]:
     core_dir = root / "core"
     active_dir = root / ".github"
     pairs: list[tuple[Path, Path]] = []
+    runtime_suffixes = {".db", ".sqlite"}
+    runtime_names = {"__init__.py"}
 
     if not core_dir.exists() or not active_dir.exists():
         return pairs
 
     for src in sorted(core_dir.iterdir()):
-        if not src.is_file() or src.name == "__init__.py":
+        if not src.is_file() or src.name in runtime_names or src.suffix in runtime_suffixes:
             continue
         dest = active_dir / src.name
         if dest.exists() and dest.is_file():

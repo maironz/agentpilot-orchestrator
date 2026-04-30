@@ -13,6 +13,15 @@ python .github/session_header.py --query "<query>"
 ```
 Questo comando esegue internamente stats + direct + update_report + mcp_status e stampa header pronto.
 
+### Regola root e target (.github)
+- Il repository in root e' la sorgente principale per sviluppo, fix e documentazione.
+- Il target operativo e' la cartella `.github` (servizio router/MCP distribuito tramite update).
+- Flusso obbligatorio quando si migliora il progetto:
+   1. Modifica e valida prima il repository in root.
+   2. Allinea/merge il repository sorgente.
+   3. Esegui update del target `.github` con il metodo di update previsto.
+- Evita fix diretti solo sul target `.github` senza riportarli prima nella sorgente root.
+
 ### Per-request protocol (obbligatorio)
 Prima di ogni risposta operativa:
 1. Esegui il comando unico (default obbligatorio):
@@ -45,8 +54,9 @@ Prima di ogni risposta operativa:
 
 4. Pubblica header **obbligatorio** in questa forma:
    ```
-   🤖 <model> | Agente: <agent> | Scenario: <scenario> | Budget: ~<N>k tok | Routing: <stats> | Update: <ok-or-NeedUpdateLink> | MCP: <Active-or-Inactive>
+   🤖 Suggest:<suggested_model> | Agente: <agent> | Scenario: <scenario> | Budget: ~<N>k tok | Routing: <stats> | Update: <ok-or-NeedUpdateLink> | MCP: <Active-or-Inactive>
    ```
+   Dove `suggested_model` è il modello **preferito** da routing-map (`preferred_model`) in base all'uso (`usage_profile`) e alla priorità; non è un vincolo hard e non rappresenta il modello reale in uso nel picker Copilot.
    Linee aggiuntive consigliate subito sotto header:
    ```
    Riepilogo: confidence=<0..1|n/a> | clarify=<yes|no>
@@ -61,18 +71,24 @@ Prima di ogni risposta operativa:
    - se non attivo: `MCP: Inactive (see .github/MCP_ACTIVATION.md)`
    Esempio reale:
    ```
-   🤖 GPT-5.3-Codex | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: ok | MCP: Active
+   🤖 Suggest:gpt-4o-mini | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: ok | MCP: Active
    ```
    Oppure, se non aggiornato:
    ```
-   🤖 GPT-5.3-Codex | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: [Need Update](.github/UPDATE_STATUS.md) | MCP: Active
+   🤖 Suggest:claude-sonnet-4-5 | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: [Need Update](.github/UPDATE_STATUS.md) | MCP: Active
    ```
    Oppure, se MCP non attivo:
    ```
-   🤖 GPT-5.3-Codex | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: ok | MCP: Inactive (see .github/MCP_ACTIVATION.md)
+   🤖 Suggest:claude-sonnet-4-6 | Agente: orchestratore | Scenario: _fallback | Budget: ~15k tok | Routing: 13scn/176kw|overlap:2.3%|[WARN] | Update: ok | MCP: Inactive (see .github/MCP_ACTIVATION.md)
    ```
 
 5. Limita la risposta al budget dichiarato. Se prevedi di superarlo, avvisa l'utente e chiedi conferma.
+
+### Model guidance policy (non vincolante)
+- Source of truth: `.github/routing-map.json` (`usage_profile`, `preferred_model`).
+- Modalità: `preferred-not-forced`.
+- Override consentito quando confidence è bassa o la complessità reale richiede qualità superiore.
+- Ogni override deve essere esplicitato in output come scelta operativa, non come verità sul modello runtime di Copilot.
 
 ### Agents
 | Agent | Domain |

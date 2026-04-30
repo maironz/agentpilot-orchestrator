@@ -56,5 +56,8 @@ desktop.ini
 # Piani locali personali (non condivisi)
 .github/plans-local/
 
+# Cache locale fallback update check (non condivisa)
+.github/.remote_version_cache.json
+
 # Package privati locali (non condivisi)
 .private-packages/

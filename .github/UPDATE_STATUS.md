@@ -1,15 +1,20 @@
 # Update Status Report
 
-Generated at: 2026-04-17T07:08:19.660367+00:00
+Generated at: 2026-04-30T18:40:23.978543+00:00
 
 ## Summary
 - Banner label: ok
 - Banner value: ok
 - Source: active-option
 - Status: up-to-date
-- Compared files: 8
+- Compared files: 11
 - Drift files: 0
 - Suggested manual command: python .github/active_option_sync.py --apply
+
+## Remote Version Check
+- Local version: 0.4.0
+- Remote version: 0.4.0
+- Up to date with remote.
 
 ## Manual Update
 - Run this command to update without enabling auto mode:
@@ -22,12 +27,12 @@ Generated at: 2026-04-17T07:08:19.660367+00:00
 ## Raw Status JSON
 ```json
 {
-  "checked_at": "2026-04-17T07:08:19.660367+00:00",
+  "checked_at": "2026-04-30T18:40:23.897209+00:00",
   "source": "active-option",
   "scope": "core->.github",
   "status": "up-to-date",
   "update_available": false,
-  "compared_files": 8,
+  "compared_files": 11,
   "drift_files": [],
   "drift_count": 0,
   "manual_update_command": "python .github/active_option_sync.py --apply"

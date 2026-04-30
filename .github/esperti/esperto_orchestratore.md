@@ -27,6 +27,21 @@ Agente Orchestratore:
 
 ---
 
+## Policy Selezione Modello (Guida Forte, Nessun Lock)
+
+- Usa sempre i hint runtime: `usage_profile`, `preferred_model`, `model_selection_mode`.
+- Tratta `preferred_model` come default operativo, non come vincolo rigido.
+- In caso di ambiguity o confidence bassa, privilegia robustezza (qualità) e dichiara override.
+- In caso di task lineare e confidenza alta, privilegia costo/velocità.
+- Non affermare mai il modello runtime reale di Copilot se non è verificabile dal picker utente.
+
+Trigger consigliati per override (senza hard-lock):
+- `confidence < 0.55`
+- `complexity.level in {"medium", "long"}` con rischio regressione
+- contesto cross-layer non risolto al primo passaggio
+
+---
+
 <!-- CAPABILITY:DEBUG -->
 ## Debug Cross-Layer
 

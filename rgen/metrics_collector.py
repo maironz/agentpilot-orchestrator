@@ -33,6 +33,9 @@ except ImportError:
     InterventionStore = None
 
 
+_MISSING = object()
+
+
 class RouterMetricsCollector:
     """
     Collects metrics from intervention history to monitor routing health.
@@ -47,7 +50,7 @@ class RouterMetricsCollector:
 
     def __init__(
         self,
-        intervention_store: InterventionStore | None = None,
+        intervention_store=_MISSING,
         history_window: int = 50,
         db_path: Path | str | None = None,
     ):
@@ -55,14 +58,21 @@ class RouterMetricsCollector:
         Initialize metrics collector.
 
         Args:
-            intervention_store: InterventionStore instance (auto-created if None)
+            intervention_store: InterventionStore instance, None to disable store,
+                                 or omit to auto-create from db_path or default DB.
             history_window: number of recent interventions to analyze
-            db_path: path to interventions.db (only used if store is None)
+            db_path: path to interventions.db (only used if store is not provided)
         """
         self.window = history_window
-        self.store = intervention_store or (
-            InterventionStore(db_path) if InterventionStore else None
-        )
+        if intervention_store is _MISSING:
+            # Auto-create store (default behaviour)
+            self.store = (
+                InterventionStore(db_path) if (InterventionStore and db_path)
+                else (InterventionStore() if InterventionStore else None)
+            )
+        else:
+            # Explicit value (including None) → use as-is
+            self.store = intervention_store
         self._confidence_cache = []
         self._refresh_confidence_cache()
 

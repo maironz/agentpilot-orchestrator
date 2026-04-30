@@ -55,11 +55,12 @@ class PatternRegistry:
                     )
 
         for entry in self._load_registry_entries():
+            tags = self._to_str_list(entry.get("tags", []))  # <-- qui
             haystack = " ".join(
                 [
                     str(entry.get("id", "")),
                     str(entry.get("name", "")),
-                    " ".join(entry.get("tags", [])),
+                    " ".join(tags),
                 ]
             ).lower()
             if not query_l or query_l in haystack:
@@ -236,3 +237,9 @@ class PatternRegistry:
         if not isinstance(entries, list):
             return []
         return [entry for entry in entries if isinstance(entry, dict)]
+
+    @staticmethod
+    def _to_str_list(value: object) -> list[str]:
+        if isinstance(value, (list, tuple, set)):
+            return [str(v) for v in value]
+        return []
