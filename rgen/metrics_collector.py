@@ -17,6 +17,7 @@ import sqlite3
 from datetime import datetime, timedelta
 from pathlib import Path
 from statistics import mean, stdev
+from typing import Any
 
 # Import from core (sibling to rgen)
 import sys
@@ -64,6 +65,7 @@ class RouterMetricsCollector:
             db_path: path to interventions.db (only used if store is not provided)
         """
         self.window = history_window
+        self.store: Any
         if intervention_store is _MISSING:
             # Auto-create store (default behaviour)
             self.store = (
