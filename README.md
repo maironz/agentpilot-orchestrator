@@ -119,6 +119,19 @@ What began as an internal orchestration system for structured engineering suppor
 - Post-generation quality gate (`--check`) with 8 structural checks
 - Git-aware update checks (fetch, branch detection, manual-only update policy)
 
+### Capability Snapshot (Exact, Honest)
+
+| Capability axis | Status | How to verify |
+|---|---|---|
+| Parallel orchestration | Yes (planning hint) | Routing output includes `complexity.suggest_parallel_subagents` for long tasks |
+| Guards / quality checks | Yes | `python -m rgen.cli --check --target ./my-app` |
+| Memory / state | Yes (persistent + session enrichment) | `route_query` returns `prior_interventions`; `search_history` queries SQLite memory |
+| Observability / monitoring | Yes | `python .github/router.py --stats`, `python .github/router.py --audit`, MCP `get_stats` / `audit_coverage` |
+| Multi-channel / deploy | Yes (CLI + MCP + PyPI) | `python -m rgen.cli`, `agentpilot-mcp`, `pip install agentpilot-orchestrator` |
+| Tool integration | Yes (MCP tools) | `route_query`, `search_history`, `log_intervention`, `get_update_status`, `manual_update` |
+| Coding / Git support | Partial (git-aware updates, no repo janitor) | `get_update_status` uses fetch + branch detection; no automatic merge/worktree operations |
+| Sandbox execution | N/A by design | Routing layer only; does not run workloads in Docker/VM sandboxes |
+
 ## Feature Highlights
 
 ### Multi-Language Support
@@ -182,6 +195,19 @@ Risultato: OK — 8 pass, 0 warn, 0 errori
 Checks cover: required file presence, routing-map validity, expert file completeness, agent registry alignment, leftover template placeholders, and router health. Exit code is non-zero on failure, suitable for CI integration.
 
 > Design note: AgentPilot is a routing layer, not an execution sandbox. It routes tasks to the right agent context (including infra/Docker scenarios) but does not execute or isolate workloads. The `--check` command is the built-in quality gate for generated assets.
+
+### Observability & Monitoring
+
+Use these checks to monitor routing quality and detect drift early:
+
+```bash
+python .github/router.py --stats
+python .github/router.py --audit
+python .github/mcp_status.py
+python .github/update_report.py --output .github/UPDATE_STATUS.md
+```
+
+MCP equivalents are available via `get_stats`, `audit_coverage`, and `get_update_status`.
 
 ### ROI Benchmark (Live Demo)
 
