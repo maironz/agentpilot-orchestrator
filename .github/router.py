@@ -19,12 +19,18 @@ Note: copilot-instructions.md is auto-loaded by VS Code into the system prompt.
 import json
 import sys
 import re
+import time
 from pathlib import Path
 
 # Modular imports (split from monolithic router.py)
 from router_audit import audit_routing_coverage, get_health_stats
 from router_planner import handle_plan_approved, handle_plan_rejected, handle_new_query
 from interventions import InterventionStore
+try:
+    from recovery_engine import RecoveryEngine as _RecoveryEngine
+    _recovery_engine = _RecoveryEngine()
+except ImportError:  # graceful: recovery_engine not available in generated targets
+    _recovery_engine = None  # type: ignore[assignment]
 
 # Premium runtime boundary (prefer private implementations when installed)
 try:
@@ -462,6 +468,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
     Returns:
         Routing result dict
     """
+    _t0 = time.perf_counter()
     routes = _load_routes()
 
     # Load calibrated weights if requested and available
@@ -479,6 +486,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
     scored = _score_scenarios(query, routes, weighted_boosts)
 
     if not scored:
+        _recovery = _recovery_engine.evaluate("ambiguity", retry_count=0) if _recovery_engine else None
         fallback_result = {
             "agent": "orchestratore",
             "files": [AGENT_EXPERT_MAP["orchestratore"]],
@@ -487,6 +495,8 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
             "scenario": "_fallback",
             "mode": "direct",
             "confidence": 0.0,
+            "routing_latency_ms": round((time.perf_counter() - _t0) * 1000, 2),
+            "recovery": _recovery.as_dict() if _recovery else None,
             "repo_exploration": _build_repo_exploration_policy(
                 mode="direct",
                 confidence=0.0,
@@ -529,6 +539,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
         "scenario": scenario_key,
         "score": score,
         "confidence": confidence,
+        "routing_latency_ms": round((time.perf_counter() - _t0) * 1000, 2),
         "routing_debug": routing_debug,
         "mode": "direct",
         "repo_exploration": _build_repo_exploration_policy(

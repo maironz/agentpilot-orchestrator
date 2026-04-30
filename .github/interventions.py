@@ -20,6 +20,7 @@ import json
 import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Any
 
 DB_PATH = Path(__file__).parent / "interventions.db"
 
@@ -35,7 +36,14 @@ CREATE TABLE IF NOT EXISTS interventions (
     files_touched TEXT NOT NULL DEFAULT '[]',  -- JSON array
     tags TEXT NOT NULL DEFAULT '[]',           -- JSON array
     duration_min REAL,                         -- estimated effort in minutes
-    outcome TEXT NOT NULL DEFAULT 'success'    -- success | partial | failed | reverted
+    outcome TEXT NOT NULL DEFAULT 'success',   -- success | partial | failed | reverted
+    -- Milestone 2: session + recovery + trace fields
+    session_id TEXT,                           -- UUID grouping related interventions
+    trace_id TEXT,                             -- UUID for end-to-end request trace
+    error_class TEXT,                          -- timeout | ambiguity | policy | network | unknown
+    recovery_action TEXT,                      -- retry | fallback | abort | none
+    retry_count INTEGER NOT NULL DEFAULT 0,    -- number of retries attempted
+    parent_id INTEGER REFERENCES interventions(id)  -- link to parent intervention
 );
 
 -- FTS5 virtual table for full-text search on query + resolution + tags
@@ -68,6 +76,18 @@ CREATE INDEX IF NOT EXISTS idx_interventions_agent ON interventions(agent);
 CREATE INDEX IF NOT EXISTS idx_interventions_scenario ON interventions(scenario);
 CREATE INDEX IF NOT EXISTS idx_interventions_ts ON interventions(ts);
 CREATE INDEX IF NOT EXISTS idx_interventions_outcome ON interventions(outcome);
+CREATE INDEX IF NOT EXISTS idx_interventions_session_id ON interventions(session_id);
+CREATE INDEX IF NOT EXISTS idx_interventions_trace_id ON interventions(trace_id);
+"""
+
+# Additive migration: add Milestone 2 columns to existing DBs without data loss
+_MIGRATION_M2 = """
+ALTER TABLE interventions ADD COLUMN session_id TEXT;
+ALTER TABLE interventions ADD COLUMN trace_id TEXT;
+ALTER TABLE interventions ADD COLUMN error_class TEXT;
+ALTER TABLE interventions ADD COLUMN recovery_action TEXT;
+ALTER TABLE interventions ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE interventions ADD COLUMN parent_id INTEGER REFERENCES interventions(id);
 """
 
 
@@ -76,16 +96,43 @@ class InterventionStore:
 
     def __init__(self, db_path: Path | str | None = None):
         self.db_path = Path(db_path) if db_path else DB_PATH
-        self._conn = None
+        self._conn: Any = None
         self._ensure_db()
 
     def _ensure_db(self):
-        """Create DB and schema if missing."""
+        """Create DB and schema if missing; apply additive migrations."""
         self._conn = sqlite3.connect(str(self.db_path))
         self._conn.row_factory = sqlite3.Row
         self._conn.executescript(_SCHEMA)
         self._conn.execute("PRAGMA journal_mode=WAL")
         self._conn.execute("PRAGMA foreign_keys=ON")
+        self._apply_migrations()
+
+    def _apply_migrations(self):
+        """Apply additive ALTER TABLE migrations for existing DBs (idempotent)."""
+        existing_cols = {
+            row[1]
+            for row in self._conn.execute("PRAGMA table_info(interventions)").fetchall()
+        }
+        m2_cols = {
+            "session_id": "ALTER TABLE interventions ADD COLUMN session_id TEXT",
+            "trace_id": "ALTER TABLE interventions ADD COLUMN trace_id TEXT",
+            "error_class": "ALTER TABLE interventions ADD COLUMN error_class TEXT",
+            "recovery_action": "ALTER TABLE interventions ADD COLUMN recovery_action TEXT",
+            "retry_count": "ALTER TABLE interventions ADD COLUMN retry_count INTEGER NOT NULL DEFAULT 0",
+            "parent_id": "ALTER TABLE interventions ADD COLUMN parent_id INTEGER REFERENCES interventions(id)",
+        }
+        for col, stmt in m2_cols.items():
+            if col not in existing_cols:
+                self._conn.execute(stmt)
+        self._conn.commit()
+        # Add new indices if not present
+        for stmt in (
+            "CREATE INDEX IF NOT EXISTS idx_interventions_session_id ON interventions(session_id)",
+            "CREATE INDEX IF NOT EXISTS idx_interventions_trace_id ON interventions(trace_id)",
+        ):
+            self._conn.execute(stmt)
+        self._conn.commit()
 
     def close(self):
         """Close the database connection."""
@@ -111,6 +158,13 @@ class InterventionStore:
         tags: list[str] | None = None,
         duration_min: float | None = None,
         outcome: str = "success",
+        # Milestone 2 fields
+        session_id: str | None = None,
+        trace_id: str | None = None,
+        error_class: str | None = None,
+        recovery_action: str | None = None,
+        retry_count: int = 0,
+        parent_id: int | None = None,
     ) -> int:
         """
         Log a new intervention. Returns the inserted row ID.
@@ -124,18 +178,26 @@ class InterventionStore:
             tags: Categorization tags
             duration_min: Estimated effort in minutes
             outcome: success | partial | failed | reverted
+            session_id: UUID grouping related interventions in a session
+            trace_id: UUID for end-to-end request trace
+            error_class: timeout | ambiguity | policy | network | unknown
+            recovery_action: retry | fallback | abort | none
+            retry_count: Number of retries attempted
+            parent_id: ID of parent intervention for trace linking
         """
         files_json = json.dumps(files_touched or [], ensure_ascii=False)
         tags_json = json.dumps(tags or [], ensure_ascii=False)
 
         cursor = self._conn.execute(
             """INSERT INTO interventions
-               (agent, scenario, query, resolution, files_touched, tags, duration_min, outcome)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (agent, scenario, query, resolution, files_json, tags_json, duration_min, outcome),
+               (agent, scenario, query, resolution, files_touched, tags, duration_min, outcome,
+                session_id, trace_id, error_class, recovery_action, retry_count, parent_id)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (agent, scenario, query, resolution, files_json, tags_json, duration_min, outcome,
+             session_id, trace_id, error_class, recovery_action, retry_count, parent_id),
         )
         self._conn.commit()
-        return cursor.lastrowid
+        return int(cursor.lastrowid)
 
     def update_resolution(self, intervention_id: int, resolution: str, outcome: str = "success"):
         """Update the resolution of an existing intervention (e.g., after completing work)."""

@@ -46,6 +46,17 @@ route_subagent_fn = router_mod.route_subagent
 from interventions import InterventionStore
 from update_manager import get_update_status as get_update_status_fn
 from update_manager import manual_update as manual_update_fn
+from session_manager import SessionManager
+from recovery_engine import RecoveryEngine
+
+# Optional premium runtime metrics (graceful fallback if not installed)
+try:
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).parent.parent))
+    from rgen.metrics_collector import RouterMetricsCollector as _RouterMetricsCollector
+except ImportError:
+    _RouterMetricsCollector = None
 
 # ─── Server Setup ───
 
@@ -227,6 +238,73 @@ def manual_update(confirm: bool = False) -> str:
     """
     result = manual_update_fn(confirm=confirm)
     return json.dumps(result, indent=2, ensure_ascii=False)
+
+
+# ─── Tool 8: Get Runtime Metrics ───
+
+@mcp.tool()
+def get_runtime_metrics(window: int = 50) -> str:
+    """
+    Get runtime routing metrics: fallback rate, confidence distribution buckets,
+    and error rate from recent interventions.
+
+    Args:
+        window: Number of recent interventions to analyze (default: 50)
+
+    Returns:
+        JSON with fallback_rate, confidence buckets, error_rate, and scenario_usage.
+        Returns {"available": false} if metrics module is not installed.
+    """
+    if _RouterMetricsCollector is None:
+        return json.dumps({"available": False, "reason": "metrics module not installed"}, indent=2)
+
+    try:
+        collector = _RouterMetricsCollector(history_window=window)
+        snapshot = {
+            "available": True,
+            "window": window,
+            "fallback_rate": collector.fallback_rate(),
+            "confidence": collector.confidence_trend(),
+            "error_rate": collector.error_rate(),
+            "scenario_usage": collector.scenario_usage(),
+        }
+        collector.close()
+        return json.dumps(snapshot, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        return json.dumps({"available": False, "reason": str(exc)}, indent=2)
+
+
+# ─── Tool 9: Get Session Stats ───
+
+@mcp.tool()
+def get_session_stats() -> str:
+    """
+    Get aggregate statistics for routing sessions (active, expired, avg interventions).
+
+    Returns:
+        JSON with total_sessions, active_sessions, expired_sessions,
+        avg_interventions_per_active_session.
+    """
+    mgr = SessionManager()
+    try:
+        stats = mgr.stats()
+        return json.dumps(stats, indent=2, ensure_ascii=False)
+    finally:
+        mgr.close()
+
+
+# ─── Tool 10: Get Recovery Matrix ───
+
+@mcp.tool()
+def get_recovery_matrix() -> str:
+    """
+    Return the full error_class → recovery_action decision matrix.
+
+    Returns:
+        JSON array with error_class, action, max_retries, reason for each policy entry.
+    """
+    engine = RecoveryEngine()
+    return json.dumps(engine.matrix_summary(), indent=2, ensure_ascii=False)
 
 
 # ─── Entry Point ───
