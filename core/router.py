@@ -19,6 +19,7 @@ Note: copilot-instructions.md is auto-loaded by VS Code into the system prompt.
 import json
 import sys
 import re
+import time
 from pathlib import Path
 
 # Modular imports (split from monolithic router.py)
@@ -462,6 +463,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
     Returns:
         Routing result dict
     """
+    _t0 = time.perf_counter()
     routes = _load_routes()
 
     # Load calibrated weights if requested and available
@@ -487,6 +489,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
             "scenario": "_fallback",
             "mode": "direct",
             "confidence": 0.0,
+            "routing_latency_ms": round((time.perf_counter() - _t0) * 1000, 2),
             "repo_exploration": _build_repo_exploration_policy(
                 mode="direct",
                 confidence=0.0,
@@ -529,6 +532,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
         "scenario": scenario_key,
         "score": score,
         "confidence": confidence,
+        "routing_latency_ms": round((time.perf_counter() - _t0) * 1000, 2),
         "routing_debug": routing_debug,
         "mode": "direct",
         "repo_exploration": _build_repo_exploration_policy(

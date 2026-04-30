@@ -120,6 +120,7 @@ class RouterMetricsCollector:
                 "stdev": 0.0,
                 "recent_5_mean": 0.0,
                 "trend": "unknown",
+                "buckets": {"0_25": 0, "25_50": 0, "50_75": 0, "75_100": 0},
             }
 
         values = self._confidence_cache
@@ -144,12 +145,25 @@ class RouterMetricsCollector:
         else:
             trend = "stable"
 
+        # Confidence bucket distribution (0-25%, 25-50%, 50-75%, 75-100%)
+        buckets = {"0_25": 0, "25_50": 0, "50_75": 0, "75_100": 0}
+        for v in values:
+            if v < 0.25:
+                buckets["0_25"] += 1
+            elif v < 0.50:
+                buckets["25_50"] += 1
+            elif v < 0.75:
+                buckets["50_75"] += 1
+            else:
+                buckets["75_100"] += 1
+
         return {
             "values": [round(v, 2) for v in values],
             "mean": round(mean_val, 2),
             "stdev": round(stdev_val, 2),
             "recent_5_mean": round(recent_5_mean, 2),
             "trend": trend,
+            "buckets": buckets,
         }
 
     def scenario_usage(self) -> dict:
@@ -311,6 +325,32 @@ class RouterMetricsCollector:
             "error_rate": round(error_count / total, 2) if total > 0 else 0.0,
         }
 
+    def fallback_rate(self) -> dict:
+        """
+        Compute the rate of _fallback scenario in recent interventions.
+
+        Returns:
+            {
+                "fallback_count": 3,
+                "total": 50,
+                "fallback_rate": 0.06
+            }
+        """
+        if not self.store:
+            return {"fallback_count": 0, "total": 0, "fallback_rate": 0.0}
+
+        recent = self.store.recent(limit=self.window)
+        total = len(recent)
+        fallback_count = sum(
+            1 for item in recent if item.get("scenario") == "_fallback"
+        )
+
+        return {
+            "fallback_count": fallback_count,
+            "total": total,
+            "fallback_rate": round(fallback_count / total, 3) if total > 0 else 0.0,
+        }
+
     def full_snapshot(self) -> dict:
         """
         Return comprehensive metrics snapshot (all of the above).
@@ -336,6 +376,7 @@ class RouterMetricsCollector:
             "agent_overlap": self.agent_overlap(),
             "dead_zones": self.dead_zones(),
             "error_rate": self.error_rate(),
+            "fallback_rate": self.fallback_rate(),
         }
 
     def close(self):

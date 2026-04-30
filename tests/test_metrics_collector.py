@@ -269,3 +269,97 @@ def test_dead_zones_truncation(mock_interventions):
     assert dead_zones["dead_zone_count"] == 1
     # Query should be truncated to 80 chars
     assert len(dead_zones["items"][0]["query"]) <= 80
+
+
+# ─── Milestone 1: New metrics tests ───
+
+def test_fallback_rate_with_fallbacks(mock_interventions):
+    """Test fallback_rate counts _fallback scenario correctly."""
+    # Add 3 _fallback items to the existing 15
+    fallback_items = [
+        {
+            "id": 100 + i,
+            "ts": f"2026-04-06T11:{i:02d}:00Z",
+            "agent": "orchestratore",
+            "scenario": "_fallback",
+            "query": f"Unmatched query {i}",
+            "resolution": "Fallback used",
+            "outcome": "success",
+            "files_touched": [],
+            "tags": [],
+        }
+        for i in range(3)
+    ]
+    mock_interventions.data += fallback_items
+
+    collector = RouterMetricsCollector(
+        intervention_store=mock_interventions, history_window=50
+    )
+    result = collector.fallback_rate()
+
+    assert result["fallback_count"] == 3
+    assert result["total"] == 18
+    assert result["fallback_rate"] == pytest.approx(3 / 18, abs=0.001)
+
+
+def test_fallback_rate_no_fallbacks(mock_interventions):
+    """Test fallback_rate returns 0.0 when no _fallback scenarios exist."""
+    collector = RouterMetricsCollector(
+        intervention_store=mock_interventions, history_window=50
+    )
+    result = collector.fallback_rate()
+
+    assert result["fallback_count"] == 0
+    assert result["total"] == 15
+    assert result["fallback_rate"] == 0.0
+
+
+def test_fallback_rate_no_store():
+    """Test fallback_rate returns zero-state when no store."""
+    collector = RouterMetricsCollector(intervention_store=None)
+    result = collector.fallback_rate()
+
+    assert result["fallback_count"] == 0
+    assert result["total"] == 0
+    assert result["fallback_rate"] == 0.0
+
+
+def test_confidence_trend_buckets(mock_interventions):
+    """Test that confidence_trend includes bucket distribution."""
+    collector = RouterMetricsCollector(
+        intervention_store=mock_interventions, history_window=15
+    )
+    trend = collector.confidence_trend()
+
+    assert "buckets" in trend
+    buckets = trend["buckets"]
+    assert set(buckets.keys()) == {"0_25", "25_50", "50_75", "75_100"}
+
+    # 14 success (1.0) → 75_100 bucket; 1 partial (0.7) → 50_75 bucket
+    assert buckets["75_100"] == 14
+    assert buckets["50_75"] == 1
+    assert buckets["0_25"] == 0
+    assert buckets["25_50"] == 0
+
+    # Sum of all buckets equals number of values
+    assert sum(buckets.values()) == len(trend["values"])
+
+
+def test_confidence_trend_buckets_empty():
+    """Test confidence_trend buckets when no data."""
+    collector = RouterMetricsCollector(intervention_store=None)
+    trend = collector.confidence_trend()
+
+    assert "buckets" in trend
+    assert all(v == 0 for v in trend["buckets"].values())
+
+
+def test_full_snapshot_includes_fallback_rate(mock_interventions):
+    """Test full_snapshot now includes fallback_rate."""
+    collector = RouterMetricsCollector(intervention_store=mock_interventions)
+    snapshot = collector.full_snapshot()
+
+    assert "fallback_rate" in snapshot
+    assert "fallback_count" in snapshot["fallback_rate"]
+    assert "fallback_rate" in snapshot["fallback_rate"]
+

@@ -47,6 +47,15 @@ from interventions import InterventionStore
 from update_manager import get_update_status as get_update_status_fn
 from update_manager import manual_update as manual_update_fn
 
+# Optional premium runtime metrics (graceful fallback if not installed)
+try:
+    import sys as _sys
+    from pathlib import Path as _Path
+    _sys.path.insert(0, str(_Path(__file__).parent.parent))
+    from rgen.metrics_collector import RouterMetricsCollector as _RouterMetricsCollector
+except ImportError:
+    _RouterMetricsCollector = None
+
 # ─── Server Setup ───
 
 mcp = FastMCP(
@@ -227,6 +236,40 @@ def manual_update(confirm: bool = False) -> str:
     """
     result = manual_update_fn(confirm=confirm)
     return json.dumps(result, indent=2, ensure_ascii=False)
+
+
+# ─── Tool 8: Get Runtime Metrics ───
+
+@mcp.tool()
+def get_runtime_metrics(window: int = 50) -> str:
+    """
+    Get runtime routing metrics: fallback rate, confidence distribution buckets,
+    and error rate from recent interventions.
+
+    Args:
+        window: Number of recent interventions to analyze (default: 50)
+
+    Returns:
+        JSON with fallback_rate, confidence buckets, error_rate, and scenario_usage.
+        Returns {"available": false} if metrics module is not installed.
+    """
+    if _RouterMetricsCollector is None:
+        return json.dumps({"available": False, "reason": "metrics module not installed"}, indent=2)
+
+    try:
+        collector = _RouterMetricsCollector(history_window=window)
+        snapshot = {
+            "available": True,
+            "window": window,
+            "fallback_rate": collector.fallback_rate(),
+            "confidence": collector.confidence_trend(),
+            "error_rate": collector.error_rate(),
+            "scenario_usage": collector.scenario_usage(),
+        }
+        collector.close()
+        return json.dumps(snapshot, indent=2, ensure_ascii=False)
+    except Exception as exc:
+        return json.dumps({"available": False, "reason": str(exc)}, indent=2)
 
 
 # ─── Entry Point ───

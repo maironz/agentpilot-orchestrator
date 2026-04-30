@@ -142,7 +142,7 @@ This section uses benchmark-style labels to reduce ambiguity for external analyz
 | Flexible orchestration (parallel / hierarchical) | Partial | Parallelism is a planning hint (`suggest_parallel_subagents`), not autonomous multi-agent runtime execution |
 | Error recovery (retry / abort / human-in-loop) | Partial | Fallback and governance modes are present; structured retry/backoff/circuit-breaker are not yet implemented |
 | Persistent memory / session state | Present (partial for session lifecycle) | Persistent SQLite + FTS memory is present; explicit TTL-based session lifecycle is planned |
-| Scalability / observability | Present | Health stats, audit coverage, MCP status, update status are available |
+| Scalability / observability | Present | Health stats, audit coverage, MCP status, update status, runtime metrics (fallback_rate, confidence buckets, latency) are available |
 | Multi-channel deployment | Present | CLI + MCP server + Python package modes |
 | Tool / code integration | Present | MCP tools for routing, memory, stats, coverage, update checks |
 | Git integration (advanced) | Partial | Git-aware update checks only; no worktree/merge janitor |
@@ -223,6 +223,19 @@ python .github/update_report.py --output .github/UPDATE_STATUS.md
 ```
 
 MCP equivalents are available via `get_stats`, `audit_coverage`, and `get_update_status`.
+
+**Runtime metrics** (Milestone 1 — available since v0.x):
+
+```bash
+# Via MCP tool (returns JSON):
+# get_runtime_metrics(window=50)
+# → fallback_rate, confidence_buckets (0-25/25-50/50-75/75-100%), error_rate, scenario_usage
+
+# Via Python API:
+python -c "from rgen.metrics_collector import RouterMetricsCollector; import json; c = RouterMetricsCollector(); print(json.dumps(c.fallback_rate(), indent=2)); c.close()"
+```
+
+Each `route_query()` call now captures `routing_latency_ms` in the result for latency tracking.
 
 ### ROI Benchmark (Live Demo)
 
