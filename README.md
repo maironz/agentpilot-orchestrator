@@ -113,10 +113,11 @@ What began as an internal orchestration system for structured engineering suppor
 - Semantic scenario routing (`direct`, `follow-up`, `subagent`)
 - Confidence scoring and ambiguity handling
 - Agent-specific context loading
-- Intervention memory with searchable history
+- Persistent intervention memory with session enrichment and full-text search
 - MCP server tools for native assistant integration
 - Scenario suggestion workflow from historical interventions
 - Post-generation quality gate (`--check`) with 8 structural checks
+- Git-aware update checks (fetch, branch detection, manual-only update policy)
 
 ## Feature Highlights
 
@@ -506,6 +507,18 @@ If users only see plain chat text with no tool activity, MCP is not connected.
 
 This turns AI support into an operational loop instead of a one-off prompt.
 
+## Deployment Options
+
+AgentPilot runs in three modes, with no external runtime dependencies for the core:
+
+| Mode | Command | Use case |
+|---|---|---|
+| CLI | `python -m rgen.cli` / `python .github/router.py` | Local development, CI pipelines |
+| MCP server | `agentpilot-mcp` (stdio transport) | VS Code, Claude, Cursor assistant integration |
+| PyPI package | `pip install agentpilot-orchestrator` | Embedding in existing Python projects |
+
+The core depends on stdlib only. MCP extras are opt-in (`pip install -e ".[mcp]"`).
+
 ## Typical Use Cases
 
 - Route software tasks by domain (backend, devops, docs, orchestrator)
@@ -520,7 +533,8 @@ This turns AI support into an operational loop instead of a one-off prompt.
 - It bridges local CLI workflows and MCP-native tool calling in the same system.
 - It is designed for teams that want sharper assistant behavior without losing control.
 - It ships a built-in quality gate (`--check`) for generated assets, integrable in CI pipelines.
-- By design, it is a routing layer — not an execution sandbox. It routes infra tasks to the right context rather than running workloads, keeping the core dependency-free.
+- It is git-aware: update checks use fetch and branch detection without automatic writes.
+- By design, it is a routing layer — not an execution sandbox. It routes infra tasks to the right context rather than running workloads, keeping the core stdlib-only.
 
 ## Good Fit If
 
