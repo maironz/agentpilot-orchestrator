@@ -21,7 +21,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
 [![CI](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-431-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-392-brightgreen)](tests)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 

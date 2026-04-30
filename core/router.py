@@ -26,6 +26,11 @@ from pathlib import Path
 from router_audit import audit_routing_coverage, get_health_stats
 from router_planner import handle_plan_approved, handle_plan_rejected, handle_new_query
 from interventions import InterventionStore
+try:
+    from recovery_engine import RecoveryEngine as _RecoveryEngine
+    _recovery_engine = _RecoveryEngine()
+except ImportError:  # graceful: recovery_engine not available in generated targets
+    _recovery_engine = None  # type: ignore[assignment]
 
 # Premium runtime boundary (prefer private implementations when installed)
 try:
@@ -481,6 +486,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
     scored = _score_scenarios(query, routes, weighted_boosts)
 
     if not scored:
+        _recovery = _recovery_engine.evaluate("ambiguity", retry_count=0) if _recovery_engine else None
         fallback_result = {
             "agent": "orchestratore",
             "files": [AGENT_EXPERT_MAP["orchestratore"]],
@@ -490,6 +496,7 @@ def route_query(query: str, use_calibration: bool = False) -> dict:
             "mode": "direct",
             "confidence": 0.0,
             "routing_latency_ms": round((time.perf_counter() - _t0) * 1000, 2),
+            "recovery": _recovery.as_dict() if _recovery else None,
             "repo_exploration": _build_repo_exploration_policy(
                 mode="direct",
                 confidence=0.0,

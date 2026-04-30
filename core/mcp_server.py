@@ -46,6 +46,8 @@ route_subagent_fn = router_mod.route_subagent
 from interventions import InterventionStore
 from update_manager import get_update_status as get_update_status_fn
 from update_manager import manual_update as manual_update_fn
+from session_manager import SessionManager
+from recovery_engine import RecoveryEngine
 
 # Optional premium runtime metrics (graceful fallback if not installed)
 try:
@@ -270,6 +272,39 @@ def get_runtime_metrics(window: int = 50) -> str:
         return json.dumps(snapshot, indent=2, ensure_ascii=False)
     except Exception as exc:
         return json.dumps({"available": False, "reason": str(exc)}, indent=2)
+
+
+# ─── Tool 9: Get Session Stats ───
+
+@mcp.tool()
+def get_session_stats() -> str:
+    """
+    Get aggregate statistics for routing sessions (active, expired, avg interventions).
+
+    Returns:
+        JSON with total_sessions, active_sessions, expired_sessions,
+        avg_interventions_per_active_session.
+    """
+    mgr = SessionManager()
+    try:
+        stats = mgr.stats()
+        return json.dumps(stats, indent=2, ensure_ascii=False)
+    finally:
+        mgr.close()
+
+
+# ─── Tool 10: Get Recovery Matrix ───
+
+@mcp.tool()
+def get_recovery_matrix() -> str:
+    """
+    Return the full error_class → recovery_action decision matrix.
+
+    Returns:
+        JSON array with error_class, action, max_retries, reason for each policy entry.
+    """
+    engine = RecoveryEngine()
+    return json.dumps(engine.matrix_summary(), indent=2, ensure_ascii=False)
 
 
 # ─── Entry Point ───
