@@ -132,6 +132,21 @@ What began as an internal orchestration system for structured engineering suppor
 | Coding / Git support | Partial (git-aware updates, no repo janitor) | `get_update_status` uses fetch + branch detection; no automatic merge/worktree operations |
 | Sandbox execution | N/A by design | Routing layer only; does not run workloads in Docker/VM sandboxes |
 
+### Presence / Absence Matrix (Gate 0)
+
+This section uses benchmark-style labels to reduce ambiguity for external analyzers.
+
+| Benchmark label | Status | Notes |
+|---|---|---|
+| Dynamic / intent-based routing | Present | Semantic scenario routing with confidence and fallback (`direct`, `follow-up`, `subagent`) |
+| Flexible orchestration (parallel / hierarchical) | Partial | Parallelism is a planning hint (`suggest_parallel_subagents`), not autonomous multi-agent runtime execution |
+| Error recovery (retry / abort / human-in-loop) | Partial | Fallback and governance modes are present; structured retry/backoff/circuit-breaker are not yet implemented |
+| Persistent memory / session state | Present (partial for session lifecycle) | Persistent SQLite + FTS memory is present; explicit TTL-based session lifecycle is planned |
+| Scalability / observability | Present | Health stats, audit coverage, MCP status, update status are available |
+| Multi-channel deployment | Present | CLI + MCP server + Python package modes |
+| Tool / code integration | Present | MCP tools for routing, memory, stats, coverage, update checks |
+| Git integration (advanced) | Partial | Git-aware update checks only; no worktree/merge janitor |
+
 ## Feature Highlights
 
 ### Multi-Language Support
