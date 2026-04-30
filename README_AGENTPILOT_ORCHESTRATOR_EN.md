@@ -20,9 +20,10 @@
 **Automatically generate a semantic AI routing system for any project.**
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
-[![Tests](https://img.shields.io/badge/tests-223%2F223-brightgreen?logo=pytest&logoColor=white)](tests/)
+[![CI](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-431-brightgreen)](tests)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Dependencies](https://img.shields.io/badge/core-stdlib%20only%20%2B%20rich-orange)](pyproject.toml)
+[![Dependencies](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
 </div>
@@ -30,17 +31,69 @@
 
 ---
 
-# AgentPilot Orchestrator
+# AgentPilot
 
-Production-ready AI routing and orchestration for multi-agent workflows.
+AI Task Router for Developers.
 
-AgentPilot Orchestrator helps teams route each request to the right specialist context, reduce token waste, and keep AI outputs consistent across engineering domains.
+Routes developer tasks to the best AI agent using context, certainty, and cost signals.
 
-## Why AgentPilot Orchestrator
+> Built for teams that want faster technical triage, consistent AI execution, and traceable routing decisions.
+
+Current release is tracked in `VERSION` (synced from `pyproject.toml` on push to `main`).
+See `docs/RELEASE_NOTES.md` for release history and migration context.
+
+## What Problem It Solves
+
+When teams use multiple AI models and agents for software work, three issues appear quickly:
+
+- too much manual triage before real execution
+- inconsistent handling of similar requests
+- limited visibility into why one route was selected
+
+AgentPilot automates that triage.
+
+## What It Does
+
+Given a technical request, AgentPilot:
+
+- classifies the task type (bug fix, refactor, code generation, docs)
+- selects the most suitable agent path
+- applies fallback logic when certainty is low
+- returns output plus a traceable decision record
+
+In short: it behaves like a load balancer, but for AI agents.
+
+## Demo First
+
+Input:
+
+```bash
+python .github/router.py --direct "fix failing test in auth service"
+```
+
+Typical route output:
+
+```text
+task_type: bug_fix
+agent: backend
+fallback: orchestratore
+certainty: 0.82
+```
+
+Then execute with the selected context and log the intervention.
+
+## Supported Task Types
+
+- Bug fixing
+- Refactoring
+- Code generation
+- Documentation
+
+## Why AgentPilot
 
 - Route each request to the right agent context
 - Reduce irrelevant context and token usage
-- Keep routing decisions explainable (`scenario`, `confidence`, `priority`)
+- Keep routing decisions explainable (`task_type`, `certainty`, `priority`)
 - Add MCP-native integration for assistant ecosystems
 - Track interventions and improve routing over time
 
@@ -55,7 +108,7 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 
 ## Architecture at a Glance
 
-- Router engine: scenario scoring, confidence, fallback, ambiguity
+- Router engine: task-type scoring, certainty, fallback, ambiguity
 - Knowledge base: domain scenarios, keywords, expert profiles
 - Memory layer: SQLite/FTS-based intervention history
 - MCP layer: tool interface for assistants and orchestrators
@@ -65,7 +118,7 @@ AgentPilot Orchestrator helps teams route each request to the right specialist c
 ### 1) Clone and install
 
 ```bash
-git clone https://github.com/<your-org>/agentpilot-orchestrator.git
+git clone https://github.com/maironz/agentpilot-orchestrator.git
 cd agentpilot-orchestrator
 
 python -m venv .venv
@@ -104,10 +157,27 @@ Quick troubleshooting:
 - If `npx` does not install skills, the script automatically falls back to git.
 - On unstable networks, reduce timeout: `ANTHROPIC_SKILLS_CLI_TIMEOUT=30`.
 
+### Fast path
+
+```bash
+python .github/router.py --stats
+python .github/router.py --direct "debug Python API timeout"
+```
+
+Developer-focused quick flow:
+
+```bash
+python .github/router.py --direct "fix failing test in auth service"
+python .github/router.py --direct "refactor payment service retries"
+python .github/router.py --direct "write docs for rate-limit middleware"
+```
+
+CLI note: prefer `python -m rgen.cli ...` during development to avoid PATH drift.
+
 ### 2) Generate routing assets
 
 ```bash
-rgen --direct --pattern python_api --name my-app --target ./my-app
+python -m rgen.cli --direct --pattern python_api --name my-app --target ./my-app
 ```
 
 ### 3) Run router checks
@@ -120,7 +190,7 @@ python .github/router.py --audit
 ### 4) Suggest new scenarios from history
 
 ```bash
-rgen --suggest-scenarios --target ./my-app --suggest-format text
+python -m rgen.cli --suggest-scenarios --target ./my-app --suggest-format text
 ```
 
 ## MCP Integration
@@ -128,8 +198,8 @@ rgen --suggest-scenarios --target ./my-app --suggest-format text
 AgentPilot Orchestrator includes an MCP server to expose routing and memory as native tools.
 
 ```bash
-pip install "mcp[cli]>=1.0.0"
-python .github/mcp_server.py
+pip install -e ".[mcp]"
+agentpilot-mcp
 ```
 
 Current MCP tools:

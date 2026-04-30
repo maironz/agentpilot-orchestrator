@@ -30,13 +30,13 @@
 
 ---
 
-# AgentPilot Orchestrator
+# AgentPilot
 
-Production-ready AI routing and orchestration for multi-agent workflows.
+AI Task Router for Developers.
 
-AgentPilot Orchestrator helps teams route each request to the right specialist context, reduce token waste, and keep AI outputs consistent across engineering domains.
+Routes developer tasks to the best AI agent using context, certainty, and cost signals.
 
-> Built for teams that want explainable routing, cleaner prompts, and an MCP-ready interface without building orchestration glue from scratch.
+> Built for teams that want faster technical triage, consistent AI execution, and traceable routing decisions.
 
 Current release is tracked in `VERSION` (synced from `pyproject.toml` on push to `main`).
 See `docs/RELEASE_NOTES.md` for release history and migration context.
@@ -44,25 +44,52 @@ User-facing guides are in `docs/`; references to `.github/` in command examples 
 
 **From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
-## At a Glance
+## What Problem It Solves
 
-| You need | AgentPilot Orchestrator gives you |
-|---|---|
-| Better request-to-expert matching | Scenario-based routing with confidence and priority |
-| Less prompt sprawl | Targeted context loading instead of generic mega-prompts |
-| Traceable assistant behavior | Auditable routing decisions and intervention history |
-| Assistant ecosystem integration | MCP tools for routing, memory, and coverage checks |
+When teams use multiple AI models and agents for software work, three problems appear fast:
+
+- too much manual triage before doing real work
+- inconsistent handling of similar requests
+- low visibility on why one route was chosen over another
+
+AgentPilot automates that triage.
 
 ## What It Does
 
-AgentPilot Orchestrator gives engineering teams a routing layer for AI workflows.
+Given a technical request, AgentPilot:
 
-- It classifies each request into a scenario.
-- It selects the most appropriate specialist context.
-- It exposes routing and memory through MCP tools.
-- It records interventions so routing can be improved over time.
+- classifies the task type (bug fix, refactor, code generation, docs)
+- selects the most suitable agent path
+- applies fallback logic when certainty is low
+- returns the result with a traceable decision record
 
-In short: it reduces noisy prompting and turns assistant usage into a repeatable operational system.
+In short: it behaves like a load balancer, but for AI agents.
+
+## Demo First
+
+Input:
+
+```bash
+python .github/router.py --direct "fix failing test in auth service"
+```
+
+Typical route output:
+
+```text
+task_type: bug_fix
+agent: backend
+fallback: orchestratore
+certainty: 0.82
+```
+
+Then execute the task with the routed context and track the intervention.
+
+## Supported Task Types
+
+- Bug fixing
+- Refactoring
+- Code generation
+- Documentation
 
 ## Project Origin
 
@@ -72,11 +99,11 @@ The project was originally shaped to solve that operational gap with something m
 
 What began as an internal orchestration system for structured engineering support evolved into a reusable open-core toolkit for teams that want assistant workflows to feel deliberate, inspectable, and production-aware.
 
-## Why AgentPilot Orchestrator
+## Why AgentPilot
 
 - Route each request to the right agent context
 - Reduce irrelevant context and token usage
-- Keep routing decisions explainable (`scenario`, `confidence`, `priority`)
+- Keep routing decisions explainable (`task_type`, `certainty`, `priority`)
 - Add MCP-native integration for assistant ecosystems
 - Track interventions and improve routing over time
 - Turn ad-hoc prompting into a repeatable engineering capability
@@ -166,7 +193,7 @@ In practice:
 ## How It Works
 
 1. Input request arrives through CLI or MCP tool call.
-2. Router evaluates scenarios using keyword sets, priorities, and confidence scoring.
+2. Router evaluates candidate task types using keyword sets, priorities, and certainty scoring.
 3. Selected agent context and relevant files are attached to the task.
 4. Response is produced and the intervention can be logged for future calibration.
 
@@ -234,6 +261,14 @@ Troubleshooting rapido:
 ```bash
 python .github/router.py --stats
 python .github/router.py --direct "debug Python API timeout"
+```
+
+For a quick developer-focused flow:
+
+```bash
+python .github/router.py --direct "fix failing test in auth service"
+python .github/router.py --direct "refactor payment service retries"
+python .github/router.py --direct "write docs for rate-limit middleware"
 ```
 
 CLI note: prefer `python -m rgen.cli ...` during development to avoid PATH drift between installed entrypoints and local source.
