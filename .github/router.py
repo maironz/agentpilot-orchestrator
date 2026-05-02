@@ -59,6 +59,7 @@ except ImportError:
     POLICY_PROVIDER = None
 
 ROUTING_MAP = Path(__file__).parent / "routing-map.json"
+ROUTING_MAP_LOCAL = Path(__file__).parent / "routing-map.local.json"
 SUBAGENT_BRIEF = Path(__file__).parent / "subagent-brief.md"
 CONFIDENCE_GATE = 0.55
 PLANS_LOCAL_DIR = Path(__file__).parent / "plans-local"
@@ -112,6 +113,21 @@ def _load_routes() -> dict:
             for scenario_id, scenario_data in section_items.items():
                 if isinstance(scenario_data, dict) and "keywords" in scenario_data:
                     routes[scenario_id] = scenario_data
+
+    if ROUTING_MAP_LOCAL.exists():
+        with open(ROUTING_MAP_LOCAL, "r", encoding="utf-8") as f:
+            local_payload = json.load(f)
+
+        local_routes = {k: v for k, v in local_payload.items() if isinstance(v, dict) and "keywords" in v}
+        local_sections = local_payload.get("_sections") if isinstance(local_payload, dict) else None
+        if isinstance(local_sections, dict):
+            for _, section_items in local_sections.items():
+                if not isinstance(section_items, dict):
+                    continue
+                for scenario_id, scenario_data in section_items.items():
+                    if isinstance(scenario_data, dict) and "keywords" in scenario_data:
+                        local_routes[scenario_id] = scenario_data
+        routes.update(local_routes)
 
     return routes
 

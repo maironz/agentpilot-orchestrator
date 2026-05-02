@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import subprocess
@@ -68,20 +69,43 @@ def _latest_vscode_mcp_state() -> Optional[str]:
     return None
 
 
-def get_mcp_status() -> dict:
-    repo_root = Path(__file__).resolve().parent.parent
+def _resolve_target_dir(target_dir: Path | None = None) -> Path:
+    if target_dir is not None:
+        return target_dir.resolve()
+
+    env_target_dir = os.environ.get("AGENTPILOT_TARGET_DIR")
+    if env_target_dir:
+        return Path(env_target_dir).expanduser().resolve()
+
+    return Path(__file__).resolve().parent.parent
+
+
+def get_mcp_status(target_dir: Path | None = None) -> dict:
+    repo_root = _resolve_target_dir(target_dir)
     workspace_cfg = repo_root / ".vscode" / "mcp.json"
     configured = workspace_cfg.exists()
     log_state = _latest_vscode_mcp_state()
     active = log_state == "Active" or _process_has_mcp_server()
+    status = "Active" if active else "Standby" if configured else "Inactive"
 
-    return {
-        "mcp": "Active" if active else "Inactive",
+    payload = {
+        "mcp": status,
         "configured": configured,
         "workspace_config": str(workspace_cfg.relative_to(repo_root)).replace('\\', '/'),
         "source": "vscode-log" if log_state is not None else "process-scan",
+        "target_dir": str(repo_root),
     }
+    if status == "Standby":
+        payload["note"] = "Server starts on first VS Code tool call."
+    return payload
+
+
+def _parse_args(argv: list[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Report VS Code MCP configuration and runtime status.")
+    parser.add_argument("--target-dir", type=Path, help="Workspace root whose .vscode/mcp.json should be checked.")
+    return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
-    json.dump(get_mcp_status(), sys.stdout, ensure_ascii=False)
+    args = _parse_args(sys.argv[1:])
+    json.dump(get_mcp_status(args.target_dir), sys.stdout, ensure_ascii=False)

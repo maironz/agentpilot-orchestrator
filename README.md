@@ -21,7 +21,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
 [![CI](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-392-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-398-brightgreen)](tests)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
@@ -208,6 +208,28 @@ Result: OK — 8 pass, 0 warn, 0 errors
 ```
 
 Checks cover: required file presence, routing-map validity, expert file completeness, agent registry alignment, leftover template placeholders, and router health. Exit code is non-zero on failure, suitable for CI integration.
+
+### Persistent Local Routing Extensions
+
+When you need host-project scenarios that must survive future `rgen` regeneration or sync, keep them in `.github/routing-map.local.json` instead of editing `.github/routing-map.json` directly.
+
+At runtime, `router.py` and `router_audit.py` load `.github/routing-map.json` first and then merge `.github/routing-map.local.json` on top when the companion file exists. This lets local scenarios override or extend generated ones without creating regeneration drift.
+
+Minimal example:
+
+```json
+{
+    "ledger_add_event": {
+        "agent": "backend",
+        "keywords": ["ledger", "event", "transaction"],
+        "files": [".github/esperti/esperto_backend.md"],
+        "context": "PersonalLedger custom workflow",
+        "priority": "high"
+    }
+}
+```
+
+Recommendation: treat `.github/routing-map.json` as generated output and keep host-specific additions in `.github/routing-map.local.json`.
 
 > Design note: AgentPilot is a routing layer, not an execution sandbox. It routes tasks to the right agent context (including infra/Docker scenarios) but does not execute or isolate workloads. The `--check` command is the built-in quality gate for generated assets.
 

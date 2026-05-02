@@ -101,3 +101,37 @@ def test_load_routes_supports_sectioned_routing_map(runtime_router, tmp_path: Pa
     assert "flat_scenario" in routes
     assert "database" in routes
     assert routes["database"]["agent"] == "backend"
+
+
+def test_load_routes_merges_local_companion_file(runtime_router, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    base_map = {
+        "python_code": {
+            "agent": "backend",
+            "keywords": ["python"],
+            "files": [".github/esperti/esperto_backend.md"],
+            "context": "Base",
+            "priority": "high",
+        }
+    }
+    local_map = {
+        "ledger_add_event": {
+            "agent": "backend",
+            "keywords": ["ledger", "event"],
+            "files": [".github/esperti/esperto_backend.md"],
+            "context": "Host project custom scenario",
+            "priority": "high",
+        }
+    }
+    map_path = tmp_path / "routing-map.json"
+    local_path = tmp_path / "routing-map.local.json"
+    map_path.write_text(json.dumps(base_map), encoding="utf-8")
+    local_path.write_text(json.dumps(local_map), encoding="utf-8")
+
+    monkeypatch.setattr(runtime_router, "ROUTING_MAP", map_path)
+    monkeypatch.setattr(runtime_router, "ROUTING_MAP_LOCAL", local_path)
+
+    routes = runtime_router._load_routes()
+
+    assert "python_code" in routes
+    assert "ledger_add_event" in routes
+    assert routes["ledger_add_event"]["context"] == "Host project custom scenario"
