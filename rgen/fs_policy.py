@@ -91,6 +91,22 @@ class FSPolicy:
         self._allowed_root = self._root / ".agentpilot"
         self._github_root = self._root / ".github"
 
+    @classmethod
+    def from_config(cls, project_root: Union[Path, str, None] = None) -> "FSPolicy":
+        """Build an :class:`FSPolicy` instance from ``.agentpilot/config.yaml``.
+
+        Falls back to safe defaults when the config file is absent or PyYAML
+        is not installed.
+        """
+        from rgen.config import load as _load_cfg  # lazy to avoid circular import
+
+        cfg = _load_cfg(project_root)
+        return cls(
+            project_root=project_root,
+            strict=cfg.fs_strict,
+            allow_github_write=cfg.allow_github_write,
+        )
+
     # ------------------------------------------------------------------
     # Public write API
     # ------------------------------------------------------------------
@@ -218,10 +234,17 @@ _default: FSPolicy | None = None
 
 
 def get_default(project_root: Union[Path, str, None] = None, strict: bool = False) -> FSPolicy:
-    """Return (or create) the module-level default :class:`FSPolicy` instance."""
+    """Return (or create) the module-level default :class:`FSPolicy` instance.
+
+    Loads ``fs_strict`` and ``allow_github_write`` from
+    ``.agentpilot/config.yaml`` when constructing for the first time.
+    The *strict* parameter acts as an override (higher precedence).
+    """
     global _default
     if _default is None or project_root is not None:
-        _default = FSPolicy(project_root=project_root, strict=strict)
+        _default = FSPolicy.from_config(project_root=project_root)
+        if strict:
+            _default._strict = True
     return _default
 
 
