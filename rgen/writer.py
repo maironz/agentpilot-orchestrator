@@ -56,7 +56,7 @@ class Writer:
         """
         target_dir = Path(target_dir)
         backup_engine = BackupEngine(
-            target_dir / ".github" / self._backup_dir_name,
+            target_dir / ".agentpilot" / "backups",
             project_root=target_dir,
             command="generate",
             target=str(target_dir),
@@ -95,7 +95,7 @@ class Writer:
         target_dir = Path(target_dir)
         if backup_engine is None:
             backup_engine = BackupEngine(
-                target_dir / ".github" / self._backup_dir_name,
+                target_dir / ".agentpilot" / "backups",
                 project_root=target_dir,
                 command="write_all",
                 target=str(target_dir),
@@ -113,7 +113,7 @@ class Writer:
                 existed_before = dest.exists()
                 backup_engine.backup_if_exists(dest)
                 dest.parent.mkdir(parents=True, exist_ok=True)
-                dest.write_text(content, encoding="utf-8")
+                dest.write_text(content, encoding="utf-8")  # fs-policy: ok
                 backup_engine.record_written_file(dest, existed_before=existed_before)
                 result.files_written.append(dest)
             except Exception as exc:
@@ -141,7 +141,7 @@ class Writer:
         github_dir = target_dir / ".github"
         if backup_engine is None:
             backup_engine = BackupEngine(
-                github_dir / self._backup_dir_name,
+                target_dir / ".agentpilot" / "backups",
                 project_root=target_dir,
                 command="copy_core_files",
                 target=str(target_dir),

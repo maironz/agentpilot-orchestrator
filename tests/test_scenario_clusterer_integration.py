@@ -8,9 +8,9 @@ from rgen.cli import main, _build_parser
 
 
 def _seed_interventions_db(target: Path) -> None:
-    gh = target / ".github"
-    gh.mkdir(parents=True, exist_ok=True)
-    db = gh / "interventions.db"
+    state_dir = target / ".agentpilot" / "state"
+    state_dir.mkdir(parents=True, exist_ok=True)
+    db = state_dir / "interventions.db"
     conn = sqlite3.connect(str(db))
     conn.execute(
         """
@@ -123,7 +123,7 @@ def test_cli_suggest_scenarios_honors_min_confidence(tmp_path: Path, capsys) -> 
 def test_cli_suggest_scenarios_can_include_matched_queries(tmp_path: Path, capsys) -> None:
     _seed_interventions_db(tmp_path)
 
-    db = tmp_path / ".github" / "interventions.db"
+    db = tmp_path / ".agentpilot" / "state" / "interventions.db"
     conn = sqlite3.connect(str(db))
     conn.execute(
         "INSERT INTO interventions (agent, scenario, query, resolution, files_touched, tags, duration_min, outcome) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
@@ -148,7 +148,7 @@ def test_cli_suggest_scenarios_can_include_matched_queries(tmp_path: Path, capsy
 
 def test_cli_suggest_scenarios_honors_history_limit(tmp_path: Path, capsys) -> None:
     _seed_interventions_db(tmp_path)
-    db = tmp_path / ".github" / "interventions.db"
+    db = tmp_path / ".agentpilot" / "state" / "interventions.db"
     conn = sqlite3.connect(str(db))
     conn.execute(
         "INSERT INTO interventions (agent, scenario, query, resolution, files_touched, tags, duration_min, outcome) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",

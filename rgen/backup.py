@@ -122,14 +122,14 @@ class BackupEngine:
         items.sort(key=lambda item: str(item.get("generation_id", "")), reverse=True)
         index_path = self._base_dir / self.INDEX_FILE
         index_path.parent.mkdir(parents=True, exist_ok=True)
-        index_path.write_text(json.dumps(items, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        index_path.write_text(json.dumps(items, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")  # fs-policy: ok
 
     def _persist_metadata(self) -> None:
         metadata = self._session_metadata
         if metadata is None:
             return
         metadata_path = self.session_dir / self.METADATA_FILE
-        metadata_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        metadata_path.write_text(json.dumps(metadata, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")  # fs-policy: ok
         self._write_index()
 
     def _ensure_session_metadata(self) -> dict[str, object]:

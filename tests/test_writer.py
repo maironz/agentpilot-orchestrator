@@ -73,7 +73,7 @@ def test_write_all_backs_up_existing_file(core_dir: Path, target_dir: Path) -> N
     writer.write_all({".github/routing-map.json": "new content"}, target_dir)
 
     assert (target_dir / ".github" / "routing-map.json").read_text() == "new content"
-    backup_root = target_dir / ".github" / ".rgen-backups"
+    backup_root = target_dir / ".agentpilot" / "backups"
     backups = [p for p in backup_root.iterdir() if p.is_dir()]
     assert len(backups) == 1
     assert (backups[0] / ".github" / "routing-map.json").read_text() == "old content"
@@ -90,7 +90,7 @@ def test_write_all_preserves_existing_copilot_instructions(core_dir: Path, targe
     assert result.success
     assert existing.read_text() == "# local customization"
     assert existing in result.files_skipped
-    backup_root = target_dir / ".github" / ".rgen-backups"
+    backup_root = target_dir / ".agentpilot" / "backups"
     assert not backup_root.exists()
 
 
@@ -160,7 +160,7 @@ def test_copy_core_files_backs_up_existing(core_dir: Path, target_dir: Path) -> 
     writer.copy_core_files(target_dir)
 
     assert existing.read_text() == "# router stub"
-    backup_root = target_dir / ".github" / ".rgen-backups"
+    backup_root = target_dir / ".agentpilot" / "backups"
     sessions = [p for p in backup_root.iterdir() if p.is_dir()]
     assert len(sessions) == 1
     assert (sessions[0] / ".github" / "router.py").read_text() == "# old router"

@@ -10,7 +10,7 @@ class InterventionStore:
     """Read-only store used by analytics features (scenario suggestions)."""
 
     def __init__(self, db_path: Path | str | None = None) -> None:
-        self.db_path = Path(db_path) if db_path else Path(".github") / "interventions.db"
+        self.db_path = Path(db_path) if db_path else Path(".agentpilot") / "state" / "interventions.db"
         self._conn: sqlite3.Connection | None = None
         self._open()
 

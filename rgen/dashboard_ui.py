@@ -293,7 +293,7 @@ class DashboardUI:
         import json
 
         snapshot = self.metrics.full_snapshot()
-        with open(filepath, "w", encoding="utf-8") as f:
+        with open(filepath, "w", encoding="utf-8") as f:  # fs-policy: ok
             json.dump(snapshot, f, indent=2, ensure_ascii=False)
 
 

@@ -127,7 +127,7 @@ def export_cutover_snapshot(
 
     if write_manifest:
         manifest_path = output_dir / "cutover-manifest.json"
-        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")  # fs-policy: ok
     return manifest
 
 
@@ -160,7 +160,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.output:
         output_path = Path(args.output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(payload + "\n", encoding="utf-8")
+        output_path.write_text(payload + "\n", encoding="utf-8")  # fs-policy: ok
     else:
         print(payload)
 

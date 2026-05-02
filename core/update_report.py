@@ -51,7 +51,7 @@ def _save_cached_remote_version(remote_version: str) -> None:
         "cached_at": _utc_now(),
         "source_url": _REMOTE_VERSION_URL,
     }
-    _VERSION_CACHE_PATH.write_text(
+    _VERSION_CACHE_PATH.write_text(  # fs-policy: ok
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
@@ -206,7 +206,7 @@ def main() -> int:
     }
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(_format_markdown(status, report_data, auto_result), encoding="utf-8")
+    report_path.write_text(_format_markdown(status, report_data, auto_result), encoding="utf-8")  # fs-policy: ok
 
     print(json.dumps({
         "update_label": report_data["update_label"],

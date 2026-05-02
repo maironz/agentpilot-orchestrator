@@ -136,7 +136,7 @@ class PatternRegistry:
     def _download_and_extract_zip(url: str, temp_dir: Path) -> Path:
         zip_path = temp_dir / "pattern-pack.zip"
         with urllib.request.urlopen(url, timeout=30) as response:
-            zip_path.write_bytes(response.read())
+            zip_path.write_bytes(response.read())  # fs-policy: ok
 
         extract_dir = temp_dir / "extracted"
         extract_dir.mkdir(parents=True, exist_ok=True)

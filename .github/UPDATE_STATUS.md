@@ -1,6 +1,6 @@
 # Update Status Report
 
-Generated at: 2026-05-02T18:32:27.063801+00:00
+Generated at: 2026-05-02T18:54:48.601004+00:00
 
 ## Summary
 - Banner label: Need Update
@@ -8,8 +8,8 @@ Generated at: 2026-05-02T18:32:27.063801+00:00
 - Source: active-option
 - Status: outdated
 - Compared files: 12
-- Drift files: 1
-- Drift list: .github/copilot-instructions.md
+- Drift files: 2
+- Drift list: .github/copilot-instructions.md, .github/update_report.py
 - Suggested manual command: python .github/active_option_sync.py --apply
 
 ## Remote Version Check
@@ -29,16 +29,17 @@ Generated at: 2026-05-02T18:32:27.063801+00:00
 ## Raw Status JSON
 ```json
 {
-  "checked_at": "2026-05-02T18:32:26.848891+00:00",
+  "checked_at": "2026-05-02T18:54:48.396768+00:00",
   "source": "active-option",
   "scope": "core->.github",
   "status": "outdated",
   "update_available": true,
   "compared_files": 12,
   "drift_files": [
-    ".github/copilot-instructions.md"
+    ".github/copilot-instructions.md",
+    ".github/update_report.py"
   ],
-  "drift_count": 1,
+  "drift_count": 2,
   "manual_update_command": "python .github/active_option_sync.py --apply"
 }
 ```

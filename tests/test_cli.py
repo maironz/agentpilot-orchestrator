@@ -137,7 +137,7 @@ def test_rollback_skips_manual_changes_by_default(tmp_path: Path, capsys: pytest
     capsys.readouterr()
 
     (gh / "router.py").write_text("# manual edit")
-    sessions = json.loads((gh / ".rgen-backups" / "index.json").read_text(encoding="utf-8"))
+    sessions = json.loads((project / ".agentpilot" / "backups" / "index.json").read_text(encoding="utf-8"))
     generation_id = sessions[0]["generation_id"]
 
     ret = main(["--rollback", "--target", str(project), "--to", generation_id])
@@ -268,7 +268,7 @@ def test_update_creates_backup(tmp_path: Path) -> None:
     (gh / "router.py").write_text("# old content")
     ret = main(["--update", "--target", str(tmp_path)])
     assert ret == 0
-    backup_root = gh / ".rgen-backups"
+    backup_root = tmp_path / ".agentpilot" / "backups"
     assert backup_root.exists()
     backup_slots = list(backup_root.iterdir())
     assert len(backup_slots) >= 1
@@ -286,7 +286,7 @@ def test_update_flat_creates_backup_in_root(tmp_path: Path) -> None:
     (tmp_path / "router.py").write_text("# old")
     ret = main(["--update", "--flat", "--target", str(tmp_path)])
     assert ret == 0
-    assert (tmp_path / ".rgen-backups").exists()
+    assert (tmp_path / ".agentpilot" / "backups").exists()
 
 
 # ---------------------------------------------------------------------------

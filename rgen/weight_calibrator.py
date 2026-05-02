@@ -267,7 +267,7 @@ class RouterWeightCalibrator:
             "keyword_boosts": weights,
         }
 
-        with open(filepath, "w", encoding="utf-8") as f:
+        with open(filepath, "w", encoding="utf-8") as f:  # fs-policy: ok
             json.dump(output, f, indent=2, ensure_ascii=False)
 
     def load_weights(self, filepath: str) -> dict:

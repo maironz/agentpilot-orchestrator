@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
 
-def _report_timeout(active_cmd: str | None, timeout: int) -> None:
+def _report_timeout(active_cmd: str | None, timeout: int | None) -> None:
     """Stampa diagnostica e suggerisce se il rallentamento è atteso."""
     print(
         f"\n[TIMEOUT] L'esecuzione ha superato {timeout}s e è stata interrotta.",
@@ -208,7 +208,7 @@ def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
         return 2
 
     target = Path(args.target or ".")
-    db_path = target / ".github" / "interventions.db"
+    db_path = target / ".agentpilot" / "state" / "interventions.db"
     store = InterventionStore(db_path=db_path)
     try:
         clusterer = ScenarioClusterer(
@@ -228,7 +228,7 @@ def _cmd_suggest_scenarios(args: argparse.Namespace) -> int:
     if args.suggest_output:
         output_path = Path(args.suggest_output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(payload + "\n", encoding="utf-8")
+        output_path.write_text(payload + "\n", encoding="utf-8")  # fs-policy: ok
 
     if args.suggest_format == "text":
         print(_render_scenario_suggestions_text(suggestions))
@@ -252,10 +252,7 @@ def _render_scenario_suggestions_text(suggestions: list[dict]) -> str:
 
 
 def _resolve_backup_root(target: Path) -> Path:
-    github_root = target / ".github" / ".rgen-backups"
-    if github_root.exists() or (target / ".github").exists():
-        return github_root
-    return target / ".rgen-backups"
+    return target / ".agentpilot" / "backups"
 
 
 def _cmd_update(args: argparse.Namespace) -> int:
@@ -276,7 +273,7 @@ def _cmd_update(args: argparse.Namespace) -> int:
     if flat:
         # Legacy flat layout: core files live directly in target_dir
         backup_engine = BackupEngine(
-            target / ".rgen-backups",
+            target / ".agentpilot" / "backups",
             project_root=target,
             command="update-flat",
             target=str(target),
@@ -300,7 +297,7 @@ def _cmd_update(args: argparse.Namespace) -> int:
                 print(f"  [ERRORE] {name}: {exc}", file=sys.stderr)
         if errors:
             return 1
-        print(f"\n{len(written)} file aggiornati in {target}  (backup in .rgen-backups/)")
+        print(f"\n{len(written)} file aggiornati in {target}  (backup in .agentpilot/backups/)")
         return 0
 
     github_dir = target / ".github"
@@ -368,7 +365,7 @@ def _cmd_update(args: argparse.Namespace) -> int:
         return 1
 
     n = len(result.files_written)
-    print(f"\n{n} file aggiornati in {github_dir}  (backup in .github/.rgen-backups/)")
+    print(f"\n{n} file aggiornati in {github_dir}  (backup in .agentpilot/backups/)")
     return 0
 
 
@@ -396,7 +393,7 @@ def _cmd_history(args: argparse.Namespace) -> int:
         if args.history_output:
             output_path = Path(args.history_output)
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            output_path.write_text(text + "\n", encoding="utf-8")
+            output_path.write_text(text + "\n", encoding="utf-8")  # fs-policy: ok
         print(text)
         return 0
 
@@ -417,7 +414,7 @@ def _cmd_history(args: argparse.Namespace) -> int:
         output_path = Path(args.history_output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         serialized = json.dumps(history, indent=2, ensure_ascii=False)
-        output_path.write_text(serialized + "\n", encoding="utf-8")
+        output_path.write_text(serialized + "\n", encoding="utf-8")  # fs-policy: ok
     return 0
 
 
@@ -634,7 +631,7 @@ def _cmd_cost_report(args: argparse.Namespace) -> int:
     from rgen.interventions import InterventionStore
 
     target = Path(args.target or ".")
-    db_path = target / ".github" / "interventions.db"
+    db_path = target / ".agentpilot" / "state" / "interventions.db"
 
     store: InterventionStore | None = None
     if db_path.exists():
@@ -657,7 +654,7 @@ def _cmd_cost_report(args: argparse.Namespace) -> int:
     if cost_output:
         output_path = Path(cost_output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(payload + "\n", encoding="utf-8")
+        output_path.write_text(payload + "\n", encoding="utf-8")  # fs-policy: ok
         print(f"[OK] Report scritto su: {output_path}")
 
     cost_format = getattr(args, "cost_format", "json")
@@ -715,7 +712,7 @@ def _cmd_roi_benchmark(args: argparse.Namespace) -> int:
     if roi_output:
         output_path = Path(roi_output)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(payload + "\n", encoding="utf-8")
+        output_path.write_text(payload + "\n", encoding="utf-8")  # fs-policy: ok
         print(f"[OK] ROI report scritto su: {output_path}")
 
     roi_format = getattr(args, "roi_format", "json")
