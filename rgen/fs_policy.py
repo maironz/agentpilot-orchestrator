@@ -23,6 +23,7 @@ import logging
 import os
 import platform
 import tempfile
+from datetime import datetime, timezone
 import warnings
 from pathlib import Path
 from typing import Union
@@ -92,6 +93,11 @@ class FSPolicy:
         self._github_root = self._root / ".github"
         # Extra whitelisted paths registered at runtime (e.g. session dirs).
         self._extra_allowed: set[str] = set()
+        # Audit log for .github/ writes — always appended regardless of
+        # allow_github_write so every access is traceable.
+        self._github_audit_log: Path = (
+            self._root / ".agentpilot" / "logs" / "github_writes.log"
+        )
 
     # ------------------------------------------------------------------
     # Dynamic whitelist management
@@ -152,15 +158,15 @@ class FSPolicy:
         """
         p = self._resolve_and_check(path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        # Re-validate after mkdir (anti-TOCTOU)
-        self._resolve_and_check(path)
+        # Re-validate after mkdir (anti-TOCTOU) — skip audit to avoid duplicates
+        self._resolve_and_check(path, _audit=False)
         p.write_text(content, encoding=encoding)
 
     def write_bytes_file(self, path: Union[Path, str], data: bytes) -> None:
         """Write binary *data* to *path* after whitelist check."""
         p = self._resolve_and_check(path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        self._resolve_and_check(path)
+        self._resolve_and_check(path, _audit=False)
         p.write_bytes(data)
 
     def write_atomic(self, path: Union[Path, str], content: str, encoding: str = "utf-8") -> None:
@@ -171,7 +177,7 @@ class FSPolicy:
         """
         p = self._resolve_and_check(path)
         p.parent.mkdir(parents=True, exist_ok=True)
-        self._resolve_and_check(path)
+        self._resolve_and_check(path, _audit=False)
         tmp_fd, tmp_path = tempfile.mkstemp(dir=p.parent, prefix=".tmp-", suffix=p.suffix)
         try:
             with os.fdopen(tmp_fd, "w", encoding=encoding) as fh:
@@ -211,7 +217,7 @@ class FSPolicy:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _resolve_and_check(self, path: Union[Path, str]) -> Path:
+    def _resolve_and_check(self, path: Union[Path, str], *, _audit: bool = True) -> Path:
         """Resolve *path* and verify it is inside an allowed root.
 
         Returns the resolved :class:`~pathlib.Path` on success.
@@ -238,6 +244,8 @@ class FSPolicy:
                 caller,
                 self._allow_github_write,
             )
+            if _audit:
+                self._audit_github_write(resolved, caller)
             if self._allow_github_write:
                 return resolved
 
@@ -260,6 +268,27 @@ class FSPolicy:
             norm_path.startswith(extra + os.sep) or norm_path == extra
             for extra in self._extra_allowed
         )
+
+    def _audit_github_write(self, path: Path, caller: str) -> None:
+        """Append one line to the persistent github_writes audit log.
+
+        The write is best-effort: any filesystem error is logged via the
+        standard :mod:`logging` module but never propagated to the caller.
+        This ensures the audit never blocks the normal write path.
+        """
+        try:
+            self._github_audit_log.parent.mkdir(parents=True, exist_ok=True)
+            ts = datetime.now(tz=timezone.utc).isoformat()
+            line = (
+                f"{ts} | allow={self._allow_github_write} "
+                f"| caller={caller} | path={path}\n"
+            )
+            with self._github_audit_log.open("a", encoding="utf-8") as fh:  # fs-policy: ok
+                fh.write(line)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "fs_policy: audit_github_write failed — %s", exc
+            )
 
     def _is_github(self, resolved: Path) -> bool:
         norm_path = _normalize(resolved)
