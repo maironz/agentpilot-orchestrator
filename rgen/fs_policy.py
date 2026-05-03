@@ -72,6 +72,13 @@ class FSPolicy:
     allow_github_write:
         Permit writes to ``.github/`` — always logged regardless of this
         flag.
+    audit_mode:
+        When *True*, every write attempt (allowed or not) is logged at INFO
+        level via :mod:`logging`.  Use for ``--fs-audit`` CLI runs.
+    dry_run:
+        When *True*, all write/delete/mkdir operations are logged but **not
+        executed**.  The policy checks still run normally.  Use for
+        ``--fs-dry-run`` CLI runs.
     """
 
     def __init__(
@@ -79,10 +86,14 @@ class FSPolicy:
         project_root: Union[Path, str, None] = None,
         strict: bool = False,
         allow_github_write: bool = False,
+        audit_mode: bool = False,
+        dry_run: bool = False,
     ) -> None:
         self._root = Path(project_root).resolve() if project_root else Path(".").resolve()
         self._strict = strict
         self._allow_github_write = allow_github_write
+        self.audit_mode = audit_mode
+        self.dry_run = dry_run
 
         # Build the concrete DIR_MAP bound to this root.
         self.DIR_MAP: dict[str, Path] = {
@@ -157,6 +168,10 @@ class FSPolicy:
         Raises :class:`PolicyViolation` in strict mode on violations.
         """
         p = self._resolve_and_check(path)
+        if self.audit_mode:
+            logger.info("fs_policy audit: write_file path=%s dry_run=%s", p, self.dry_run)
+        if self.dry_run:
+            return
         p.parent.mkdir(parents=True, exist_ok=True)
         # Re-validate after mkdir (anti-TOCTOU) — skip audit to avoid duplicates
         self._resolve_and_check(path, _audit=False)
@@ -165,6 +180,10 @@ class FSPolicy:
     def write_bytes_file(self, path: Union[Path, str], data: bytes) -> None:
         """Write binary *data* to *path* after whitelist check."""
         p = self._resolve_and_check(path)
+        if self.audit_mode:
+            logger.info("fs_policy audit: write_bytes_file path=%s dry_run=%s", p, self.dry_run)
+        if self.dry_run:
+            return
         p.parent.mkdir(parents=True, exist_ok=True)
         self._resolve_and_check(path, _audit=False)
         p.write_bytes(data)
@@ -176,6 +195,10 @@ class FSPolicy:
         ``cache/`` files.
         """
         p = self._resolve_and_check(path)
+        if self.audit_mode:
+            logger.info("fs_policy audit: write_atomic path=%s dry_run=%s", p, self.dry_run)
+        if self.dry_run:
+            return
         p.parent.mkdir(parents=True, exist_ok=True)
         self._resolve_and_check(path, _audit=False)
         tmp_fd, tmp_path = tempfile.mkstemp(dir=p.parent, prefix=".tmp-", suffix=p.suffix)
@@ -204,13 +227,19 @@ class FSPolicy:
     def mkdir(self, path: Union[Path, str]) -> None:
         """Create directory *path* after whitelist check."""
         p = self._resolve_and_check(path)
-        p.mkdir(parents=True, exist_ok=True)
+        if self.audit_mode:
+            logger.info("fs_policy audit: mkdir path=%s dry_run=%s", p, self.dry_run)
+        if not self.dry_run:
+            p.mkdir(parents=True, exist_ok=True)
 
     def delete(self, path: Union[Path, str]) -> None:
         """Delete file *path* after whitelist check."""
         p = self._resolve_and_check(path)
-        if p.is_file() or p.is_symlink():
-            p.unlink(missing_ok=True)
+        if self.audit_mode:
+            logger.info("fs_policy audit: delete path=%s dry_run=%s", p, self.dry_run)
+        if not self.dry_run:
+            if p.is_file() or p.is_symlink():
+                p.unlink(missing_ok=True)
         # Directories are not deleted via this API to avoid accidental rm -rf.
 
     # ------------------------------------------------------------------
