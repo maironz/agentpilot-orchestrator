@@ -43,9 +43,6 @@ desktop.ini
 *.db
 *.sqlite
 
-# Claude Code memory (locale, non condiviso)
-.claude/
-
 # Continue / local agent state (locale, non condiviso)
 .continue/
 .continuerules
