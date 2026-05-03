@@ -90,6 +90,40 @@ class FSPolicy:
 
         self._allowed_root = self._root / ".agentpilot"
         self._github_root = self._root / ".github"
+        # Extra whitelisted paths registered at runtime (e.g. session dirs).
+        self._extra_allowed: set[str] = set()
+
+    # ------------------------------------------------------------------
+    # Dynamic whitelist management
+    # ------------------------------------------------------------------
+
+    def add_allowed_path(self, path: Union[Path, str]) -> None:
+        """Register *path* as an additional whitelisted root.
+
+        Writes to *path* or any descendant will be permitted without a
+        policy warning.  The path must still be inside the project root
+        (no escaping to arbitrary filesystem locations).
+
+        Raises :class:`PolicyViolation` when *path* is outside the project
+        root in strict mode; otherwise emits a warning.
+        """
+        resolved = Path(path).resolve()
+        norm_proj = _normalize(self._root)
+        norm_p = _normalize(resolved)
+        if not (norm_p.startswith(norm_proj + os.sep) or norm_p == norm_proj):
+            msg = (
+                f"fs_policy: add_allowed_path outside project root — "
+                f"path={resolved} root={self._root}"
+            )
+            if self._strict:
+                raise PolicyViolation(msg)
+            warnings.warn(msg, stacklevel=2)
+            return
+        self._extra_allowed.add(_normalize(resolved))
+
+    def remove_allowed_path(self, path: Union[Path, str]) -> None:
+        """Unregister a previously added extra whitelisted path."""
+        self._extra_allowed.discard(_normalize(Path(path).resolve()))
 
     @classmethod
     def from_config(cls, project_root: Union[Path, str, None] = None) -> "FSPolicy":
@@ -219,7 +253,13 @@ class FSPolicy:
     def _is_allowed(self, resolved: Path) -> bool:
         norm_path = _normalize(resolved)
         norm_root = _normalize(self._allowed_root)
-        return norm_path.startswith(norm_root + os.sep) or norm_path == norm_root
+        if norm_path.startswith(norm_root + os.sep) or norm_path == norm_root:
+            return True
+        # Check extra dynamically registered roots (e.g. session dirs).
+        return any(
+            norm_path.startswith(extra + os.sep) or norm_path == extra
+            for extra in self._extra_allowed
+        )
 
     def _is_github(self, resolved: Path) -> bool:
         norm_path = _normalize(resolved)
