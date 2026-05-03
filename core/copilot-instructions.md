@@ -1,5 +1,8 @@
 # AgentPilot Orchestrator -- AI Dispatcher
 
+<!-- start AgentPilot Rules -->
+⚠️ **WARNING**: Content between these markers is auto-generated and may be overwritten by the sync process. Do not add local customizations here.
+
 ## DISPATCHER
 
 ### Session bootstrap (obbligatorio)
@@ -136,6 +139,7 @@ python .github/update_report.py --output .github/UPDATE_STATUS.md --auto
 1. Parti sempre dai file instradati dal router
 2. Mantieni scope ridotto se confidence > soglia
 3. Allarga all'intero repo solo se `repo_exploration.allowed: true`
+<!-- end AgentPilot Rules -->
 
 ## PROJECT
 
