@@ -21,7 +21,8 @@
 
 [![Python](https://img.shields.io/badge/python-3.12+-blue?logo=python&logoColor=white)](https://python.org)
 [![CI](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml/badge.svg)](https://github.com/maironz/agentpilot-orchestrator/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-538-brightgreen)](tests)
+[![Tests](https://img.shields.io/badge/tests-547-brightgreen)](tests)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue)](VERSION)
 [![Dependencies](https://img.shields.io/badge/core-stdlib%20only-orange)](pyproject.toml)
 [![Works with](https://img.shields.io/badge/works%20with-Copilot%20%7C%20Claude%20%7C%20Cursor-blueviolet)](README.md)
 
@@ -98,6 +99,18 @@ AgentPilot Orchestrator started as a practical response to a familiar problem: o
 The project was originally shaped to solve that operational gap with something more rigorous than a folder of prompts and more lightweight than a fully custom platform: a routing layer that can decide which context should answer, explain why, and improve over time.
 
 What began as an internal orchestration system for structured engineering support evolved into a reusable open-core toolkit for teams that want assistant workflows to feel deliberate, inspectable, and production-aware.
+
+## What's New in v0.5.0 — Operational Guardrails
+
+**AgentPilot v2** introduces **operational discipline patterns** from production systems, ensuring consistent and traceable AI workflows:
+
+- **Pre-identification**: Every session's first response includes mandatory routing context header with stats
+- **Named Exceptions**: 3 documented bypass conditions (summary continuation, post-task docs, ambiguity meta-routing) reduce unnecessary router calls
+- **Postflight Validation**: 5-step checklist (router usage, agent coherence, file conformance, coverage audit, health check) prevents routing gaps
+- **Coverage Audit**: New `validate_new_components_coverage()` function ensures new components have routing-map keyword coverage
+- **Smart Sync**: Override zones infrastructure preserves local customizations without data loss during updates
+
+These patterns enforce operational discipline without configuration overhead, making AgentPilot suitable for production teams that need both flexibility and governance.
 
 ## Why AgentPilot
 
