@@ -62,13 +62,7 @@ def load(project_root: Union[Path, str, None] = None) -> AgentPilotConfig:
     data: dict = dict(_DEFAULTS)
 
     if cfg_path.is_file():
-        if not _HAS_YAML:
-            warnings.warn(
-                "agentpilot config: PyYAML not installed — using defaults. "
-                "Run: pip install pyyaml",
-                stacklevel=2,
-            )
-        else:
+        if _HAS_YAML:
             try:
                 with cfg_path.open("r", encoding="utf-8") as fh:
                     loaded = yaml.safe_load(fh) or {}
@@ -76,6 +70,25 @@ def load(project_root: Union[Path, str, None] = None) -> AgentPilotConfig:
                     for k in _DEFAULTS:
                         if k in loaded and isinstance(loaded[k], bool):
                             data[k] = loaded[k]
+            except Exception as exc:  # noqa: BLE001
+                warnings.warn(
+                    f"agentpilot config: could not read {cfg_path} — {exc}",
+                    stacklevel=2,
+                )
+        else:
+            # Fallback: parse the minimal ``key: true/false`` format written
+            # by save() when PyYAML is absent.  Covers the common case without
+            # requiring a full YAML parser.
+            try:
+                for line in cfg_path.read_text(encoding="utf-8").splitlines():
+                    line = line.strip()
+                    if not line or line.startswith("#") or ":" not in line:
+                        continue
+                    k, _, v = line.partition(":")
+                    k = k.strip()
+                    v = v.strip().lower()
+                    if k in _DEFAULTS and v in ("true", "false"):
+                        data[k] = v == "true"
             except Exception as exc:  # noqa: BLE001
                 warnings.warn(
                     f"agentpilot config: could not read {cfg_path} — {exc}",

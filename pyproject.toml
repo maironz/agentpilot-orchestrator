@@ -26,6 +26,7 @@ Issues = "https://github.com/maironz/agentpilot-orchestrator/issues"
 dev = [
     "pytest>=9.0",
     "pytest-cov>=7.0",
+    "pyyaml>=6.0",
 ]
 mcp = [
     "mcp[cli]>=1.0.0",
