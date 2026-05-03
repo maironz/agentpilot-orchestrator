@@ -706,6 +706,20 @@ This is the part we want public: the routing engine, the contracts, the operatio
 - Redacted infrastructure examples and placeholders only
 - Release checklist includes know-how exposure review
 
+## How Agent Responses Are Validated
+
+Every response involving substantial work is checked against the routing discipline:
+
+- ✅ **Routing evidence** — Router output present or exception declared
+- ✅ **Agent coherence** — Agent matches task type  
+- ✅ **File conformance** — Files modified align with routing scope
+- ✅ **Coverage audit** — New components have routing keywords
+- ✅ **Postflight validation** — 5-step checklist completed
+
+If any check fails, the response is returned for revision.
+
+See [.claude/ROUTING_DISCIPLINE.md](.claude/ROUTING_DISCIPLINE.md) (custom instructions) and [/memories/routing-discipline.md](/memories/routing-discipline.md) (persistent rule) for details on the 3 Named Exceptions and postflight protocol.
+
 ## Contributing
 
 Contributions are welcome.
