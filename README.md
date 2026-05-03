@@ -31,29 +31,88 @@
 
 ---
 
-# AgentPilot
+# AgentPilot — Your AI Load Balancer
 
-AI Task Router for Developers.
+**Stop manually routing AI tasks. Let AgentPilot do it.**
 
-Routes developer tasks to the best AI agent using context, certainty, and cost signals.
+For teams using multiple AI assistants (Copilot, Claude, Cursor) who need consistent routing, reduced overhead, and traceable decisions.
 
-> Built for teams that want faster technical triage, consistent AI execution, and traceable routing decisions.
+> Built for engineering teams that refuse to choose between control and speed.
 
 Current release is tracked in `VERSION` (synced from `pyproject.toml` on push to `main`).
 See `docs/RELEASE_NOTES.md` for release history and migration context.
 User-facing guides are in `docs/`; references to `.github/` in command examples point to runtime scripts, not documentation files.
 
+---
+
+## How It Works: Load Balancer for AI
+
+Just like a load balancer routes traffic to the healthiest backend, AgentPilot routes tasks to the best-fit AI agent based on task type, project context, and cost.
+
+Each request gets explainable routing: `agent`, `scenario`, `confidence` score, `priority`.  
+Every decision is logged, searchable, and improves over time.
+
 **From an internal routing experiment to a reusable orchestration layer for AI-heavy engineering workflows.**
 
-## What Problem It Solves
+## What's New in v0.5.0 — Operational Guardrails
 
-When teams use multiple AI models and agents for software work, three problems appear fast:
+AgentPilot v0.5.0 introduces **5 operational guardrail patterns** that enforce consistent AI execution workflows:
 
-- too much manual triage before doing real work
-- inconsistent handling of similar requests
-- low visibility on why one route was chosen over another
+1. **Pre-identification** — Routing context required in first response
+2. **Named Exceptions** — 3 documented bypass cases maintain discipline
+3. **Postflight Validation** — 5-step checklist before task completion
+4. **Coverage Audit** — New components must have routing keywords
+5. **Smart Sync** — Safe merge preserves local customizations
 
-AgentPilot automates that triage.
+| Pattern | Key Benefit |
+|---------|------------|
+| Pre-identification | No hidden routing decisions |
+| Named Exceptions | Discipline + flexibility |
+| Postflight Validation | Catches routing gaps automatically |
+| Coverage Audit | Prevents feature drift |
+| Smart Sync | Updates without overwriting work |
+
+**547/547 tests passing** (17 new guardrail tests). Zero config overhead.  
+**Result:** Consistent, auditable AI workflows across teams.
+
+---
+
+## The Problem: AI Tools Without Governance
+
+When teams use multiple AI models, friction compounds fast:
+
+- **Inconsistent routing**: same request gets routed differently by different people
+- **Manual overhead**: "which tool should I use?" takes longer than the actual task
+- **No memory**: what worked last time is invisible to the next person who faces the same problem
+
+AgentPilot automates routing and remembers every decision.
+
+## Before vs After
+
+### Before: Manual AI Usage
+- Ask the same thing to multiple assistants, pick the "good enough" answer
+- Paste context manually each time
+- Same task routed differently by different people
+- No memory of what worked last time
+- 15+ minutes overhead per complex task
+
+### After: Routed AI Workflow
+- One interface, automatic routing based on task type and project context
+- Routing decision is explicit and explainable (`agent`, `scenario`, `certainty`)
+- Consistent handling across team — same request always hits the right context
+- Full intervention memory: search, learn, improve
+- 2-minute task setup with automatic file loading
+
+## Where AgentPilot Fits
+
+AgentPilot sits between developers and AI tools:
+
+1. You submit a task
+2. AgentPilot classifies it (bug fix? refactor? docs?)
+3. Routes to the best-fit agent + loads project context automatically
+4. You get consistent, traceable results
+
+It's not execution — it's orchestration. Routes work, tracks decisions, improves over time.
 
 ## What It Does
 
@@ -66,7 +125,19 @@ Given a technical request, AgentPilot:
 
 In short: it behaves like a load balancer, but for AI agents.
 
-## Demo First
+## Who Is This For
+
+### Ideal fit:
+- Teams using multiple AI assistants (Copilot + Claude + Cursor)
+- Engineering orgs with 5+ developers sharing the same codebase
+- Projects with recurring task patterns (bug fixes, refactors, docs)
+- Teams that want routing decisions to be visible, not magical
+
+### Not ideal for:
+- Single-person projects using one AI tool exclusively
+- Environments where all AI usage must be heavily restricted by policy
+
+## See It in Action
 
 Input:
 
