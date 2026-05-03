@@ -76,6 +76,15 @@ def test_update_report_ok_has_no_link_target(tmp_path: Path, monkeypatch, capsys
         },
     )
     monkeypatch.setattr(module, "apply_active_option_update", lambda confirm: {"status": "up-to-date", "updated": False})
+    monkeypatch.setattr(
+        module,
+        "get_remote_version_status",
+        lambda no_refresh=False: {
+            "branch_state": "in-sync",
+            "update_available": False,
+            "remote_commit": "abc123def456",
+        },
+    )
 
     output = tmp_path / "UPDATE_STATUS.md"
     monkeypatch.setattr(sys, "argv", ["update_report.py", "--output", str(output)])

@@ -16,6 +16,59 @@ python .github/session_header.py --query "<query>"
 ```
 Questo comando esegue internamente stats + direct + update_report + mcp_status e stampa header pronto.
 
+### Pre-identification (prima risposta della sessione) — MANDATORY
+
+> **⛔ MANDATORY — BEFORE ANY OTHER ACTION**  
+> Alla **prima risposta** di ogni nuova sessione (o dopo un reset contesto),  
+> l'identificazione è il **primo step da eseguire** — prima di leggere file,  
+> prima di analizzare la richiesta, prima di qualsiasi tool call operativo.  
+> Saltare questo step invalida architetturalmente l'intera risposta.
+
+**Step**:
+1. Esegui `python .github/router.py --stats` per ottenere le metriche di salute
+2. Mostra l'header identificativo con metriche inline:
+```
+🤖 **[NomeModello]** | Agente: **[agente]** | Priorità: [priority] | Routing: [stats-one-liner]
+```
+**Esempio**: `🤖 **Claude Haiku** | Agente: **orchestratore** | Priorità: medium | Routing: 13scn/176kw | overlap:2.3% | [OK]`
+
+**Exception**: Se continui dal summary precedente (context overflow), dichiara esplicitamente:  
+`Continuo dal summary precedente, agente: [X]` — in questo caso il router viene saltato ma la dichirazione è obbligatoria.
+
+### Named Exceptions — Quando saltare il router
+
+Tre casi documentati dove è **lecito saltare il router** (ma deve essere dichiarato):
+
+**Exception 1: Conversation Summary Present**
+- Quando VS Code comprime il contesto, il summary è source di truth
+- Condizione: Summary contiene file list + agent + continuation plan
+- Dichiarazione: `"Continuo dal summary precedente, agente: [X]"`
+- Implication: Il router può essere skippato se tutti i dettagli di continuità sono già nel summary
+
+**Exception 2: Post-Task Documentation**
+- Documentazione come estensione naturale di un task appena completato (stesso agente)
+- Condizione: target è un file noto, scope è limitato al task completato
+- Esempio: "aggiorna file avanzamento-lavori dopo code work"
+- Implication: Se il task è lo stesso agente + target noto, router è opzionale
+
+**Exception 3: Ambiguity Meta-Router**
+- Quando il router restituisce scenari con confidence simile (differenza < 5%)
+- Ruolo: L'agente `orchestratore` decide quale scenario è più appropriato
+- Dichiarazione: "Orchestrazione: scelgo [scenario] perché [motivo]"
+- Implication: Mantiene disciplina pur rispettando ambiguità reali
+
+### Postflight Validation — Solo task non banali
+
+Per task multi-step o non banali, verifica a fine risposta:
+
+1. **Router usato**: ✅ Router eseguito, OPPURE ✅ Exception dichiarata ($summary/$post-task/$meta-router)
+2. **Agente coerente**: Agent matching è coerente con il task svolto (no subject drift)
+3. **File conformi**: File di contesto nominati nel routing sono quelli effettivamente modificati
+4. **Routing coverage**: Se il task ha creato nuovi componenti (classi, namespace, script CLI, tabelle DB, moduli), verificare che le relative keywords siano coperte da almeno uno scenario in `routing-map.json`. In caso di gap, proporre aggiornamento.
+5. **Health check**: Se il task ha modificato `routing-map.json`, eseguire `python .github/router.py --stats` e segnalare se lo status è cambiato rispetto all'inizio sessione (es. nuovi scenari, keywords overlap, ecc).
+
+**Nota**: Postflight è **obbligatorio** solo per task non banali (multi-step, create new components, modify routing-map). Per richieste semplici (query, pequeño fix), è opzionale.
+
 ### Regola root e target (.github)
 - Il repository in root e' la sorgente principale per sviluppo, fix e documentazione.
 - Il target operativo e' la cartella `.github` (servizio router/MCP distribuito tramite update).
