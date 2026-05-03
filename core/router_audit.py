@@ -6,6 +6,7 @@ Extracted from router.py to keep the main router under the line-count threshold.
 Provides:
   - audit_routing_coverage(): scan codebase for routing-map gaps
   - get_health_stats(): compute routing system health metrics
+  - validate_new_components_coverage(): check if new components created in a task are covered by routing-map
 """
 
 import json
@@ -323,3 +324,68 @@ def get_health_stats(router_file: Path | None = None) -> dict:
         "metrics": metrics,
         "thresholds": _THRESHOLDS,
     }
+
+
+# ─── Coverage Validation: New Components (for Postflight) ───
+
+def validate_new_components_coverage(component_names: list[str]) -> dict:
+    """
+    Postflight validator: Check if newly created components (classes, namespaces,
+    CLI scripts, DB tables, modules) are covered by routing-map keywords.
+
+    Args:
+        component_names: List of component names to validate
+                        (e.g., ["MailService", "notify-due", "np2gn_psm_mail"])
+
+    Returns:
+        {
+            "mode": "postflight_coverage",
+            "input_components": [...],
+            "covered": [...],
+            "gaps": [...],
+            "status": "ok" | "warn",  # "warn" if gaps exist
+            "coverage_pct": 0-100,
+            "recommendations": [...]
+        }
+    """
+    routes = _load_routes()
+    all_keywords = set()
+    for data in routes.values():
+        for kw in data.get("keywords", []):
+            all_keywords.add(kw.lower())
+
+    covered = []
+    gaps = []
+
+    for component in component_names:
+        search_terms = _concept_to_keywords(component, "Generic Component")
+        matched_keywords = [t for t in search_terms if t in all_keywords]
+
+        if matched_keywords:
+            covered.append({
+                "component": component,
+                "matched_by": matched_keywords,
+            })
+        else:
+            gaps.append({
+                "component": component,
+                "suggested_keywords": search_terms,
+            })
+
+    recommendations = []
+    if gaps:
+        recommendations.append({
+            "type": "add_keywords",
+            "message": f"{len(gaps)} componente/i non trovati in routing-map. Considera aggiungere keyword: {', '.join([g['component'] for g in gaps])}",
+        })
+
+    return {
+        "mode": "postflight_coverage",
+        "input_components": component_names,
+        "covered": covered,
+        "gaps": gaps,
+        "status": "warn" if gaps else "ok",
+        "coverage_pct": round(len(covered) / max(len(component_names), 1) * 100, 1),
+        "recommendations": recommendations,
+    }
+

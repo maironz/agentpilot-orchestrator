@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -77,6 +78,46 @@ def get_active_option_status() -> dict:
     }
 
 
+def _sync_with_override_zones(src: Path, dest: Path) -> bool:
+    """
+    Sync src → dest respecting override zone markers.
+    If both files have <!-- start AgentPilot Rules -->...<!-- end AgentPilot Rules --> markers,
+    replace only that section. Otherwise, fallback to flat copy.
+    
+    Returns True if sync was performed (either smart or flat), False if skipped due to missing markers.
+    """
+    if not src.exists():
+        return False
+    
+    src_content = src.read_text(encoding='utf-8')
+    dest_content = dest.read_text(encoding='utf-8') if dest.exists() else ""
+    
+    pattern = r'<!-- start AgentPilot Rules -->(.*?)<!-- end AgentPilot Rules -->'
+    
+    # Check if src has the override zone markers
+    src_match = re.search(pattern, src_content, re.DOTALL)
+    if not src_match:
+        # No markers in source → skip (fallback safety)
+        return False
+    
+    override_block = src_match.group(0)  # Include the markers
+    
+    # Check if dest has the override zone markers
+    if dest_content and re.search(pattern, dest_content, re.DOTALL):
+        # Both have markers → replace only the override zone
+        merged = re.sub(pattern, override_block, dest_content, flags=re.DOTALL)
+    elif dest_content:
+        # Dest exists but has no markers → skip (safety: don't touch files without markers)
+        return False
+    else:
+        # Dest doesn't exist → use source content as is
+        merged = src_content
+    
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(merged, encoding='utf-8')
+    return True
+
+
 def apply_active_option_update(confirm: bool = False) -> dict:
     if not confirm:
         return {
@@ -105,21 +146,40 @@ def apply_active_option_update(confirm: bool = False) -> dict:
         }
 
     copied: list[str] = []
+    skipped: list[str] = []
+    
     for rel in drift_files:
         dest = root / rel
         src = root / "core" / dest.name
         dest.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(src, dest)
-        copied.append(rel)
+        
+        # Try smart sync with override zones first (only for copilot-instructions.md)
+        if src.name == "copilot-instructions.md":
+            smart_synced = _sync_with_override_zones(src, dest)
+            if smart_synced:
+                copied.append(rel)
+            else:
+                # Fallback: markers missing, skip the update (safety)
+                skipped.append(f"{rel} (no override zones, skipped)")
+        else:
+            # For other files, use flat copy
+            shutil.copy2(src, dest)
+            copied.append(rel)
 
     post = get_active_option_status()
-    return {
-        "updated": True,
-        "status": "updated",
+    result = {
+        "updated": True if copied else False,
+        "status": "updated" if copied else "skipped",
         "message": f"Active option updated for {len(copied)} files.",
         "files_updated": copied,
         "details": post,
     }
+    
+    if skipped:
+        result["files_skipped"] = skipped
+        result["message"] += f" ({len(skipped)} files skipped due to missing override zones)"
+    
+    return result
 
 
 def main() -> int:
